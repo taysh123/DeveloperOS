@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     title       TEXT NOT NULL,
     kind        TEXT NOT NULL DEFAULT 'task',   -- task|bug|feature
     status      TEXT NOT NULL DEFAULT 'todo',   -- todo|in_progress|blocked|done
+    priority    TEXT NOT NULL DEFAULT 'medium', -- low|medium|high
     milestone   TEXT,
     notes       TEXT,
     created_at  TEXT NOT NULL,
