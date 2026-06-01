@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "developeros"
+version = "0.1.0"
+description = "DeveloperOS — an AI-powered personal operating system for developers."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "DeveloperOS" }]
+keywords = ["developer-tools", "cli", "code-intelligence", "ai", "productivity"]
+# Runtime is intentionally stdlib-only for the foundation (see docs/DECISIONS.md D-0005).
+dependencies = []
+
+[project.optional-dependencies]
+# Adopted deliberately in later phases; not required to run the foundation.
+dev = ["pytest>=8"]
+
+[project.scripts]
+devos = "devos.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["devos*"]
+
+[tool.setuptools.package-data]
+devos = ["storage/*.sql"]
