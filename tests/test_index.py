@@ -75,3 +75,35 @@ class TestChunking(unittest.TestCase):
         chunks = index_mod.chunk_text("a\nb\nc", max_lines=50)
         self.assertEqual(len(chunks), 1)
         self.assertEqual((chunks[0].start_line, chunks[0].end_line), (1, 3))
+
+
+class TestRepoIndexHelpers(unittest.TestCase):
+    def _conn(self, tmp: str):
+        return db.initialize(Path(tmp) / "devos.db")
+
+    def test_insert_and_count_and_delete_chunks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            conn = self._conn(tmp)
+            try:
+                pid = repo.upsert_project(conn, "/x", "x")
+                repo.upsert_file(conn, pid, "a.py", "python", "backend", 3, "h1")
+                fid = conn.execute(
+                    "SELECT id FROM files WHERE project_id=? AND rel_path='a.py';", (pid,)
+                ).fetchone()["id"]
+
+                cid = repo.insert_chunk(conn, fid, 1, 2, "backend,python", "ch1", "print(1)")
+                self.assertEqual(repo.file_chunk_count(conn, fid), 1)
+                self.assertEqual(
+                    conn.execute("SELECT content FROM chunks_fts WHERE chunk_id=?;",
+                                 (cid,)).fetchone()["content"],
+                    "print(1)",
+                )
+
+                repo.delete_chunks_for_file(conn, fid)
+                self.assertEqual(repo.file_chunk_count(conn, fid), 0)
+                self.assertIsNone(
+                    conn.execute("SELECT 1 FROM chunks_fts WHERE chunk_id=?;",
+                                 (cid,)).fetchone()
+                )
+            finally:
+                conn.close()
