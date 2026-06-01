@@ -14,3 +14,6 @@ All notable, user-visible changes. Format loosely follows Keep a Changelog.
 - `devos index <path>`: scan then build/refresh a searchable index — splits files into line-ranged chunks, mirrors them into a SQLite FTS5 index, and reindexes incrementally (only changed files, via content hash). Reports (re)indexed/unchanged/skipped files and chunk counts.
 - `devos search <query>`: ranked keyword search (bm25) across indexed code/docs, returning `file:line-range` locations with highlighted snippets; supports `--project` and `--limit`.
 - Storage upgraded to schema v2 (`files.indexed_hash`) with an upgrade-capable migration runner.
+- `devos ask "<question>"`: grounded Q&A over your indexed project(s). Retrieves relevant chunks, answers via the configured AI provider (offline mock by default — no API key), and cites `file:line` sources. Clearly declines instead of guessing when there isn't enough indexed context.
+- `devos explain [path]`: plain-language explanation of a specific file (from its indexed chunks) or a whole-project overview (file-type breakdown + notable files), with source citations.
+- Added `docs/SECURITY.md` documenting the security-by-design architecture future phases must respect.

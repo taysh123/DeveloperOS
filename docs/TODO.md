@@ -22,9 +22,16 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] `devos search <query>`: bm25-ranked keyword results with file:line + snippets.
 - [x] Tests for chunking + search (TDD, 20 tests) + docs/state updates + D-0006.
 
-## Now (Phase 4 — Q&A & Project Understanding)  _(not started — plan first)_
-- [ ] Retrieval over the index (reuse `index.search` → `SearchHit`) → context assembly → AI provider.
-- [ ] `devos ask "<question>"` and `devos explain [path]` with file citations (mock provider for now).
+## Done (Phase 4 — Q&A & Project Understanding) ✅
+- [x] Retrieval over the index (OR-mode `index.search` → full chunk content) → context assembly → AI provider.
+- [x] `devos ask "<question>"` and `devos explain [path]` with file:line citations (mock provider, no keys).
+- [x] Grounding: declines (no provider call) when retrieval is empty; never guesses.
+- [x] `docs/SECURITY.md` (security-by-design) + D-0007. 21 tests (66 total).
+
+## Now (Phase 5 — Debug Assistant)  _(not started — plan first)_
+- [ ] Parse errors/stack traces/logs; locate referenced files/lines.
+- [ ] Assemble context (reuse `modules/qa` retrieval) → propose cause/fix/verification via provider.
+- [ ] `devos debug` (paste/pipe a trace). No silent file writes.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

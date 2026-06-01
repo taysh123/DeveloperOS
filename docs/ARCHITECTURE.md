@@ -91,6 +91,15 @@ semantic strategy will return the **same** `SearchHit`, so callers (CLI, Phase 4
 need no change. Per-chunk `content_hash` lets a later `embeddings(chunk_id, vector, model)`
 table attach to chunks without re-chunking. See DECISIONS.md D-0006.
 
+### Q&A & understanding (`modules/qa`)
+`modules/qa` is read-only orchestration: **retrieve** (OR-mode `index.search` + full chunk
+text) → **assemble** a delimited, source-tagged context → **generate** via `providers/ai`.
+Answers are **grounded**: attribution (`file:line`) comes from retrieval, the system prompt
+forbids guessing, and an empty retrieval returns a decline without calling the provider.
+Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, context=)`),
+so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
+untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
+
 ## Configuration & data location
 - Data dir resolution order: `DEVOS_HOME` env var → `%APPDATA%\DeveloperOS` (Windows)
   / `~/.local/share/devos` (POSIX). Created on `devos init`.

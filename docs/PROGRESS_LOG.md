@@ -4,6 +4,19 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 4: Phase 4 (Q&A & Project Understanding) complete
+- Session startup (AGENT_STATE/ROADMAP/provider+search code) + anti-duplication check (no ask/explain/qa code existed).
+- Authored **docs/SECURITY.md** (required before implementation): local-first privacy, secret management, future auth, safe-action-agent restrictions, audit logging, prompt-injection threat model, encryption roadmap, future API security — tagged [NOW]/[PLANNED]/[FUTURE]; nothing built that isn't needed this phase.
+- Wrote plan `docs/superpowers/plans/2026-06-01-phase4-qa-understanding.md` (9 TDD tasks); executed inline (parallel agents not beneficial — coupled state).
+- `modules/qa.py`: `question_terms` (stopword filter), `retrieve` (OR-mode `index.search` + full chunk content), `assemble_context` (delimited, source-tagged, char-capped), `answer` (grounded; declines without calling provider when empty), `explain` (file via its chunks; project overview via category breakdown + top files). `RetrievedChunk`/`Answer` types; grounding/anti-injection system prompts.
+- `index.build_match_query`/`search`: added `op` param (AND default; OR for NL questions) — Phase 3 tests unaffected.
+- `storage/repo`: `get_chunk_content`, `get_file_chunks`, `find_project_for_path`, `top_files`.
+- Commands `devos ask <question>` and `devos explain [path]` (cite file:line; use `ws.ai` = MockAIProvider, no keys).
+- TDD throughout (RED→GREEN per task). **verification-before-completion:** full suite **66/66 pass**.
+- Dogfooded on this repo: grounded answers with correct `Sources:`; `explain <file>` cites the file's chunks; decline path verified with terms absent from the corpus (no guessing, no sources).
+- Logged **D-0007** (Q&A retrieval/grounding + provider seam). Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/KNOWN_ISSUES/README/SECURITY/memory.
+- No schema change (Q&A is read-only over the existing index). **Next:** Phase 5 — Debug Assistant (do NOT start without planning). Stopped here per instruction.
+
 ## 2026-06-01 — Session 3: Phase 3 (Code Indexing & Search) complete
 - Ran session startup (AGENT_STATE/ROADMAP/TODO) + anti-duplication check (no index/search code existed; `chunks`/`chunks_fts` were reserved in schema).
 - Wrote a detailed plan via writing-plans: `docs/superpowers/plans/2026-06-01-phase3-indexing-search.md` (8 TDD tasks). Executed inline (executing-plans); parallel agents judged not beneficial (tightly coupled shared state).

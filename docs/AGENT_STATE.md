@@ -6,21 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 4 — Q&A & Project Understanding** is NEXT (Phases 0–3 complete). _Not started._
+**Phase 5 — Debug Assistant** is NEXT (Phases 0–4 complete). _Not started._
 
 ## Current milestone
-(Upcoming, do not start without going through planning.) Retrieval over the Phase 3
-index → context assembly → AI provider; `devos ask "<question>"` and `devos explain [path]`
-with file citations. The mock AI provider stays default until a real provider is wired in.
+(Upcoming, do not start without going through planning.) Parse errors/stack traces/logs,
+locate referenced files/lines, assemble context (reuse `modules/qa` retrieval), and propose
+cause/fix/verification via the provider — `devos debug`. No silent file writes.
 
 ## Next immediate step
-Begin Phase 4 by re-running the session-startup procedure and `/plan`. Phase 4 will reuse
-`modules/index.search` (returns `SearchHit`) for retrieval and the existing `providers/ai`
-abstraction — no redesign needed (see D-0006).
+Begin Phase 5 by re-running the session-startup procedure and `/plan`. Phase 5 will reuse
+`modules/qa` (retrieval + grounded answers) and `providers/ai`; likely add per-language
+trace parsers. The mock provider stays default (no API keys).
 
 ## Tasks
 ### In progress
-- _None (Phase 3 just completed; Phase 4 not yet started)._
+- _None (Phase 4 just completed; Phase 5 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -40,6 +40,12 @@ abstraction — no redesign needed (see D-0006).
       helpers + `reconcile_fts`; `devos index` + `devos search`. 20 new tests (45 total) pass;
       dogfooded on this repo (40 files → 90 chunks; 2nd index 0 re-indexed/40 unchanged; ranked
       located snippets). Architecture decision D-0006 logged (semantic-search seam).
+- [x] Phase 4: Q&A & understanding — `modules/qa` (OR-retrieval + stopwords, context assembly,
+      grounded `answer` that declines without calling the provider when retrieval is empty,
+      `explain` for files + project overview); `index.search`/`build_match_query` gained an `op`
+      param; `repo` retrieval helpers; `devos ask` + `devos explain` (cite file:line). Uses the
+      MockAIProvider via `ws.ai` (no keys). 21 new tests (66 total) pass; dogfooded on this repo
+      (grounded answers w/ sources; decline path verified). Added `docs/SECURITY.md` and D-0007.
 
 ### Blocked
 - _None._

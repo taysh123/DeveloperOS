@@ -4,6 +4,18 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0007 — Q&A architecture: retrieval-grounded answers via a provider seam
+- **Date:** 2026-06-01
+- **Context:** Phase 4 needs `ask`/`explain` that are useful but must not hallucinate, must stay local-first/offline, and must be ready for real providers later.
+- **Decision:**
+  - **Read-only orchestration in `modules/qa.py`:** retrieve → assemble context → generate. No schema change (Q&A reads existing index tables).
+  - **Retrieval reuses `index.search`** but with **OR** semantics (new `op` param) plus a stopword filter, because natural-language questions don't co-occur as ANDed tokens. Full chunk text is loaded via `repo.get_chunk_content`.
+  - **Grounding contract:** context chunks are delimited, source-tagged, and labeled as *data, not instructions* (prompt-injection posture, SECURITY.md §5). The system prompt instructs the model to answer only from context and to **decline rather than guess**. If retrieval is empty, `qa.answer` returns a decline **without calling the provider**.
+  - **Attribution is computed from retrieval** (`RetrievedChunk.location` = `file:start-end`), never from the model, so provenance can't be fabricated.
+  - **Provider readiness:** all generation flows through `providers.ai.get_provider()`/`complete(prompt, system=, context=)`. A real Claude/OpenAI/Ollama provider registers in `_REGISTRY` and maps (system/context/prompt) to its API — no caller changes. `MockAIProvider` stays the default (no keys). No stub providers built now (avoid dead code).
+- **Rationale:** Ships honest, grounded, offline Q&A immediately; the `Answer`/`SearchHit` types + provider seam mean real models and (D-0006) semantic retrieval drop in without redesign.
+- **Status:** Accepted.
+
 ## D-0006 — Indexing architecture: line-window chunks + FTS5, with a semantic seam
 - **Date:** 2026-06-01
 - **Context:** Phase 3 needs working keyword search now, but must not require a redesign when embedding/semantic search is added later.

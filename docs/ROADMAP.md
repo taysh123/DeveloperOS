@@ -40,7 +40,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Index bloat; stale index. **Mitigation:** content hashing, incremental updates.
 - **Dependencies:** Phase 2.
 
-## Phase 4 — Q&A & Project Understanding 🚧 (next)
+## Phase 4 — Q&A & Project Understanding ✅
 - **Goal:** Answer "how does X work?" / "where is the auth flow?" with citations.
 - **Scope:** Retrieval over the index → context assembly → AI provider; plain-language project explanation; module summaries.
 - **Deliverables:** `devos ask "<question>"`, `devos explain [path]`, answers cite files.
@@ -48,7 +48,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Hallucination; context limits. **Mitigation:** retrieval-grounded prompts, citations, chunk budgets.
 - **Dependencies:** Phase 3.
 
-## Phase 5 — Debug Assistant ⬜
+## Phase 5 — Debug Assistant 🚧 (next)
 - **Goal:** Turn an error/stack trace/log into root-cause + fix proposal.
 - **Scope:** Parse traces, locate referenced files/lines, assemble context, propose cause/fix/verification; optional patch suggestion (no silent writes).
 - **Deliverables:** `devos debug` (paste/pipe a trace), structured diagnosis output.
