@@ -186,3 +186,33 @@ class TestAnswer(QaTestCase):
             self.assertFalse(ans.grounded)
         finally:
             conn.close()
+
+
+class TestExplain(QaTestCase):
+    def test_explain_file_uses_its_chunks(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ans = qa.explain(conn, str(self.root / "src" / "auth" / "login.py"),
+                             provider=MockAIProvider())
+            self.assertTrue(ans.grounded)
+            self.assertTrue(any(s.rel_path == "src/auth/login.py" for s in ans.sources))
+        finally:
+            conn.close()
+
+    def test_explain_unknown_path_declines(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ans = qa.explain(conn, "/nowhere/x.py", provider=MockAIProvider())
+            self.assertFalse(ans.grounded)
+            self.assertIn("not", ans.text.lower())
+        finally:
+            conn.close()
+
+    def test_explain_project_overview(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ans = qa.explain(conn, None, provider=MockAIProvider(), project="demo")
+            self.assertTrue(ans.grounded)
+            self.assertTrue(ans.sources)  # cites notable files
+        finally:
+            conn.close()
