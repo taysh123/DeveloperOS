@@ -58,7 +58,13 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard action slice 1 ✅
+- [x] Action-oriented, tabbed dashboard (Home · Tasks · Notes · Search & Ask): create/update tasks, add/edit notes, code search, plain-English Q&A — all from the UI.
+- [x] Guarded write API: POST `tasks/notes create|update` reusing repo writes; GET `search`/`ask`/`explain` reusing `index`/`qa`. `repo.update_memory` added.
+- [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
+
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
+- [ ] Dashboard: scan/import UI, debug/learning/career/meeting tabs, task/note delete + project pickers in forms.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

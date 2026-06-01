@@ -3,26 +3,33 @@
 > Read this FIRST every session. It is the authoritative record of where the project
 > stands and what to do next. Update it after every meaningful work session.
 
-_Last updated: 2026-06-01_
+_Last updated: 2026-06-02_
 
 ## Current phase
-**Phase 9 — Future Modules:** all originally-enumerated directions shipped — **Learning (s1–3),
-Career slice 1 (s4), Plugin seam (s5), Meeting foundation (s6).** Phases 0–9 complete.
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard action slice 1 shipped:**
+the local dashboard is now action-oriented (Tasks/Notes write + Search/Q&A) with a guarded write API.
 
 ## Current milestone
-**Roadmap Phases 0–9 have all shipped their planned scope.** No approved work pending. Future
-extensions (audio STT, action-item→tasks, plugin sandboxing/signing, CV rewrite, real AI
-providers, multi-user/cloud) are optional and require an explicit new request + `/plan`.
+**Accessible dashboard slice 1 complete (D-0018).** The dashboard is the primary, non-programmer-
+friendly entry point for everyday work (create/update tasks, add/edit notes, search, ask), backed
+by a CSRF-token-protected loopback write API. No further approved work pending.
 
 ## Next immediate step
-Nothing pending. Awaiting the owner's direction for any future extension (each would start
-with a fresh `/plan`). Real AI provider can be wired behind `providers.ai` when desired.
+Nothing pending. Optional follow-ups (on a fresh `/plan`): scan/import UI, debug/learning/career/
+meeting UIs, richer task/note management (delete, projects in forms), real AI provider behind
+`providers.ai`. Each requires an explicit new request.
 
 ## Tasks
 ### In progress
-- _None. All roadmap phases (0–9) complete; future extensions are on-request only._
+- _None. Dashboard action slice 1 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard action slice 1 (2026-06-02): action-oriented, tabbed dashboard. `repo.update_memory`;
+      `app.route` extended (keyword-only `method`/`body`) with POST `tasks/notes create|update` (reuse
+      repo writes) + GET `search`/`ask`/`explain` (reuse `index`/`qa`, `ws.ai`); `server.py` `do_POST`
+      + `/api/session` with CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS; React+htm
+      SPA rebuilt with tabs (Home/Tasks/Notes/Search&Ask), token-aware `post()`, accessible labels.
+      TDD; **208/208 tests pass** (+25); live smoke verified end-to-end. D-0018; SECURITY §8 NOW.
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
 - [x] Created/populated mandatory docs: PROJECT_BRIEF, ROADMAP, ARCHITECTURE, AGENT_STATE,
       TODO, PROGRESS_LOG, DECISIONS, CHANGELOG, KNOWN_ISSUES.

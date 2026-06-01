@@ -91,6 +91,24 @@ class TestMemoryRepo(RecallTestCase):
         finally:
             conn.close()
 
+    def test_update_memory_whitelisted_fields(self) -> None:
+        conn = self.ws.connect()
+        try:
+            mid = repo.create_memory(conn, None, kind="note", title="Old", body="old body")
+            # unknown/None fields are ignored; whitelisted fields are written
+            changed = repo.update_memory(conn, mid, title="New", body="new body",
+                                         tags="t", bogus="x", kind=None)
+            self.assertEqual(changed, 1)
+            row = repo.get_memory(conn, mid)
+            self.assertEqual(row["title"], "New")
+            self.assertEqual(row["body"], "new body")
+            self.assertEqual(row["tags"], "t")
+            self.assertEqual(row["kind"], "note")  # untouched (passed None)
+            # no updatable fields -> no-op
+            self.assertEqual(repo.update_memory(conn, mid), 0)
+        finally:
+            conn.close()
+
 
 class TestRecallModule(RecallTestCase):
     def test_recall_spans_memory_tasks_and_code(self) -> None:

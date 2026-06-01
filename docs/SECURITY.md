@@ -128,15 +128,25 @@ into the AI context, a model could be manipulated.
 - **[FUTURE] In transit:** any future sync/API uses TLS only; no plaintext transport.
 - **[FUTURE] Key management:** OS keychain for keys; never store encryption keys beside the data.
 
-## 8. Local API & dashboard security  **[NOW — Phase 7; FUTURE — Phase 9 cloud]**
-- **[NOW]** The Phase 7 dashboard API (`devos/api`, `devos serve`) binds **127.0.0.1 only**
-  (loopback) and is **read-only (GET)** — no state-changing endpoints, minimal attack surface.
+## 8. Local API & dashboard security  **[NOW — Phase 7 + dashboard write slice; FUTURE — Phase 9 cloud]**
+- **[NOW]** The dashboard API (`devos/api`, `devos serve`) binds **127.0.0.1 only** (loopback).
   It serves only files under `devos/api/static/` (path traversal rejected) and frontend libs are
   **vendored locally** (no third-party runtime/CDN fetch). No secrets are exposed (none stored).
-- **[PLANNED]** When write endpoints are added, require a locally-generated **token + CSRF**
-  protection and route mutations through the Safe Action Agent (§4); lock CORS to the dashboard origin.
-- Bind local API to loopback; CORS locked to the local dashboard origin; CSRF protection for
-  any state-changing endpoint; auth token required (§3).
+- **[NOW] Write endpoints (dashboard action slice — D-0018).** The API now has **state-changing
+  POST endpoints** (`/api/tasks/create|update`, `/api/notes/create|update`). They are protected at
+  the HTTP boundary (`server.py`) by: a per-server **CSRF token** (`secrets.token_urlsafe`) required
+  in the **`X-DevOS-Token`** header (constant-time compare) and delivered same-origin via
+  `GET /api/session`; an **Origin allowlist** (loopback origins only); a **JSON content-type**
+  requirement; and a **64 KB request-size cap**. **No CORS headers are ever emitted**, so a
+  cross-origin web page can neither read API responses nor obtain the token (same-origin policy) —
+  this, plus the custom-header requirement, is the CSRF defense. All dashboard input is treated as
+  **untrusted** and validated at the API layer (required/length-capped fields, enum/id checks) on top
+  of parameterized queries. Mutations are scoped DB record writes (tasks/notes) equivalent to the CLI
+  `task`/`remember` commands, so they do **not** invoke the Safe Action Agent (§4) — which remains
+  reserved for filesystem/git/shell actions. Read-only AI endpoints (`/api/search|ask|explain`) reuse
+  the Q&A grounding contract (§5) and the offline mock provider; no secrets reach the frontend.
+- **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
+  CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
   and FTS query sanitization in `index.build_match_query`).
 - Rate limiting and request size caps on any networked surface.
@@ -154,7 +164,8 @@ into the AI context, a model could be manipulated.
 | Mutating actions | None in Phases 4–5 (Q&A and debug are read-only) |
 | Trace/log handling (Phase 5) | Untrusted; file location is **index-only** (no filesystem reads from trace paths) |
 | Tasks/memory (Phase 6) | Untrusted stored text (display/storage only); `recall` is offline/read-only — **no AI call, no new injection surface** |
-| Dashboard API (Phase 7) | **Loopback-only, read-only (GET)**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
+| Dashboard API (Phase 7) | **Loopback-only**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
+| Dashboard writes (action slice, D-0018) | POST tasks/notes guarded by **CSRF token + Origin allowlist + JSON-only + 64 KB cap**; no CORS headers; input validated; DB writes ≈ CLI `task`/`remember` (no Safe Action Agent); search/ask/explain read-only + grounded (offline mock) |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

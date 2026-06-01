@@ -1,4 +1,7 @@
-"""`devos serve` — run the local, read-only dashboard (loopback only)."""
+"""`devos serve` — run the local dashboard web UI (loopback only).
+
+The dashboard supports common actions (create/update tasks & notes) plus read-only
+search and Q&A. Writes are guarded by a CSRF token + origin check (see SECURITY.md sec. 8)."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +13,7 @@ from devos.core.workspace import Workspace
 @register
 class ServeCommand(Command):
     name = "serve"
-    help = "Run the local dashboard web UI (read-only, 127.0.0.1 only)."
+    help = "Run the local dashboard web UI (create/manage tasks & notes, search, ask; 127.0.0.1 only)."
 
     def configure(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--host", default="127.0.0.1",
@@ -25,7 +28,7 @@ class ServeCommand(Command):
 
         srv = server.create_server(args.host, args.port)
         host, port = srv.server_address[0], srv.server_address[1]
-        print(f"DeveloperOS dashboard: http://{host}:{port}  (read-only; Ctrl+C to stop)")
+        print(f"DeveloperOS dashboard: http://{host}:{port}  (local-first; Ctrl+C to stop)")
         try:
             srv.serve_forever()
         except KeyboardInterrupt:

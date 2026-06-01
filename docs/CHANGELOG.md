@@ -4,6 +4,8 @@ All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Action-oriented dashboard (slice 1):** the local web dashboard (`devos serve`) is now the primary, non-programmer-friendly way to work — not just a read-only view. Via lightweight tabs (Home · Tasks · Notes · Search & Ask) you can **create tasks, change a task's status / mark it done, add and edit notes, search your code, and ask plain-English questions** with cited sources — all in plain language with accessible labels. The CLI remains for power users.
+- Local API gained guarded **write endpoints** (`/api/tasks/create|update`, `/api/notes/create|update`) plus read-only `/api/search`, `/api/ask`, `/api/explain`, all reusing the existing storage/modules layers. Writes are protected at the loopback boundary by a per-session **CSRF token** (`X-DevOS-Token`, delivered via `GET /api/session`), an **Origin allowlist**, a JSON content-type requirement, and a **64 KB** request cap; no CORS headers are emitted. Still 127.0.0.1-only, offline, mock AI provider.
 - Project foundation: vision brief, phased roadmap (0–9), architecture, and source-of-truth state files.
 - `devos` CLI with `init` (creates local data dir + SQLite DB, schema v1) and `status` (reports location, schema, provider, stored counts).
 - Local-first SQLite storage layer with idempotent schema/migrations and an FTS5 search table reserved for indexing.

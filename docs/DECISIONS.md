@@ -4,6 +4,35 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0018 — Action-oriented dashboard: guarded write API (token + CSRF) over loopback
+- **Date:** 2026-06-02
+- **Context:** The Phase 7 dashboard was read-only (GET); everyday work still required the CLI. To make
+  the dashboard the primary, non-programmer-friendly entry point we needed the API to perform common
+  actions. SECURITY.md §8 had pre-committed the controls for this exact moment.
+- **Decision:**
+  - **Extend `app.route(ws, path, query, *, method="GET", body=None)`** (keyword-only `method`/`body`
+    keeps every existing GET call site unchanged). New **POST** actions reuse existing repo writes:
+    `/api/tasks/create`, `/api/tasks/update`, `/api/notes/create`, `/api/notes/update`; new read-only
+    **GET** endpoints surface existing modules: `/api/search` (`index.search`, OR-mode),
+    `/api/ask` (`qa.answer`), `/api/explain` (`qa.explain`) — provider via `ws.ai` (mock default).
+  - **Added `repo.update_memory`** (the only missing reusable fn), mirroring `update_task`'s
+    `_MEMORY_UPDATABLE` whitelist + parameterized SQL.
+  - **Security at the HTTP boundary (`server.py`, stdlib only):** per-server CSRF token
+    (`secrets.token_urlsafe`) delivered same-origin via `GET /api/session` and required in the
+    `X-DevOS-Token` header (constant-time compare); **Origin allowlist** (loopback only); JSON
+    content-type required; **64 KB** request cap. **No CORS headers** are ever emitted, so a
+    cross-origin page can neither read responses nor obtain the token. Loopback binding unchanged.
+  - **Input validation at the API layer** (friendly 400s): required/length-capped titles, enum checks
+    for status/kind/priority, unknown-project rejection, positive-int ids.
+  - **Frontend:** the vendored React+htm SPA gains lightweight **tabbed navigation** (Home · Tasks ·
+    Notes · Search & Ask) — state-driven, no router, no new deps — with accessible labels and a shared
+    token-aware `post()` helper.
+- **Rationale:** Builds the reusable secure-write foundation once; rides it for the two simplest fully
+  offline actions (tasks/notes) and exposes existing read-only search/Q&A. DB record writes are
+  equivalent to the existing CLI `task`/`remember` mutations, so they do **not** invoke the Safe Action
+  Agent (§4), which stays reserved for filesystem/git/shell. Stays stdlib-only, local-first, offline.
+- **Status:** Accepted (dashboard slice 1). Scan/debug/learning/career/meeting UIs remain on-request.
+
 ## D-0017 — Phase 9 slice 6 = Meeting/Transcript foundation (+ console-safe output)
 - **Date:** 2026-06-01
 - **Context:** Final enumerated Phase 9 direction: summarize a local transcript/notes file. Completes learning+career+plugin+meeting.

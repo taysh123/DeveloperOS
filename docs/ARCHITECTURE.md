@@ -141,15 +141,21 @@ global records). One `provider.complete()` call → `GeneratedDoc`; declines (no
 when ungrounded. `devos docgen` prints to stdout by default and writes to `--output` only
 (no overwrite without `--force`); attribution is retrieval/record-derived. See DECISIONS.md D-0011.
 
-### Dashboard & local API (`devos/api`, Phase 7)
-`devos/api/app.py` holds read-only **data builders** (`overview`/`projects`/`tasks`/`memory`/`recall`
-payloads) that reuse `storage/repo` + `modules.recall`, plus a socket-free `route(ws, path, query)
+### Dashboard & local API (`devos/api`, Phase 7 + action slice)
+`devos/api/app.py` holds the **data builders** (`overview`/`projects`/`tasks`/`memory`/`recall`/
+`search`/`ask`/`explain` payloads + the `*_action` write handlers) that reuse `storage/repo` +
+`modules.recall`/`index`/`qa`, plus a socket-free `route(ws, path, query, *, method, body)
 -> Response` table (JSON `/api/*`; static files under `static/`, path-traversal-rejected).
+**GET** endpoints are read-only; **POST** endpoints (`/api/tasks/create|update`,
+`/api/notes/create|update`) perform guarded DB writes via the same repo functions the CLI uses.
 `devos/api/server.py` wraps `route()` in a stdlib `ThreadingHTTPServer` **bound to 127.0.0.1 only**,
-opening a per-request connection. The frontend (`static/index.html` + `app.js`) is a **React + htm**
-SPA (no build step) with React/ReactDOM/htm **vendored locally** for offline use. `devos serve` runs
-it. Read-only this phase; future write endpoints route through the safe-action model with a
-token/CSRF (SECURITY §8). See DECISIONS.md D-0010.
+opening a per-request connection; it enforces the write-side controls at the HTTP boundary — a
+per-server **CSRF token** (`X-DevOS-Token`, served via `GET /api/session`), an **Origin allowlist**,
+JSON-only content type, and a 64 KB cap, with **no CORS headers**. The frontend (`static/index.html`
++ `app.js`) is a **React + htm** SPA (no build step, vendored offline) with lightweight **tabbed
+navigation** (Home · Tasks · Notes · Search & Ask) and a token-aware `post()` helper. `devos serve`
+runs it. DB record writes are equivalent to CLI `task`/`remember` mutations (not the Safe Action
+Agent). See DECISIONS.md D-0010 + D-0018 and SECURITY.md §8.
 
 ### Debug Assistant (`modules/trace` + `modules/debug`)
 `modules/trace` is pure, pluggable trace/log parsing (Python/Node/generic; register a parser

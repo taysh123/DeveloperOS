@@ -4,6 +4,15 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-02 — Session 15: Action-oriented dashboard (slice 1) — Tasks/Notes/Search/Q&A from the UI
+- `/plan`: scope confirmed via **AskUserQuestion** → Tasks + Notes + Search/Q&A, presented as lightweight **tabbed** UI. Explored existing read-only API/SPA + reusable module/repo fns first (no duplication); confirmed the only missing reusable fn was a memory update.
+- **TDD throughout.** `repo.update_memory` (mirrors `update_task` whitelist; memory has no `updated_at`). `app.route` extended to `(ws, path, query, *, method="GET", body=None)` — keyword-only so all existing GET call sites + tests stay unchanged. New **POST** actions reuse `repo.create_task`/`update_task`/`create_memory`/`update_memory`; new **GET** `/api/search`/`ask`/`explain` reuse `index.search`/`qa.answer`/`qa.explain` (provider via `ws.ai`). Friendly 400/404 validation at the API layer.
+- **Security (D-0018 / SECURITY §8 flipped PLANNED→NOW):** `server.py` gained `do_POST` + `/api/session`; per-server CSRF token (`X-DevOS-Token`, constant-time compare), Origin allowlist (loopback), JSON-only, 64 KB cap, **no CORS**. DB writes ≈ CLI `task`/`remember` → no Safe Action Agent.
+- **Frontend:** rewrote the vendored React+htm SPA with tabs (Home · Tasks · Notes · Search & Ask), a token-aware `post()` helper, accessible labels (`<label>`, `role=tablist`, `aria-selected`, `.sr-only`), friendly plain language; extended `styles.css`. No new deps, still offline.
+- **verification-before-completion:** full suite **208/208 pass** (+25). Scripted **live smoke** against a real loopback server: SPA served, token issued, POST-without-token → 403, create task + mark done, create + edit note, search finds code, ask returns grounded answer + sources, overview reflects the new done task — all PASS.
+- Synced DECISIONS (D-0018), SECURITY (§8 + posture row), CHANGELOG, ARCHITECTURE, README, AGENT_STATE, TODO. Committed. (No remote configured → no push.)
+- **Slice complete.** Scan/debug/learning/career/meeting UIs remain on-request; did not broaden scope.
+
 ## 2026-06-01 — Session 14: Phase 9 slice 6 (Meeting/Transcript) complete — roadmap 0–9 done
 - Plan-mode `/plan`: same header/body conflict as last turn (header "Meeting/Transcript"; pasted body = stale Career template). Resolved per the established pattern → built the header's slice; flagged it in the plan; ExitPlanMode = the veto gate. Confirmed no meeting code.
 - `modules/meeting.py`: `summarize(text, *, provider, source_label)` → `MeetingSummary` (Summary/Decisions/Action-items, grounded; declines on empty; 12k char cap). `devos meeting summarize <file>` (nested subcommand; `utf-8-sig` read).

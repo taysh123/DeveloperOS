@@ -35,7 +35,7 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos task <add\|list\|show\|set\|rm>` | Track tasks/bugs/features with status, priority, kind, milestone, and notes. |
 | `devos remember <title>` | Store a long-term memory (decision/summary/preference/note) with tags. |
 | `devos recall <query>` | Search across memory, tasks, and indexed code in one place (offline). |
-| `devos serve` | Launch the local **dashboard** (read-only, 127.0.0.1) — overview, task status, blocked, recent activity, "where I left off", recall. |
+| `devos serve` | Launch the local **dashboard** (127.0.0.1) — the easy, click-driven way to work. Tabs for **Home** (overview), **Tasks** (add / mark done / change status), **Notes** (add / edit), and **Search & Ask** (keyword search + plain-English Q&A). Writes are CSRF-token protected; offline. |
 | `devos docgen <type>` | Generate grounded docs (readme/architecture/api/setup/changelog/decisions/milestone); stdout or `--output` (no overwrite without `--force`). |
 | `devos learn <path\|topic>` | Learn your code at a chosen depth (`--level eli5\|intermediate\|advanced`), grounded with `file:line` sources. |
 | `devos quiz <path\|topic>` | Generate grounded review questions (`--n N`) about a file or topic, with `file:line` sources. |
@@ -48,7 +48,8 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos meeting summarize <file>` | Summarize a local transcript/notes file: summary, decisions, action items (grounded, with source). |
 
 AI answers use an offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
-The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline.
+The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline — and is the
+recommended entry point for everyday use; the CLI stays for power users and automation.
 
 ## How it's built
 - **Python core + CLI** now; a **TypeScript/React dashboard** comes in Phase 7.

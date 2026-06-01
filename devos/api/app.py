@@ -10,10 +10,17 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
+from devos.modules import index as index_mod
+from devos.modules import qa
 from devos.modules import recall as recall_mod
 from devos.storage import repo
 
 TASK_STATUSES = ("todo", "in_progress", "blocked", "done")
+TASK_KINDS = ("task", "bug", "feature")
+TASK_PRIORITIES = ("low", "medium", "high")
+MEMORY_KINDS = ("decision", "summary", "preference", "note")
+MAX_TITLE = 500
+MAX_BODY = 20000
 STATIC_DIR = Path(__file__).parent / "static"
 
 _CONTENT_TYPES = {
@@ -115,13 +122,178 @@ def recall_payload(conn: sqlite3.Connection, query: str, *, project: str | None 
     }
 
 
-# --- routing (read-only, GET) ---------------------------------------------
+def search_payload(conn: sqlite3.Connection, query: str, *,
+                   project: str | None = None, limit: int = 10) -> dict:
+    hits = index_mod.search(conn, query, project=project, limit=limit, op="OR")
+    return {"query": query, "results": [
+        {"location": h.location, "project": h.project, "rel_path": h.rel_path,
+         "start_line": h.start_line, "end_line": h.end_line,
+         "snippet": h.snippet, "score": h.score} for h in hits]}
 
-def route(ws, path: str, query: dict[str, str]) -> Response:
-    """Map a GET path + query to a Response. JSON for /api/*, static files otherwise."""
-    if path == "/" or path == "/index.html":
+
+def _answer_dict(ans) -> dict:
+    """Serialize a qa.Answer (shared by ask + explain)."""
+    return {
+        "text": ans.text, "grounded": ans.grounded, "provider": ans.provider,
+        "sources": [{"location": s.location, "project": s.project, "rel_path": s.rel_path,
+                     "start_line": s.start_line, "end_line": s.end_line} for s in ans.sources],
+    }
+
+
+def ask_payload(conn: sqlite3.Connection, ws, question: str, *,
+                project: str | None = None) -> dict:
+    ans = qa.answer(conn, question, provider=ws.ai, project=project)
+    return {"question": question, **_answer_dict(ans)}
+
+
+def explain_payload(conn: sqlite3.Connection, ws, path: str | None, *,
+                    project: str | None = None) -> dict:
+    ans = qa.explain(conn, path or None, provider=ws.ai, project=project)
+    return {"path": path or None, **_answer_dict(ans)}
+
+
+# --- write actions (POST, JSON body) --------------------------------------
+
+def _bad(msg: str) -> Response:
+    return _json({"error": msg}, 400)
+
+
+def _resolve_project(conn: sqlite3.Connection, name) -> "tuple[int | None, Response | None]":
+    """Resolve an optional project name to an id. Returns (id_or_None, error_or_None)."""
+    if not name:
+        return None, None
+    pid = repo.project_id_by_name(conn, str(name))
+    if pid is None:
+        return None, _bad(f"unknown project '{name}'")
+    return pid, None
+
+
+def _clean_title(value) -> "tuple[str | None, Response | None]":
+    title = str(value or "").strip()
+    if not title:
+        return None, _bad("title is required")
+    if len(title) > MAX_TITLE:
+        return None, _bad(f"title is too long (max {MAX_TITLE} characters)")
+    return title, None
+
+
+def create_task_action(conn: sqlite3.Connection, body: dict) -> Response:
+    title, err = _clean_title(body.get("title"))
+    if err:
+        return err
+    kind = body.get("kind") or "task"
+    status = body.get("status") or "todo"
+    priority = body.get("priority") or "medium"
+    if kind not in TASK_KINDS:
+        return _bad(f"kind must be one of {', '.join(TASK_KINDS)}")
+    if status not in TASK_STATUSES:
+        return _bad(f"status must be one of {', '.join(TASK_STATUSES)}")
+    if priority not in TASK_PRIORITIES:
+        return _bad(f"priority must be one of {', '.join(TASK_PRIORITIES)}")
+    pid, err = _resolve_project(conn, body.get("project"))
+    if err:
+        return err
+    tid = repo.create_task(conn, pid, title, kind=kind, status=status,
+                           priority=priority, notes=body.get("notes"))
+    return _json({"id": tid}, 201)
+
+
+def update_task_action(conn: sqlite3.Connection, body: dict) -> Response:
+    tid = body.get("id")
+    if not isinstance(tid, int) or tid <= 0:
+        return _bad("a valid task id is required")
+    if repo.get_task(conn, tid) is None:
+        return _json({"error": f"no task #{tid}"}, 404)
+    fields: dict = {}
+    if body.get("title") is not None:
+        title, err = _clean_title(body.get("title"))
+        if err:
+            return err
+        fields["title"] = title
+    for key, allowed in (("status", TASK_STATUSES), ("priority", TASK_PRIORITIES),
+                         ("kind", TASK_KINDS)):
+        if body.get(key) is not None:
+            if body[key] not in allowed:
+                return _bad(f"{key} must be one of {', '.join(allowed)}")
+            fields[key] = body[key]
+    for key in ("milestone", "notes"):
+        if body.get(key) is not None:
+            fields[key] = str(body[key])
+    if not fields:
+        return _bad("no updatable fields provided")
+    return _json({"updated": repo.update_task(conn, tid, **fields)})
+
+
+def create_note_action(conn: sqlite3.Connection, body: dict) -> Response:
+    title, err = _clean_title(body.get("title"))
+    if err:
+        return err
+    text = str(body.get("body") or "").strip()
+    if not text:
+        return _bad("body is required")
+    if len(text) > MAX_BODY:
+        return _bad(f"body is too long (max {MAX_BODY} characters)")
+    kind = body.get("kind") or "note"
+    if kind not in MEMORY_KINDS:
+        return _bad(f"kind must be one of {', '.join(MEMORY_KINDS)}")
+    pid, err = _resolve_project(conn, body.get("project"))
+    if err:
+        return err
+    mid = repo.create_memory(conn, pid, kind=kind, title=title, body=text,
+                             tags=body.get("tags"))
+    return _json({"id": mid}, 201)
+
+
+def update_note_action(conn: sqlite3.Connection, body: dict) -> Response:
+    mid = body.get("id")
+    if not isinstance(mid, int) or mid <= 0:
+        return _bad("a valid note id is required")
+    if repo.get_memory(conn, mid) is None:
+        return _json({"error": f"no note #{mid}"}, 404)
+    fields: dict = {}
+    if body.get("title") is not None:
+        title, err = _clean_title(body.get("title"))
+        if err:
+            return err
+        fields["title"] = title
+    if body.get("body") is not None:
+        text = str(body["body"]).strip()
+        if not text:
+            return _bad("body cannot be empty")
+        if len(text) > MAX_BODY:
+            return _bad(f"body is too long (max {MAX_BODY} characters)")
+        fields["body"] = text
+    if body.get("kind") is not None:
+        if body["kind"] not in MEMORY_KINDS:
+            return _bad(f"kind must be one of {', '.join(MEMORY_KINDS)}")
+        fields["kind"] = body["kind"]
+    if body.get("tags") is not None:
+        fields["tags"] = str(body["tags"])
+    if not fields:
+        return _bad("no updatable fields provided")
+    return _json({"updated": repo.update_memory(conn, mid, **fields)})
+
+
+_POST_ACTIONS = {
+    "/api/tasks/create": create_task_action,
+    "/api/tasks/update": update_task_action,
+    "/api/notes/create": create_note_action,
+    "/api/notes/update": update_note_action,
+}
+
+
+# --- routing --------------------------------------------------------------
+
+def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
+          body: dict | None = None) -> Response:
+    """Map a request to a Response. JSON for /api/*, static files otherwise.
+
+    GET endpoints are read-only; POST endpoints (in ``_POST_ACTIONS``) perform guarded
+    DB writes. The HTTP boundary (``server.py``) enforces CSRF token + origin before any
+    POST reaches here (see docs/SECURITY.md sec. 8)."""
+    if method == "GET" and (path == "/" or path == "/index.html"):
         return _serve_static("index.html")
-    if path.startswith("/static/"):
+    if method == "GET" and path.startswith("/static/"):
         return _serve_static(path[len("/static/"):])
 
     if path.startswith("/api/"):
@@ -129,6 +301,11 @@ def route(ws, path: str, query: dict[str, str]) -> Response:
             return _json({"error": "not initialized; run `devos init` or `devos scan`"}, 503)
         conn = ws.connect()
         try:
+            if method == "POST":
+                action = _POST_ACTIONS.get(path)
+                if action is None:
+                    return _json({"error": "not found", "path": path}, 404)
+                return action(conn, body or {})
             if path == "/api/health":
                 return _json({"ok": True})
             if path == "/api/overview":
@@ -142,6 +319,25 @@ def route(ws, path: str, query: dict[str, str]) -> Response:
                 return _json(memory_payload(conn))
             if path == "/api/recall":
                 return _json(recall_payload(conn, query.get("q", ""), project=query.get("project")))
+            if path == "/api/search":
+                limit = _int(query.get("limit"), default=10, lo=1, hi=50)
+                return _json(search_payload(conn, query.get("q", ""),
+                                            project=query.get("project"), limit=limit))
+            if path == "/api/ask":
+                q = query.get("q", "").strip()
+                if not q:
+                    return _bad("a question is required")
+                return _json(ask_payload(conn, ws, q, project=query.get("project")))
+            if path == "/api/explain":
+                return _json(explain_payload(conn, ws, query.get("path"),
+                                             project=query.get("project")))
         finally:
             conn.close()
     return _json({"error": "not found", "path": path}, 404)
+
+
+def _int(value, *, default: int, lo: int, hi: int) -> int:
+    try:
+        return max(lo, min(hi, int(value)))
+    except (TypeError, ValueError):
+        return default

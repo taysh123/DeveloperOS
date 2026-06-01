@@ -368,6 +368,24 @@ def get_memory(conn: sqlite3.Connection, memory_id: int) -> sqlite3.Row | None:
     ).fetchone()
 
 
+_MEMORY_UPDATABLE = {"title", "body", "kind", "tags"}
+
+
+def update_memory(conn: sqlite3.Connection, memory_id: int, **fields) -> int:
+    """Update whitelisted fields of a memory (note). Returns rowcount.
+
+    Mirrors ``update_task``: only ``_MEMORY_UPDATABLE`` keys with non-None values are
+    written, via parameterized SQL. The memory table has no ``updated_at`` column."""
+    sets = [(k, v) for k, v in fields.items() if k in _MEMORY_UPDATABLE and v is not None]
+    if not sets:
+        return 0
+    assignments = ", ".join(f"{k} = ?" for k, _ in sets)
+    params = [v for _, v in sets] + [memory_id]
+    cur = conn.execute(f"UPDATE memory SET {assignments} WHERE id = ?;", params)
+    conn.commit()
+    return cur.rowcount
+
+
 def list_memory(conn: sqlite3.Connection, *, project_id: int | None = None,
                 kind: str | None = None, include_global: bool = False) -> list[sqlite3.Row]:
     clauses, params = [], []
