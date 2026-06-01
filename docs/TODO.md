@@ -28,10 +28,16 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Grounding: declines (no provider call) when retrieval is empty; never guesses.
 - [x] `docs/SECURITY.md` (security-by-design) + D-0007. 21 tests (66 total).
 
-## Now (Phase 5 — Debug Assistant)  _(not started — plan first)_
-- [ ] Parse errors/stack traces/logs; locate referenced files/lines.
-- [ ] Assemble context (reuse `modules/qa` retrieval) → propose cause/fix/verification via provider.
-- [ ] `devos debug` (paste/pipe a trace). No silent file writes.
+## Done (Phase 5 — Debug Assistant) ✅
+- [x] Parse errors/stack traces/logs (`modules/trace`: Python/Node/generic, pluggable); locate referenced files/lines (index-only).
+- [x] Assemble context (reuse `modules/qa` retrieval) → propose cause/fix/verification via provider (`modules/debug.diagnose`).
+- [x] `devos debug` (arg/--file/stdin); structured evidence + analysis + sources + confidence; declines when no evidence.
+- [x] Security: index-only file location (no filesystem reads from trace paths); D-0008; SECURITY §5. 17 tests (83 total).
+
+## Now (Phase 6 — Task Manager & Memory)  _(not started — plan first)_
+- [ ] Tasks/bugs/features CRUD with status (todo/in_progress/blocked/done) + milestones (`tasks` table exists).
+- [ ] Memory store for decisions/summaries/preferences (`memory` table exists); recall surfaced in search.
+- [ ] `devos task ...`, `devos remember ...`, `devos recall ...`.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

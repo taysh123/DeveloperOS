@@ -4,6 +4,18 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0008 — Debug Assistant: pluggable trace parsing + index-only location, reusing retrieval
+- **Date:** 2026-06-01
+- **Context:** Phase 5 turns errors/traces/logs into diagnoses. Must be useful, grounded, safe with untrusted input, and reuse existing layers (no duplicate retrieval), with no schema change.
+- **Decision:**
+  - **Pure, pluggable parsing in `modules/trace.py`:** `parse_python`/`parse_node`/`parse_generic` registered in `TRACE_PARSERS`; first parser yielding frames wins, else a generic `path:line` scan. New languages = new parser fn, no other change.
+  - **`modules/debug.diagnose`** orchestrates: parse → **locate frames in the index only** (`repo.find_file_by_path`; absolute paths via `find_project_for_path`) → **reuse `qa.retrieve`** for related code and **`qa.assemble_context`** for context → generate via `providers.ai`.
+  - **Security — no filesystem egress:** trace-supplied paths are resolved only against the DB index; DeveloperOS never opens a path named in a trace. An absolute path outside any known project is skipped. (SECURITY.md §5.)
+  - **Structured, grounded output:** `DebugDiagnosis` separates deterministic evidence (`error_type`/`error_message`/`frames`/`located_frames`/`sources`) from the provider's `analysis` (system prompt mandates Observed evidence / Likely root cause / Assumptions / Recommended fix / Verification steps + file:line + low-confidence honesty). Heuristic `confidence`: high (a frame located with its code), medium (related code only), low (nothing → decline, no provider call). Attribution from parsing/retrieval, never the model.
+  - **Provider readiness:** reuses the D-0007 `providers.ai` seam; real Claude/OpenAI/Ollama improve `analysis` with no debug-code change. No schema change (read-only over the index).
+- **Rationale:** Delivers a safe, grounded debugger now on stdlib + mock; the parser registry and provider/retrieval reuse keep it extensible without redesign.
+- **Status:** Accepted.
+
 ## D-0007 — Q&A architecture: retrieval-grounded answers via a provider seam
 - **Date:** 2026-06-01
 - **Context:** Phase 4 needs `ask`/`explain` that are useful but must not hallucinate, must stay local-first/offline, and must be ready for real providers later.

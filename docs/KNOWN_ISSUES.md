@@ -18,6 +18,14 @@ _Active issues, limitations, and tech debt. Resolved items move to PROGRESS_LOG/
   sufficiency to the model (instructed to decline if context is inadequate). Quality improves
   with semantic search (D-0006) and a real provider (D-0007). Line-window chunks can also
   split a function across chunks, affecting answer completeness.
+- **Debug parsing covers Python, Node/JS, and a generic `path:line` fallback only.** Other
+  languages fall back to the generic scanner (file:line extraction without error typing). Add
+  a parser to `trace.TRACE_PARSERS` to extend (D-0008).
+- **Debug analysis prose is a mock stub** until a real provider is configured; evidence,
+  index-only file location, citations, and confidence are real now. As with Q&A, debug rarely
+  hits the pure "no evidence" decline when the error message contains common words (OR
+  retrieval matches incidentally) — but `confidence` and the evidence list still report
+  honestly whether any trace files were located in the index.
 
 ## Open issues
 - _None recorded yet._

@@ -6,21 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 5 — Debug Assistant** is NEXT (Phases 0–4 complete). _Not started._
+**Phase 6 — Task Manager & Memory** is NEXT (Phases 0–5 complete). _Not started._
 
 ## Current milestone
-(Upcoming, do not start without going through planning.) Parse errors/stack traces/logs,
-locate referenced files/lines, assemble context (reuse `modules/qa` retrieval), and propose
-cause/fix/verification via the provider — `devos debug`. No silent file writes.
+(Upcoming, do not start without going through planning.) Tasks/bugs/features CRUD with
+status + milestones; a memory store for decisions/summaries/preferences; recall surfaced
+in search. The `tasks` + `memory` tables already exist in the schema (reserved since v1).
 
 ## Next immediate step
-Begin Phase 5 by re-running the session-startup procedure and `/plan`. Phase 5 will reuse
-`modules/qa` (retrieval + grounded answers) and `providers/ai`; likely add per-language
-trace parsers. The mock provider stays default (no API keys).
+Begin Phase 6 by re-running the session-startup procedure and `/plan`. Phase 6 adds
+`devos task ...`, `devos remember ...`, `devos recall ...`, reusing `storage/repo` patterns
+and (for recall) the retrieval layer. The mock provider stays default (no API keys).
 
 ## Tasks
 ### In progress
-- _None (Phase 4 just completed; Phase 5 not yet started)._
+- _None (Phase 5 just completed; Phase 6 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -46,6 +46,12 @@ trace parsers. The mock provider stays default (no API keys).
       param; `repo` retrieval helpers; `devos ask` + `devos explain` (cite file:line). Uses the
       MockAIProvider via `ws.ai` (no keys). 21 new tests (66 total) pass; dogfooded on this repo
       (grounded answers w/ sources; decline path verified). Added `docs/SECURITY.md` and D-0007.
+- [x] Phase 5: Debug Assistant — `modules/trace` (pluggable Python/Node/generic parsers) +
+      `modules/debug` (`diagnose`: index-only frame location, reuses `qa.retrieve`/`assemble_context`
+      + `providers/ai`, structured grounded `DebugDiagnosis` w/ confidence; declines without calling
+      the provider when no evidence); `repo.find_file_by_path`; exposed `qa.resolve_project`;
+      `devos debug` (arg/--file/stdin). 17 new tests (83 total) pass; dogfooded (located real file,
+      high confidence; security: no filesystem read from trace paths). D-0008 + SECURITY §5 updated.
 
 ### Blocked
 - _None._

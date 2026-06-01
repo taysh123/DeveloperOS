@@ -100,6 +100,16 @@ Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, con
 so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
 untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
 
+### Debug Assistant (`modules/trace` + `modules/debug`)
+`modules/trace` is pure, pluggable trace/log parsing (Python/Node/generic; register a parser
+in `TRACE_PARSERS` to add a language) → `ParsedTrace(error_type, error_message, frames)`.
+`modules/debug.diagnose` orchestrates: parse → **locate frames in the index only**
+(`repo.find_file_by_path`; never opens trace-named filesystem paths) → **reuse** `qa.retrieve`
++ `qa.assemble_context` → generate via `providers/ai`. Output (`DebugDiagnosis`) separates
+deterministic evidence (error, located `file:line`, sources) from the provider's analysis and
+carries a confidence heuristic; it declines (no provider call) when no evidence is found.
+See DECISIONS.md D-0008 and SECURITY.md §5.
+
 ## Configuration & data location
 - Data dir resolution order: `DEVOS_HOME` env var → `%APPDATA%\DeveloperOS` (Windows)
   / `~/.local/share/devos` (POSIX). Created on `devos init`.

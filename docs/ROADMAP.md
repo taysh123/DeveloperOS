@@ -48,7 +48,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Hallucination; context limits. **Mitigation:** retrieval-grounded prompts, citations, chunk budgets.
 - **Dependencies:** Phase 3.
 
-## Phase 5 — Debug Assistant 🚧 (next)
+## Phase 5 — Debug Assistant ✅
 - **Goal:** Turn an error/stack trace/log into root-cause + fix proposal.
 - **Scope:** Parse traces, locate referenced files/lines, assemble context, propose cause/fix/verification; optional patch suggestion (no silent writes).
 - **Deliverables:** `devos debug` (paste/pipe a trace), structured diagnosis output.
@@ -56,7 +56,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Trace format variety. **Mitigation:** pluggable parsers per language.
 - **Dependencies:** Phase 3 (index), Phase 4 (AI plumbing).
 
-## Phase 6 — Task Manager & Memory ⬜
+## Phase 6 — Task Manager & Memory 🚧 (next)
 - **Goal:** Track work and remember decisions across sessions.
 - **Scope:** Tasks/bugs/features CRUD with status & milestones; memory store for decisions/summaries/preferences; link memory ↔ project/files; recall surfaced in search.
 - **Deliverables:** `devos task ...`, `devos remember ...`, `devos recall ...`.

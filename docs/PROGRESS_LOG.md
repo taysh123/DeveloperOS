@@ -4,6 +4,18 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 5: Phase 5 (Debug Assistant) complete
+- Session startup (AGENT_STATE/ROADMAP/qa.py/SECURITY) + anti-duplication check (no debug code; only a planning mention).
+- Wrote plan `docs/superpowers/plans/2026-06-01-phase5-debug-assistant.md` (5 TDD tasks); executed inline (parallel agents not beneficial — coupled).
+- `modules/trace.py`: pure pluggable parsers (`parse_python`/`parse_node`/`parse_generic`, `TRACE_PARSERS`, `parse_trace`) → `Frame`/`ParsedTrace`.
+- `modules/debug.py`: `diagnose` — index-only frame location (`repo.find_file_by_path`; absolute via `find_project_for_path`), **reuses** `qa.retrieve`/`qa.assemble_context` + `providers/ai`; structured `DebugDiagnosis` (deterministic evidence vs provider analysis), confidence heuristic (high/medium/low), declines without calling the provider when no evidence. `build_debug_query`, `LocatedFrame`.
+- `repo.find_file_by_path` (index-only, exact→suffix→basename); exposed `qa.resolve_project` (renamed from `_resolve_project`, caller updated).
+- `devos debug` (arg / `--file` / piped stdin) — prints evidence, confidence, analysis, sources.
+- TDD throughout. **systematic-debugging:** a CLI test hung on `sys.stdin.read()` (non-tty, no EOF in the runner); fixed by injecting an empty stdin in the test helper; also added missing `import sys` (a `;`-chained background commit had captured the buggy file — corrected with a follow-up commit).
+- **verification-before-completion:** full suite **83/83 pass**. Dogfooded: piped Python trace located `devos/modules/index.py` (Confidence: high) with evidence + sources; security test confirms trace-named filesystem paths are never read.
+- Logged **D-0008**; updated **SECURITY.md** (§5 + posture). Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/KNOWN_ISSUES/README/memory.
+- No schema change (debug is read-only over the index). **Next:** Phase 6 — Task Manager & Memory (do NOT start without planning). Stopped here per instruction.
+
 ## 2026-06-01 — Session 4: Phase 4 (Q&A & Project Understanding) complete
 - Session startup (AGENT_STATE/ROADMAP/provider+search code) + anti-duplication check (no ask/explain/qa code existed).
 - Authored **docs/SECURITY.md** (required before implementation): local-first privacy, secret management, future auth, safe-action-agent restrictions, audit logging, prompt-injection threat model, encryption roadmap, future API security — tagged [NOW]/[PLANNED]/[FUTURE]; nothing built that isn't needed this phase.

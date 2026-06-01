@@ -79,6 +79,12 @@ into the AI context, a model could be manipulated.
   with confirmation. Context is never executed.
 - **[PLANNED] Output handling:** treat model output as untrusted (no eval, no auto-run, no
   unconfirmed file writes).
+- **[NOW] Debug Assistant (Phase 5):** errors/stack traces/logs are untrusted input. File
+  references in a trace are resolved **only against the SQLite index** (`repo.find_file_by_path`);
+  DeveloperOS never opens a filesystem path named in a trace, and absolute paths outside a known
+  project are skipped — so a trace naming `/etc/passwd` or `C:\secrets.txt` causes no file read and
+  no exfiltration. The trace text enters the provider context as **data, not instructions** (same
+  grounding contract as Q&A). Verified by `tests/test_debug.py::TestDiagnose::test_does_not_read_filesystem_paths_from_trace`.
 
 ## 6. Audit logging requirements  **[PLANNED — when actions/providers are added]**
 - Log security-relevant events **locally** (append-only, in the data dir): action-agent
@@ -114,7 +120,8 @@ into the AI context, a model could be manipulated.
 | Data location | Local SQLite under data dir; git-ignored |
 | AI grounding / anti-hallucination | **Enforced** (grounded answers, declines when context insufficient) |
 | Prompt-injection containment | Offline + grounding contract + retrieval-sourced attribution |
-| Mutating actions | None in Phase 4 (Q&A is read-only) |
+| Mutating actions | None in Phases 4–5 (Q&A and debug are read-only) |
+| Trace/log handling (Phase 5) | Untrusted; file location is **index-only** (no filesystem reads from trace paths) |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._
