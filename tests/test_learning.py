@@ -196,6 +196,43 @@ class TestExercise(LearnTestCase):
             conn.close()
 
 
+class TestGrade(LearnTestCase):
+    def test_grounded_feedback_with_sources(self) -> None:
+        conn = self.ws.connect()
+        try:
+            grade = learning_mod.grade(conn, "src/retrieval.py",
+                                       answer="It searches the index and ranks results",
+                                       question="What does retrieve do?",
+                                       provider=MockAIProvider(), project="demo")
+            self.assertTrue(grade.grounded)
+            self.assertTrue(any(s.rel_path == "src/retrieval.py" for s in grade.sources))
+            self.assertIn("ranks results", grade.text)  # mock echoes the answer in the prompt
+        finally:
+            conn.close()
+
+    def test_empty_answer_raises(self) -> None:
+        conn = self.ws.connect()
+        try:
+            with self.assertRaises(ValueError):
+                learning_mod.grade(conn, "src/retrieval.py", answer="   ",
+                                   provider=MockAIProvider(), project="demo")
+        finally:
+            conn.close()
+
+    def test_declines_without_grounding(self) -> None:
+        class BoomProvider(MockAIProvider):
+            def complete(self, *a, **k):
+                raise AssertionError("provider must not be called without grounding")
+        conn = self.ws.connect()
+        try:
+            grade = learning_mod.grade(conn, "zzz_absent_topic_qqq", answer="something",
+                                       provider=BoomProvider(), project="demo")
+            self.assertFalse(grade.grounded)
+            self.assertEqual(grade.sources, [])
+        finally:
+            conn.close()
+
+
 class TestLearnCli(LearnTestCase):
     def _run(self, *argv):
         buf = io.StringIO()
