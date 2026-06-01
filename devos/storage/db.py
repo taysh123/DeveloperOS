@@ -11,7 +11,12 @@ from datetime import datetime, timezone
 from importlib import resources
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+
+# Numbered migrations applied to EXISTING databases (fresh DBs use schema.sql directly).
+MIGRATIONS: dict[int, list[str]] = {
+    2: ["ALTER TABLE files ADD COLUMN indexed_hash TEXT;"],
+}
 
 # Tables surfaced in `devos status` (exists per current schema).
 COUNTED_TABLES = ("projects", "files", "chunks", "tasks", "memory")
@@ -38,22 +43,36 @@ def schema_version(conn: sqlite3.Connection) -> int:
 
 
 def initialize(db_path: Path) -> sqlite3.Connection:
-    """Create the database (if needed), apply the schema, and return a connection.
+    """Create or upgrade the database and return a connection (idempotent).
 
-    Idempotent: applies the schema only when the stored version is behind
-    ``SCHEMA_VERSION``.
+    Fresh databases (version 0) are built directly from ``schema.sql`` (already at the
+    latest shape). Existing databases are upgraded by applying numbered ``MIGRATIONS``
+    for each version between the stored version and ``SCHEMA_VERSION``.
     """
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = connect(db_path)
     current = schema_version(conn)
-    if current < SCHEMA_VERSION:
+    if current == SCHEMA_VERSION:
+        return conn
+
+    if current == 0:
         conn.executescript(_load_schema_sql())
-        conn.execute(
-            "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?, ?);",
-            (SCHEMA_VERSION, _now()),
-        )
-        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION};")
-        conn.commit()
+    else:
+        for version in range(current + 1, SCHEMA_VERSION + 1):
+            for statement in MIGRATIONS.get(version, []):
+                conn.execute(statement)
+
+    # Defensive: ensure the bookkeeping table exists even on an unusual legacy DB.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS schema_migrations "
+        "(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);"
+    )
+    conn.execute(
+        "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?, ?);",
+        (SCHEMA_VERSION, _now()),
+    )
+    conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION};")
+    conn.commit()
     return conn
 
 

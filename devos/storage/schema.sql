@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS files (
     category     TEXT,           -- frontend|backend|db|api|auth|test|config|other
     size         INTEGER,
     content_hash TEXT,
+    indexed_hash TEXT,          -- sha256 of the text the current chunks were built from
     indexed_at   TEXT,
     UNIQUE (project_id, rel_path)
 );
@@ -38,6 +39,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     tags         TEXT,
     content_hash TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_chunks_file ON chunks(file_id);
 
 -- Phase 3: full-text keyword search over chunk content (FTS5).
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
