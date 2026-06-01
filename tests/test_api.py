@@ -123,3 +123,23 @@ class TestRouting(ApiTestCase):
     def test_static_path_traversal_blocked(self) -> None:
         resp = api_app.route(self.ws, "/static/../../devos/config.py", {})
         self.assertEqual(resp.status, 404)
+
+
+class TestLiveServer(ApiTestCase):
+    def test_live_overview_and_index(self) -> None:
+        from devos.api import server as api_server
+        srv = api_server.create_server("127.0.0.1", 0)
+        self.assertEqual(srv.server_address[0], "127.0.0.1")  # loopback only
+        port = srv.server_address[1]
+        th = threading.Thread(target=srv.serve_forever, daemon=True)
+        th.start()
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/overview", timeout=5) as r:
+                self.assertEqual(r.status, 200)
+                self.assertIn("task_counts", json.loads(r.read()))
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as r:
+                self.assertEqual(r.status, 200)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+            th.join(timeout=5)
