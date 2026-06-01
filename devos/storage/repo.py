@@ -288,6 +288,56 @@ def search_tasks(conn: sqlite3.Connection, query: str, *, project_id: int | None
     ).fetchall()
 
 
+# --- job leads (career) ---------------------------------------------------
+
+JOB_STATUSES = ("saved", "applied", "interview", "offer", "rejected", "closed")
+_JOB_COLS = "id, company, role, url, status, notes, created_at, updated_at"
+
+
+def create_job(conn: sqlite3.Connection, company: str, *, role: str | None = None,
+               url: str | None = None, status: str = "saved", notes: str | None = None) -> int:
+    now = _now()
+    cur = conn.execute(
+        "INSERT INTO job_leads (company, role, url, status, notes, created_at, updated_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);",
+        (company, role, url, status, notes, now, now),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_job(conn: sqlite3.Connection, job_id: int) -> sqlite3.Row | None:
+    return conn.execute(f"SELECT {_JOB_COLS} FROM job_leads WHERE id = ?;", (job_id,)).fetchone()
+
+
+def list_jobs(conn: sqlite3.Connection, *, status: str | None = None) -> list[sqlite3.Row]:
+    if status is not None:
+        return conn.execute(
+            f"SELECT {_JOB_COLS} FROM job_leads WHERE status = ? ORDER BY id;", (status,)
+        ).fetchall()
+    return conn.execute(f"SELECT {_JOB_COLS} FROM job_leads ORDER BY id;").fetchall()
+
+
+_JOB_UPDATABLE = {"company", "role", "url", "status", "notes"}
+
+
+def update_job(conn: sqlite3.Connection, job_id: int, **fields) -> int:
+    sets = [(k, v) for k, v in fields.items() if k in _JOB_UPDATABLE and v is not None]
+    if not sets:
+        return 0
+    assignments = ", ".join(f"{k} = ?" for k, _ in sets) + ", updated_at = ?"
+    params = [v for _, v in sets] + [_now(), job_id]
+    cur = conn.execute(f"UPDATE job_leads SET {assignments} WHERE id = ?;", params)
+    conn.commit()
+    return cur.rowcount
+
+
+def delete_job(conn: sqlite3.Connection, job_id: int) -> int:
+    cur = conn.execute("DELETE FROM job_leads WHERE id = ?;", (job_id,))
+    conn.commit()
+    return cur.rowcount
+
+
 # --- memory ---------------------------------------------------------------
 
 _MEM_COLS = "id, project_id, kind, title, body, tags, created_at"

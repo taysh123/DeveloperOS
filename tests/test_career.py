@@ -63,3 +63,30 @@ class CareerTestCase(unittest.TestCase):
         else:
             os.environ["DEVOS_HOME"] = self._prev
         self._home.cleanup()
+
+
+class TestJobRepo(CareerTestCase):
+    def test_create_get(self) -> None:
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "Acme", role="Backend Eng", url="http://x",
+                                  status="applied", notes="python sqlite rest")
+            row = repo.get_job(conn, jid)
+            self.assertEqual(row["company"], "Acme")
+            self.assertEqual(row["role"], "Backend Eng")
+            self.assertEqual(row["status"], "applied")
+        finally:
+            conn.close()
+
+    def test_list_filter_update_delete(self) -> None:
+        conn = self.ws.connect()
+        try:
+            a = repo.create_job(conn, "Acme", status="applied")
+            repo.create_job(conn, "Globex", status="saved")
+            self.assertEqual([j["company"] for j in repo.list_jobs(conn, status="applied")], ["Acme"])
+            repo.update_job(conn, a, status="interview", notes="round 1")
+            self.assertEqual(repo.get_job(conn, a)["status"], "interview")
+            self.assertEqual(repo.delete_job(conn, a), 1)
+            self.assertIsNone(repo.get_job(conn, a))
+        finally:
+            conn.close()
