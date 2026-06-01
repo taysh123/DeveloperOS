@@ -27,6 +27,31 @@ def _d(row: sqlite3.Row) -> dict:
     return {k: row[k] for k in row.keys()}
 
 
+@dataclass
+class Response:
+    status: int
+    content_type: str
+    body: bytes
+
+
+def _json(obj, status: int = 200) -> Response:
+    return Response(status, "application/json; charset=utf-8",
+                    json.dumps(obj).encode("utf-8"))
+
+
+def _serve_static(rel: str) -> Response:
+    """Serve a file from STATIC_DIR, rejecting path traversal."""
+    target = (STATIC_DIR / rel).resolve()
+    try:
+        target.relative_to(STATIC_DIR.resolve())
+    except ValueError:
+        return _json({"error": "not found"}, 404)
+    if not target.is_file():
+        return _json({"error": "not found"}, 404)
+    ctype = _CONTENT_TYPES.get(target.suffix.lower(), "application/octet-stream")
+    return Response(200, ctype, target.read_bytes())
+
+
 # --- data builders --------------------------------------------------------
 
 def overview(conn: sqlite3.Connection) -> dict:
@@ -88,3 +113,35 @@ def recall_payload(conn: sqlite3.Connection, query: str, *, project: str | None 
         "code": [{"location": c.location, "project": c.project, "rel_path": c.rel_path,
                   "start_line": c.start_line, "end_line": c.end_line} for c in result.code],
     }
+
+
+# --- routing (read-only, GET) ---------------------------------------------
+
+def route(ws, path: str, query: dict[str, str]) -> Response:
+    """Map a GET path + query to a Response. JSON for /api/*, static files otherwise."""
+    if path == "/" or path == "/index.html":
+        return _serve_static("index.html")
+    if path.startswith("/static/"):
+        return _serve_static(path[len("/static/"):])
+
+    if path.startswith("/api/"):
+        if not ws.is_initialized():
+            return _json({"error": "not initialized; run `devos init` or `devos scan`"}, 503)
+        conn = ws.connect()
+        try:
+            if path == "/api/health":
+                return _json({"ok": True})
+            if path == "/api/overview":
+                return _json(overview(conn))
+            if path == "/api/projects":
+                return _json(projects_payload(conn))
+            if path == "/api/tasks":
+                return _json(tasks_payload(conn, status=query.get("status"),
+                                           kind=query.get("kind"), project=query.get("project")))
+            if path == "/api/memory":
+                return _json(memory_payload(conn))
+            if path == "/api/recall":
+                return _json(recall_payload(conn, query.get("q", ""), project=query.get("project")))
+        finally:
+            conn.close()
+    return _json({"error": "not found", "path": path}, 404)

@@ -94,3 +94,32 @@ class TestOverviewBuilder(ApiTestCase):
         self.assertIn("memory", payload)
         self.assertIn("code", payload)
         self.assertTrue(any("dashboard" in t["title"].lower() for t in payload["tasks"]))
+
+
+class TestRouting(ApiTestCase):
+    def test_api_overview_json(self) -> None:
+        resp = api_app.route(self.ws, "/api/overview", {})
+        self.assertEqual(resp.status, 200)
+        self.assertIn("json", resp.content_type)
+        body = json.loads(resp.body)
+        self.assertIn("task_counts", body)
+
+    def test_api_tasks_filter(self) -> None:
+        resp = api_app.route(self.ws, "/api/tasks", {"status": "blocked"})
+        self.assertEqual(resp.status, 200)
+        titles = [t["title"] for t in json.loads(resp.body)["tasks"]]
+        self.assertEqual(titles, ["Blocked thing"])
+
+    def test_unknown_api_route_404(self) -> None:
+        resp = api_app.route(self.ws, "/api/nope", {})
+        self.assertEqual(resp.status, 404)
+
+    def test_index_served_at_root(self) -> None:
+        resp = api_app.route(self.ws, "/", {})
+        self.assertEqual(resp.status, 200)
+        self.assertIn("html", resp.content_type)
+        self.assertIn(b'id="root"', resp.body)
+
+    def test_static_path_traversal_blocked(self) -> None:
+        resp = api_app.route(self.ws, "/static/../../devos/config.py", {})
+        self.assertEqual(resp.status, 404)
