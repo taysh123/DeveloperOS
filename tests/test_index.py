@@ -10,6 +10,7 @@ from pathlib import Path
 
 from devos.cli import main
 from devos.core.workspace import Workspace
+from devos.modules import index as index_mod
 from devos.modules import ingest
 from devos.storage import db, repo
 
@@ -53,3 +54,24 @@ class TestSchemaV2(unittest.TestCase):
                 self.assertIn("indexed_hash", cols)
             finally:
                 conn.close()
+
+
+class TestChunking(unittest.TestCase):
+    def test_splits_into_line_windows(self) -> None:
+        text = "\n".join(f"line{i}" for i in range(1, 121))  # 120 lines
+        chunks = index_mod.chunk_text(text, max_lines=50)
+        self.assertEqual(len(chunks), 3)
+        self.assertEqual((chunks[0].start_line, chunks[0].end_line), (1, 50))
+        self.assertEqual((chunks[1].start_line, chunks[1].end_line), (51, 100))
+        self.assertEqual((chunks[2].start_line, chunks[2].end_line), (101, 120))
+        self.assertTrue(chunks[0].content.startswith("line1"))
+        self.assertIn("line50", chunks[0].content)
+
+    def test_empty_text_yields_no_chunks(self) -> None:
+        self.assertEqual(index_mod.chunk_text(""), [])
+        self.assertEqual(index_mod.chunk_text("   \n  \n"), [])
+
+    def test_single_short_file_is_one_chunk(self) -> None:
+        chunks = index_mod.chunk_text("a\nb\nc", max_lines=50)
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual((chunks[0].start_line, chunks[0].end_line), (1, 3))
