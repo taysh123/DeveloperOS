@@ -142,3 +142,63 @@ class TestResolveProjectPublic(DebugDataTestCase):
             self.assertEqual(qa.resolve_project(conn, "demo"), (self.pid, "demo"))
         finally:
             conn.close()
+
+
+class TestDiagnose(DebugDataTestCase):
+    def test_locates_frame_in_index_and_grounds(self) -> None:
+        conn = self.ws.connect()
+        try:
+            diag = debug_mod.diagnose(conn, PY_TRACE, provider=MockAIProvider())
+            self.assertTrue(diag.grounded)
+            self.assertEqual(diag.error_type, "ZeroDivisionError")
+            located = {lf.rel_path for lf in diag.located_frames}
+            self.assertIn("src/calc.py", located)
+            self.assertIn("src/app.py", located)
+            self.assertEqual(diag.confidence, "high")
+            calc = next(lf for lf in diag.located_frames if lf.rel_path == "src/calc.py")
+            self.assertIsNotNone(calc.chunk)
+            self.assertIn("divisor", calc.chunk.content)
+        finally:
+            conn.close()
+
+    def test_sources_include_located_files(self) -> None:
+        conn = self.ws.connect()
+        try:
+            diag = debug_mod.diagnose(conn, PY_TRACE, provider=MockAIProvider())
+            src_paths = {s.rel_path for s in diag.sources}
+            self.assertIn("src/calc.py", src_paths)
+        finally:
+            conn.close()
+
+    def test_unlocatable_trace_declines_without_provider(self) -> None:
+        class BoomProvider(MockAIProvider):
+            def complete(self, *a, **k):
+                raise AssertionError("provider must not be called without evidence")
+        conn = self.ws.connect()
+        try:
+            trace = ('Traceback (most recent call last):\n'
+                     '  File "/external/lib/zzzqqq.py", line 5, in nope\n'
+                     'KeyError: \'zzqqxx_absent_symbol\'')
+            diag = debug_mod.diagnose(conn, trace, provider=BoomProvider())
+            self.assertFalse(diag.grounded)
+            self.assertEqual(diag.confidence, "low")
+            self.assertEqual(diag.sources, [])
+        finally:
+            conn.close()
+
+    def test_does_not_read_filesystem_paths_from_trace(self) -> None:
+        # A trace naming a real on-disk file OUTSIDE the project must not be located/read.
+        conn = self.ws.connect()
+        try:
+            outside = Path(self._home.name) / "secret.txt"
+            outside.write_text("TOP SECRET", encoding="utf-8")
+            trace = f'Traceback (most recent call last):\n  File "{outside}", line 1, in x\nError: boom'
+            diag = debug_mod.diagnose(conn, trace, provider=MockAIProvider())
+            self.assertTrue(all("TOP SECRET" not in (s.content or "") for s in diag.sources))
+        finally:
+            conn.close()
+
+    def test_build_debug_query_uses_message_and_funcs(self) -> None:
+        parsed = trace_mod.parse_trace(PY_TRACE)
+        q = debug_mod.build_debug_query(parsed)
+        self.assertIn("compute", q)
