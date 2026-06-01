@@ -90,3 +90,41 @@ class TestMemoryRepo(RecallTestCase):
             self.assertEqual([m["title"] for m in hits], ["Provider abstraction"])
         finally:
             conn.close()
+
+
+class TestRecallModule(RecallTestCase):
+    def test_recall_spans_memory_tasks_and_code(self) -> None:
+        conn = self.ws.connect()
+        try:
+            repo.create_memory(conn, None, kind="decision",
+                               title="Claude provider plan", body="wire claude behind interface")
+            repo.create_task(conn, None, "Implement Claude provider", kind="feature",
+                             status="todo", priority="high")
+            result = recall_mod.recall(conn, "claude")
+            self.assertTrue(any("Claude" in m["title"] for m in result.memories))
+            self.assertTrue(any("Claude" in t["title"] for t in result.tasks))
+            self.assertTrue(any(c.rel_path == "src/provider.py" for c in result.code))
+        finally:
+            conn.close()
+
+    def test_recall_empty_query_lists_recent(self) -> None:
+        conn = self.ws.connect()
+        try:
+            repo.create_memory(conn, None, kind="note", title="Recent note", body="x")
+            repo.create_task(conn, None, "Recent task", kind="task", status="todo", priority="low")
+            result = recall_mod.recall(conn, "")
+            self.assertTrue(result.memories)
+            self.assertTrue(result.tasks)
+            self.assertEqual(result.code, [])  # no code without a query
+        finally:
+            conn.close()
+
+    def test_recall_no_matches_is_empty(self) -> None:
+        conn = self.ws.connect()
+        try:
+            result = recall_mod.recall(conn, "zzzqqq_absent_term_xyz")
+            self.assertEqual(result.memories, [])
+            self.assertEqual(result.tasks, [])
+            self.assertEqual(result.code, [])
+        finally:
+            conn.close()
