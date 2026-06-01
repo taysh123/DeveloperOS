@@ -79,6 +79,11 @@ into the AI context, a model could be manipulated.
   with confirmation. Context is never executed.
 - **[PLANNED] Output handling:** treat model output as untrusted (no eval, no auto-run, no
   unconfirmed file writes).
+- **[NOW] Career Assistant (Phase 9 slice 4: `job`/`cv`/`interview`):** job leads + CV text are
+  **personal data stored locally** (SQLite under the data dir, git-ignored — same privacy model as
+  memory/tasks). `cv <file>` reads only the user-named path; CV text + job notes are untrusted **data**
+  (CV matching is deterministic/no-AI; interview prep treats notes as data, not instructions). **No
+  scraping, no external/paid APIs**, offline. No new outbound surface.
 - **[NOW] Learning Assistant (Phase 9 slices 1–3: `learn`/`quiz`/`exercise`/`grade`):** same grounding
   contract as Q&A — indexed code **and the learner's answer** (`grade`) are **data to evaluate, not
   instructions**; ground truth is retrieved code; attribution is retrieval-derived; read-only/stateless;
@@ -140,6 +145,7 @@ into the AI context, a model could be manipulated.
 | Dashboard API (Phase 7) | **Loopback-only, read-only (GET)**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
+| Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._

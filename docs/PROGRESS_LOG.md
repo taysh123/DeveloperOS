@@ -4,6 +4,16 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 12: Phase 9 slice 4 (Career Assistant, first slice) complete
+- Plan-mode `/plan`: AGENT_STATE source of truth; slice explicitly chosen (Career); confirmed no career/job code. Plan approved (overwrote slice-3 plan).
+- Schema **v4**: `job_leads` table + `MIGRATIONS[4]` + `COUNTED_TABLES` += job_leads. Future-proofed Phase 6 schema tests to assert `db.SCHEMA_VERSION` (regression caught by full suite).
+- `storage/repo`: job CRUD mirroring tasks (`create/get/list/update/delete_job`, `JOB_STATUSES`).
+- `modules/career.py`: `analyze_cv` (deterministic offline keyword overlap reusing `qa.question_terms`) + `interview_prep` (grounded on job notes via provider; declines when missing/noteless).
+- Commands: `devos job` (add/list/show/set/rm), `devos cv <file> [--job]`, `devos interview <id>`.
+- TDD throughout. **systematic-debugging:** dogfood showed CV matching included company/role (`acme`/`engineer` as "missing" noise) — fixed to match **job notes only** (test added). **verification-before-completion:** full suite **167/167 pass**. Dogfooded: job lifecycle, cv coverage (matched/missing), interview prep grounded on notes, `devos status` shows job_leads.
+- Logged **D-0015**; SECURITY career data-privacy note + posture row. Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/README/memory. Committed + pushed to origin.
+- **Phase 9 still in progress;** remaining slices (plugin seam, meeting/transcript) **deferred pending approval**. Did NOT broaden scope (no scraping/APIs/CV-rewrite). Stopped here per instruction.
+
 ## 2026-06-01 — Session 11: Phase 9 slice 3 (Exercises & Grading) complete
 - Plan-mode `/plan`: AGENT_STATE source of truth; slice explicitly chosen by user (Exercises & Grading); confirmed no exercise/grade code. Plan approved (overwrote slice-2 plan).
 - `modules/learning.py`: added `exercise()`/`Exercise` (n grounded practice tasks, default 3 clamped [1,10]) and `grade()`/`Grade` (evaluate a supplied answer vs retrieved code → Feedback/Strengths/Weaknesses + file:line). Both reuse shared `_resolve_chunks` + `qa.assemble_context` + provider. **Stateless/read-only, no schema change.** Decline (no provider call) when ungrounded; `grade` requires non-empty answer.

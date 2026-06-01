@@ -4,6 +4,17 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0015 — Phase 9 slice 4 = Career Assistant (first slice)
+- **Date:** 2026-06-01
+- **Context:** First Career slice (user-approved): job-lead tracking, offline CV keyword matching, grounded interview prep — no scraping/paid APIs.
+- **Decision:**
+  - **Schema v4: `job_leads`** table (company/role/url/status/notes/timestamps); `schema.sql` + `MIGRATIONS[4]` + `SCHEMA_VERSION=4`; added to `db.COUNTED_TABLES` (shown in `devos status`).
+  - **Job CRUD in `storage/repo`** mirroring tasks (`create_job`/`get_job`/`list_jobs`/`update_job`/`delete_job`, `JOB_STATUSES`); `devos job add/list/show/set/rm`.
+  - **`modules/career.analyze_cv(cv_text, target_text)`** — deterministic, offline keyword overlap reusing `qa.question_terms` (matched/missing/coverage). `devos cv <file> [--job ID]` matches a local CV against a job's **notes** (the description; company/role excluded to avoid noise) or all jobs' notes. No AI.
+  - **`career.interview_prep(conn, job_id, *, provider, n)`** — grounded interview questions from the job's stored notes via the provider seam; declines (no provider call) when the job is missing/noteless; `n` clamped [1,15]. `devos interview <job-id>`.
+  - **Local-first/private:** job leads + CV text are personal data; job CRUD writes only to the local DB; `cv`/`interview` are read-only; `--file` reads only the user-named path. No scraping/external/paid APIs.
+- **Status:** Accepted (Career slice 1). Remaining Phase 9 slices (plugin seam, meeting/transcript) deferred pending approval.
+
 ## D-0014 — Phase 9 slice 3 = Learning Exercises & Grading (`devos exercise` / `devos grade`)
 - **Date:** 2026-06-01
 - **Context:** Third narrow Phase 9 slice (user-approved), completing the Learning module's practice loop.

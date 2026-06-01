@@ -84,7 +84,8 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - ✅ Slice 1: **Learning Assistant** (`devos learn <path|topic> [--level]`) — grounded leveled code explanations.
 - ✅ Slice 2: **Learning Quiz** (`devos quiz <path|topic> [--n N]`) — grounded review questions.
 - ✅ Slice 3: **Exercises & Grading** (`devos exercise`, `devos grade`) — grounded practice tasks + answer evaluation (feedback/strengths/weaknesses).
-- ⬜ Deferred (need approval per slice): Career Assistant · extension/plugin seam · meeting/transcript foundation.
+- ✅ Slice 4: **Career Assistant (first slice)** (`devos job`, `devos cv`, `devos interview`) — job-lead tracking, offline CV keyword match, grounded interview prep (schema v4 `job_leads`).
+- ⬜ Deferred (need approval per slice): extension/plugin seam · meeting/transcript foundation · further career (CV rewrite, scraping/APIs — out of scope by design).
 - **Goal:** Career & Learning assistants; extension seams.
 - **Scope:** Learning (explain levels, exercises, quizzes), Career (job leads, CV analysis, interview prep), plus seams for meeting assistant, multi-user, cloud sync, browser/VS Code integration, plugins, multi-agent.
 - **Deliverables:** TBD per module when reached.

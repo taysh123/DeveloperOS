@@ -100,6 +100,13 @@ Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, con
 so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
 untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
 
+### Career Assistant (`modules/career` + `job_leads`, Phase 9 slice 4)
+Job leads live in the `job_leads` table (schema v4) with CRUD in `storage/repo` mirroring tasks
+(`devos job`). `career.analyze_cv` is deterministic/offline keyword overlap (reuses `qa.question_terms`)
+between a local CV file and a job's notes (`devos cv`). `career.interview_prep` reuses the provider
+seam, grounded only on a job's stored notes, declining when noteless (`devos interview`). Local-first,
+read-only except job CRUD; no scraping/APIs. See DECISIONS.md D-0015.
+
 ### Learning Assistant (`modules/learning`, Phase 9 slice 1)
 `learning.learn(conn, target, *, provider, level, project, limit) -> Lesson` gives a grounded,
 leveled (eli5/intermediate/advanced) explanation: **file mode** grounds on an indexed file's
