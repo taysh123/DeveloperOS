@@ -6,22 +6,22 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 2 — Project Ingestion** (Phases 0 and 1 complete).
+**Phase 3 — Code Indexing & Search** (Phases 0–2 complete).
 
 ## Current milestone
-Implement project ingestion: `devos scan <path>` (walk + ignore rules + classify +
-persist file inventory) and `devos projects` (list registered projects).
+Build a searchable index: chunk indexed files, populate the `chunks` + `chunks_fts`
+(FTS5) tables, and add `devos index` + `devos search <query>` (keyword), with a design
+seam for embeddings/semantic search later.
 
 ## Next immediate step
-Start Phase 2: add a `modules/ingest` service that walks a target folder applying
-ignore rules (.gitignore, node_modules, venvs, binaries, size caps), classifies files
-into buckets (frontend/backend/db/api/auth/test/config/other), and upserts `projects`
-+ `files` rows idempotently. Wire up `devos scan` and `devos projects`. TDD: write
-ingest tests first.
+Start Phase 3 test-first: add a `modules/index` service that reads each recorded file,
+splits it into line-ranged chunks, stores them in `chunks`, and mirrors content into
+`chunks_fts`. Implement incremental reindex keyed on `files.content_hash`. Wire up
+`devos index` and `devos search`. Write the chunking/search tests first.
 
 ## Tasks
 ### In progress
-- _None (Phase 1 just completed; Phase 2 not yet started)._
+- _None (Phase 2 just completed; Phase 3 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -31,6 +31,10 @@ ingest tests first.
       commands, core/workspace, module stubs); `pyproject.toml`, `.gitignore`, `README.md`.
 - [x] Phase 1: `pip install -e .` works; `devos --version|init|status` verified end-to-end;
       10 smoke tests pass (`python -m unittest`); first git commit made.
+- [x] Phase 2: ingestion — `modules/ingest` (walk + ignore rules + .gitignore subset +
+      binary/size skip + heuristic classification) and `storage/repo` (idempotent upserts);
+      `devos scan` + `devos projects`. 15 new tests (25 total) pass; dogfooded on this repo
+      (35 files classified, idempotent rescan, no duplicate project).
 
 ### Blocked
 - _None._

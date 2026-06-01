@@ -25,8 +25,10 @@ No API key or network is required for the foundation: AI features run against a 
 |---|---|
 | `devos init` | Create the local data directory and initialize the SQLite database. |
 | `devos status` | Report data location, schema version, provider, and stored counts. |
+| `devos scan <path>` | Scan a project folder and record/refresh its file inventory (classified, idempotent). |
+| `devos projects` | List registered projects with file counts and last-scanned time. |
 
-More commands (`scan`, `search`, `ask`, `debug`, `task`, …) arrive per the
+More commands (`index`, `search`, `ask`, `debug`, `task`, …) arrive per the
 [roadmap](docs/ROADMAP.md).
 
 ## How it's built

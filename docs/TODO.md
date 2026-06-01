@@ -9,14 +9,18 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Smoke tests in `tests/` (stdlib unittest) — 10 passing.
 - [x] Initial git commit.
 
-## Now (Phase 2 — Project Ingestion)
-- [ ] Ingest service: walk files, ignore rules (.gitignore/node_modules/venv/binary/size caps), classify into buckets.
-- [ ] `devos scan <path>`: persist `projects` + `files` inventory idempotently.
-- [ ] `devos projects`: list registered projects.
-- [ ] Tests for ingest (TDD) + docs/state updates.
+## Done (Phase 2 — Project Ingestion) ✅
+- [x] Ingest service: walk files, ignore rules (.gitignore subset/node_modules/venv/binary/size caps), classify into buckets.
+- [x] `devos scan <path>`: persist `projects` + `files` inventory idempotently.
+- [x] `devos projects`: list registered projects.
+- [x] Tests for ingest (TDD, 15 tests) + docs/state updates.
 
-## Later
-- [ ] Phase 3: `devos index` / `devos search` (FTS5).
+## Now (Phase 3 — Code Indexing & Search)
+- [ ] Index service: read recorded files, split into line-ranged chunks, store in `chunks`, mirror to `chunks_fts`.
+- [ ] Incremental reindex keyed on `files.content_hash`.
+- [ ] `devos index`: build/refresh the index for a project.
+- [ ] `devos search <query>`: ranked keyword results with file:line.
+- [ ] Tests for chunking + search (TDD) + docs/state updates.
 - [ ] Phase 4: `devos ask` / `devos explain`.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.

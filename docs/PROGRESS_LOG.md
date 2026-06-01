@@ -4,6 +4,15 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 2: Phase 2 (Project Ingestion) complete
+- Worked test-first (TDD): wrote `tests/test_ingest.py` (15 tests), confirmed RED (missing module), then implemented to GREEN.
+- Added `devos/modules/ingest.py`: `os.walk` with directory pruning, default ignore set + top-level `.gitignore` subset, binary detection (NUL byte) + 2 MB size cap, heuristic classification into frontend/backend/db/api/auth/test/config/other, sha256 content hashing.
+- Added `devos/storage/repo.py`: idempotent `upsert_project`/`upsert_file` (added/updated/unchanged), `delete_files` (prune), `list_projects` (+ file_count), `category_breakdown` — all SQL kept in the storage layer.
+- Added commands `devos scan <path>` (auto-inits storage; prints add/update/unchanged/remove/skip + per-type breakdown) and `devos projects`.
+- Verified: 25/25 tests pass. Dogfooded on this repo — 35 files classified (19 backend, 10 other/md, 3 test, 2 config, 1 db); rescan fully idempotent; no duplicate project.
+- Updated state docs (AGENT_STATE, ROADMAP, TODO, CHANGELOG, KNOWN_ISSUES) and committed.
+- **Next:** Phase 3 — Code Indexing & Search (`devos index` / `devos search`).
+
 ## 2026-06-01 — Session 1: Phase 0 complete, Phase 1 started
 - Inspected repo: fresh git repo on `main`, no commits; `docs/` had 4 empty placeholder files.
 - Confirmed product vision with the owner; restated it in PROJECT_BRIEF.md.

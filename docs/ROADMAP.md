@@ -24,7 +24,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Dependency/network friction. **Mitigation:** stdlib-only runtime.
 - **Dependencies:** Phase 0.
 
-## Phase 2 — Project Ingestion 🚧 (next)
+## Phase 2 — Project Ingestion ✅
 - **Goal:** Point DeveloperOS at a project folder and register/scan it.
 - **Scope:** Workspace/project registry; file walker with ignore rules (.gitignore, node_modules, venvs); language/file-type classification; detect frontend/backend/db/API/auth/test/config buckets; persist project + file inventory.
 - **Deliverables:** `devos scan <path>`, `devos projects`, project record + file inventory in DB.
@@ -32,7 +32,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Huge repos / binary files / encoding. **Mitigation:** size caps, binary detection, streaming.
 - **Dependencies:** Phase 1.
 
-## Phase 3 — Code Indexing & Search ⬜
+## Phase 3 — Code Indexing & Search 🚧 (next)
 - **Goal:** A searchable index of code & docs.
 - **Scope:** Chunking strategy (line/AST-aware later), tagging, FTS5 index, keyword search; design seam for embeddings/semantic search.
 - **Deliverables:** `devos index`, `devos search <query>` (keyword), ranked results with file:line.
