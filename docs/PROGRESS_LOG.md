@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 9: Phase 9 slice 1 (Learning Assistant) complete
+- Plan-mode `/plan`: AGENT_STATE source of truth; confirmed no learning/career/plugin/meeting code. Honored the scoping rule — **AskUserQuestion to pick one narrow slice** → user chose **Learning Assistant**. Plan approved (overwrote Phase 8 plan). No subagents (full context).
+- `modules/learning.py`: `learn(conn, target, *, provider, level, project, limit) -> Lesson`. File mode (resolve via `repo.find_project_for_path`/`find_file_by_path`/`get_file_chunks`) or topic mode (`qa.retrieve`); leveled system prompts (eli5/intermediate/advanced); declines (no provider call) when ungrounded. Reuses `qa.assemble_context`/`resolve_project` + provider — no new retrieval logic, no schema change.
+- `devos learn <target...> [--level] [--project] [--limit]`; reuses `ask_cmd.print_answer` (text + file:line Sources).
+- TDD throughout. **verification-before-completion:** full suite **133/133 pass**. Dogfooded: `learn <file> --level eli5` (grounded on the file), `learn "<topic>" --level advanced` (topic retrieval), both with Sources; decline path unit-tested (dogfood "decline" matched incidentally on a common token — documented OR-retrieval behavior).
+- Logged **D-0012** (Phase 9 = narrow slices; slice 1 only). SECURITY note + posture row added. Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/README/memory. Committed + pushed to origin.
+- **Phase 9 remains in progress;** remaining slices (quizzes, career, plugin seam, meeting) are **deferred pending approval**. Did NOT broaden scope. Stopped here per instruction.
+
 ## 2026-06-01 — Session 8: Phase 8 (Documentation Automation) complete
 - Plan-mode `/plan`: AGENT_STATE source of truth; confirmed no docgen code; plan approved (overwrote Phase 7 plan). No subagents (full context; token economy).
 - `modules/docgen.py`: `generate(conn, doc_type, *, provider, project, limit)` → `GeneratedDoc`. Code docs (readme/architecture/api/setup) reuse `qa.retrieve` + project facts (`category_breakdown`/`top_files`); record docs (changelog/decisions/milestone) use `repo.list_memory`/`list_tasks`. Declines (no provider call) when ungrounded. Reuses `qa.assemble_context`/`resolve_project` + `providers.ai` — no parallel pipeline.

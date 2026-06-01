@@ -49,10 +49,14 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Grounded via `modules/qa` retrieval (code docs) + memory/tasks (record docs); declines when ungrounded.
 - [x] stdout default; `--output` no-clobber + `--force`. 11 tests (126 total). D-0011.
 
-## Now (Phase 9 — Future Modules: Learning & Career)  _(not started — plan first)_
-- [ ] Learning Assistant: explain at levels, exercises, quizzes (reuse qa/provider).
-- [ ] Career Assistant: job leads, CV analysis, interview prep.
-- [ ] Keep behind existing architecture; seams for meeting/multi-user/cloud/VS Code/plugins.
+## Phase 9 — Future Modules (narrow slices)
+### Done
+- [x] Slice 1 — Learning Assistant: `devos learn <path|topic> [--level eli5|intermediate|advanced]` (grounded, cites file:line, declines when ungrounded). 7 tests (133 total). D-0012.
+### Deferred (need explicit approval before building)
+- [ ] Learning quizzes/exercises.
+- [ ] Career Assistant (job leads, CV analysis, interview prep).
+- [ ] Extension/plugin seam.
+- [ ] Meeting/transcript foundation.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

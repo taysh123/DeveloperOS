@@ -80,7 +80,9 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Accuracy. **Mitigation:** grounded generation + human review step.
 - **Dependencies:** Phases 3–4.
 
-## Phase 9 — Future Modules 🚧 (next)
+## Phase 9 — Future Modules 🚧 (in progress — delivered as narrow slices)
+- ✅ Slice 1: **Learning Assistant** (`devos learn <path|topic> [--level]`) — grounded leveled code explanations.
+- ⬜ Deferred (need approval per slice): learning quizzes/exercises · Career Assistant · extension/plugin seam · meeting/transcript foundation.
 - **Goal:** Career & Learning assistants; extension seams.
 - **Scope:** Learning (explain levels, exercises, quizzes), Career (job leads, CV analysis, interview prep), plus seams for meeting assistant, multi-user, cloud sync, browser/VS Code integration, plugins, multi-agent.
 - **Deliverables:** TBD per module when reached.

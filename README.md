@@ -37,6 +37,7 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos recall <query>` | Search across memory, tasks, and indexed code in one place (offline). |
 | `devos serve` | Launch the local **dashboard** (read-only, 127.0.0.1) — overview, task status, blocked, recent activity, "where I left off", recall. |
 | `devos docgen <type>` | Generate grounded docs (readme/architecture/api/setup/changelog/decisions/milestone); stdout or `--output` (no overwrite without `--force`). |
+| `devos learn <path\|topic>` | Learn your code at a chosen depth (`--level eli5\|intermediate\|advanced`), grounded with `file:line` sources. |
 
 AI answers use an offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
 The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline.

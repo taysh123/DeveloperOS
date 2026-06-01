@@ -4,6 +4,16 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0012 — Phase 9 delivered as slices; slice 1 = Learning Assistant (`devos learn`)
+- **Date:** 2026-06-01
+- **Context:** Phase 9 ("future modules") is open-ended. To avoid scope creep we deliver it as **narrow, separately-approved slices**. Slice 1 (user-selected) is the Learning Assistant.
+- **Decision:**
+  - **`modules/learning.learn(conn, target, *, provider, level, project, limit)` → `Lesson`** gives a grounded, leveled explanation. **File mode** (target resolves to an indexed file via `repo.find_project_for_path`/`find_file_by_path`/`get_file_chunks`) grounds on that file's chunks; **topic mode** grounds via `qa.retrieve`. Declines (no provider call) when ungrounded. Same composition pattern as `debug`/`docgen` — **no new retrieval logic, no schema change.**
+  - **Levels** `eli5`/`intermediate`(default)/`advanced` = different system-prompt guidance over identical grounded context. Grounding/anti-injection contract preserved (context is data; attribution from retrieval; cite file:line).
+  - **`devos learn <target...>`** prints via the shared `ask_cmd.print_answer` (text + deduped file:line Sources); stdout only (read-only).
+  - **Remaining Phase 9 directions (quizzes/exercises, career, plugin seam, meeting/transcript) are deferred** and require separate approval. ROADMAP Phase 9 stays in-progress (🚧), not done.
+- **Status:** Accepted (slice 1).
+
 ## D-0011 — Documentation Automation: grounded docgen reusing the Q&A pipeline
 - **Date:** 2026-06-01
 - **Context:** Phase 8 generates project docs without a parallel pipeline, staying grounded/offline.

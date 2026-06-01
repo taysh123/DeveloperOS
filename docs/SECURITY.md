@@ -79,6 +79,9 @@ into the AI context, a model could be manipulated.
   with confirmation. Context is never executed.
 - **[PLANNED] Output handling:** treat model output as untrusted (no eval, no auto-run, no
   unconfirmed file writes).
+- **[NOW] Learning Assistant (Phase 9 slice 1):** same grounding contract as Q&A — indexed code
+  in the context is **data, not instructions**; attribution is retrieval-derived; read-only;
+  offline (mock default). No new external surface.
 - **[NOW] Documentation Automation (Phase 8):** source/docs/memory/tasks fed into the provider
   context are **data, not instructions** (same grounding contract). Generated text is model
   output and is **never executed**; it is written only to an explicit `--output` path and
@@ -135,6 +138,7 @@ into the AI context, a model could be manipulated.
 | Tasks/memory (Phase 6) | Untrusted stored text (display/storage only); `recall` is offline/read-only — **no AI call, no new injection surface** |
 | Dashboard API (Phase 7) | **Loopback-only, read-only (GET)**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
+| Learning (Phase 9.1) | Read-only; grounded (context = data); offline/mock default; no new surface |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._

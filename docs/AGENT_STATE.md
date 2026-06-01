@@ -6,22 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 9 — Future Modules (Learning & Career)** is NEXT (Phases 0–8 complete). _Not started._
+**Phase 9 — Future Modules** is IN PROGRESS (delivered as narrow slices). **Slice 1
+(Learning Assistant) is complete.** Phases 0–8 complete.
 
 ## Current milestone
-(Upcoming, do not start without going through planning.) Per ROADMAP Phase 9: Learning
-Assistant (explain levels, exercises, quizzes) and Career Assistant (job leads, CV analysis,
-interview prep), plus seams for meeting assistant / multi-user / cloud sync / VS Code / plugins.
-Core is stable; build these behind the existing architecture.
+Phase 9 slice 1 (Learning Assistant, `devos learn`) done. Remaining Phase 9 directions are
+**deferred pending explicit approval** (do not build without it): learning quizzes/exercises,
+Career Assistant, extension/plugin seam, meeting/transcript foundation.
 
 ## Next immediate step
-Begin Phase 9 by re-running the session-startup procedure and `/plan`. Likely reuses
-`modules/qa` + `providers/ai`; may add `learning`/`career` modules and tables. Mock provider
-stays default (no API keys). This is the "future modules" phase — scope carefully.
+Await approval for the next Phase 9 slice (then `/plan` it narrowly). Do NOT broaden scope
+unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays default.
 
 ## Tasks
 ### In progress
-- _None (Phase 8 just completed; Phase 9 not yet started)._
+- _None. Phase 9 slice 1 complete; further slices await approval._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -68,6 +67,10 @@ stays default (no API keys). This is the "future modules" phase — scope carefu
       global records); declines (no provider call) when ungrounded; `devos docgen <type>` (stdout
       default, `--output` no-clobber/`--force`); added `repo` `include_global`. 11 new tests (126
       total) pass; dogfooded (grounded readme/decisions, no-clobber). D-0011 + SECURITY §4/§5 noted.
+- [x] Phase 9 slice 1: Learning Assistant — `modules/learning` (`learn` → `Lesson`: file mode via
+      repo helpers, topic mode via `qa.retrieve`, leveled eli5/intermediate/advanced prompts,
+      declines when ungrounded); `devos learn <path|topic> [--level]` (reuses `ask_cmd.print_answer`).
+      7 new tests (133 total) pass; dogfooded (file + topic grounding, leveled, sources). D-0012.
 
 ### Blocked
 - _None._
