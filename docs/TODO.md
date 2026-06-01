@@ -34,10 +34,15 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] `devos debug` (arg/--file/stdin); structured evidence + analysis + sources + confidence; declines when no evidence.
 - [x] Security: index-only file location (no filesystem reads from trace paths); D-0008; SECURITY §5. 17 tests (83 total).
 
-## Now (Phase 6 — Task Manager & Memory)  _(not started — plan first)_
-- [ ] Tasks/bugs/features CRUD with status (todo/in_progress/blocked/done) + milestones (`tasks` table exists).
-- [ ] Memory store for decisions/summaries/preferences (`memory` table exists); recall surfaced in search.
-- [ ] `devos task ...`, `devos remember ...`, `devos recall ...`.
+## Done (Phase 6 — Task Manager & Memory) ✅
+- [x] Tasks CRUD with status/kind/priority/milestone/notes (schema v3 added `tasks.priority`).
+- [x] Memory store (decision/summary/preference/note), idempotent create; recall across memory+tasks+code.
+- [x] `devos task` (add/list/show/set/rm), `devos remember`, `devos recall`. 18 tests (103 total). D-0009.
+
+## Now (Phase 7 — Dashboard & Polish)  _(not started — plan first)_
+- [ ] Local API over existing `storage/repo` + `modules/*`; TypeScript/React (Next.js) dashboard.
+- [ ] Home/overview: projects, task status, recent activity, blocked items, "where I left off".
+- [ ] CLI UX polish (consider Typer/Rich).
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

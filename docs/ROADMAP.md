@@ -56,7 +56,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Trace format variety. **Mitigation:** pluggable parsers per language.
 - **Dependencies:** Phase 3 (index), Phase 4 (AI plumbing).
 
-## Phase 6 — Task Manager & Memory 🚧 (next)
+## Phase 6 — Task Manager & Memory ✅
 - **Goal:** Track work and remember decisions across sessions.
 - **Scope:** Tasks/bugs/features CRUD with status & milestones; memory store for decisions/summaries/preferences; link memory ↔ project/files; recall surfaced in search.
 - **Deliverables:** `devos task ...`, `devos remember ...`, `devos recall ...`.
@@ -64,7 +64,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Memory sprawl. **Mitigation:** structured, deduped, compact entries.
 - **Dependencies:** Phase 1 (storage); integrates with Phases 3–4.
 
-## Phase 7 — Dashboard & Polish ⬜
+## Phase 7 — Dashboard & Polish 🚧 (next)
 - **Goal:** Visual overview + UX polish (the portfolio centerpiece).
 - **Scope:** TypeScript/React (Next.js) dashboard over a local API exposing projects, tasks, recent activity, blocked items, "where I left off"; CLI UX polish (Rich/Typer adoption considered here).
 - **Deliverables:** Local API, dashboard app, screenshots.

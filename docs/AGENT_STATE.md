@@ -6,21 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 6 — Task Manager & Memory** is NEXT (Phases 0–5 complete). _Not started._
+**Phase 7 — Dashboard & Polish** is NEXT (Phases 0–6 complete). _Not started._
 
 ## Current milestone
-(Upcoming, do not start without going through planning.) Tasks/bugs/features CRUD with
-status + milestones; a memory store for decisions/summaries/preferences; recall surfaced
-in search. The `tasks` + `memory` tables already exist in the schema (reserved since v1).
+(Upcoming, do not start without going through planning.) TypeScript/React (Next.js)
+dashboard over a local API exposing projects, tasks, recent activity, blocked items,
+"where I left off"; CLI UX polish (consider Typer/Rich). First front-end phase.
 
 ## Next immediate step
-Begin Phase 6 by re-running the session-startup procedure and `/plan`. Phase 6 adds
-`devos task ...`, `devos remember ...`, `devos recall ...`, reusing `storage/repo` patterns
-and (for recall) the retrieval layer. The mock provider stays default (no API keys).
+Begin Phase 7 by re-running the session-startup procedure and `/plan`. The API can call the
+existing `storage/repo` + `modules/*` (recall/qa/index/debug) directly. Decide local API
+framework + dashboard scope first. Mock provider stays default (no API keys).
 
 ## Tasks
 ### In progress
-- _None (Phase 5 just completed; Phase 6 not yet started)._
+- _None (Phase 6 just completed; Phase 7 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -52,6 +52,11 @@ and (for recall) the retrieval layer. The mock provider stays default (no API ke
       the provider when no evidence); `repo.find_file_by_path`; exposed `qa.resolve_project`;
       `devos debug` (arg/--file/stdin). 17 new tests (83 total) pass; dogfooded (located real file,
       high confidence; security: no filesystem read from trace paths). D-0008 + SECURITY §5 updated.
+- [x] Phase 6: Task Manager & Memory — schema **v3** (`tasks.priority`) + migration; `storage/repo`
+      task + memory CRUD/search (idempotent memory create); `modules/recall` (retrieval-only:
+      memory + tasks via LIKE + code via `qa.retrieve`); `devos task` (add/list/show/set/rm),
+      `devos remember`, `devos recall`. 18 new tests (103 total) pass; dogfooded (task lifecycle,
+      remember, recall grouping tasks+code; status shows counts). D-0009 logged.
 
 ### Blocked
 - _None._

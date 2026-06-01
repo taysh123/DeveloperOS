@@ -4,6 +4,20 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0009 — Task Manager & Memory: schema v3, repo CRUD, retrieval-only recall
+- **Date:** 2026-06-01
+- **Context:** Phase 6 activates the reserved `tasks`/`memory` tables with CRUD + cross-source recall, reusing existing layers (no parallel system, no dashboard).
+- **Decision:**
+  - **`tasks.priority` = TEXT `low|medium|high` (default `medium`)** — schema **v3**: `schema.sql` for fresh DBs + `MIGRATIONS[3]` ALTER for existing DBs (numbered-migration runner from D-0006-era `db.initialize`).
+  - **CRUD lives in `storage/repo.py`** (matching the established SQL-in-repo pattern): `create_task/get_task/list_tasks/update_task/delete_task/search_tasks` and `create_memory/get_memory/list_memory/delete_memory/search_memory`. Commands call repo directly (CRUD is thin); orchestration (recall) is a module.
+  - **`recall` (modules/recall.py) is retrieval-only and offline** — groups memory + tasks (SQL `LIKE`) with code (**reusing `qa.retrieve`** → FTS). No AI call → no new prompt-injection surface (SECURITY.md §5). Empty query lists recent memory/tasks.
+  - **Tasks/memory search via SQL `LIKE`** (no new FTS table) — sufficient at single-user scale; can upgrade to FTS later.
+  - **Idempotency:** `create_memory` dedups on `(project_id, title, body)` (returns existing id); task creation is additive; `update_task`/`set` operations are idempotent.
+  - **Project linkage optional** (`project_id` NULL = global); resolve `--project` by name, unknown name → error.
+  - **`devos task`** uses nested argparse subcommands (`add|list|show|set|rm`); thin `repo` functions keep a future API/dashboard able to call the same layer.
+- **Rationale:** Delivers the Project Manager + Memory Engine on the existing schema/storage with one tiny migration, stays offline/local-first, and keeps recall safe by avoiding any model call.
+- **Status:** Accepted.
+
 ## D-0008 — Debug Assistant: pluggable trace parsing + index-only location, reusing retrieval
 - **Date:** 2026-06-01
 - **Context:** Phase 5 turns errors/traces/logs into diagnoses. Must be useful, grounded, safe with untrusted input, and reuse existing layers (no duplicate retrieval), with no schema change.

@@ -4,6 +4,16 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 6: Phase 6 (Task Manager & Memory) complete
+- Plan-mode `/plan`: read AGENT_STATE + confirmed schema (no `priority` col; `tasks`/`memory` reserved); grep confirmed no task/memory/recall code. Plan approved (`~/.claude/plans/steady-wobbling-lecun.md`). No subagents (full context; token economy).
+- Schema **v3**: added `tasks.priority` (TEXT low|medium|high, default medium) to `schema.sql` + `MIGRATIONS[3]`. Updated Phase 3 schema tests to track `SCHEMA_VERSION` and use a realistic v1 fixture (regression caught by full suite: migration 3 needs a `tasks` table).
+- `storage/repo`: task CRUD (`create/get/list/update/delete/search_tasks`) + memory CRUD (`create_memory` idempotent on (project,title,body), `get/list/delete/search_memory`); shared `_like` LIKE-escaper.
+- `modules/recall.py`: `recall` (retrieval-only) groups memory + tasks (LIKE) + code (**reuses `qa.retrieve`**); empty query → recent; no AI call (no new injection surface).
+- Commands: `devos task` (nested add/list/show/set/rm), `devos remember`, `devos recall`.
+- TDD throughout (RED→GREEN per task). **verification-before-completion:** full suite **103/103 pass**. Dogfooded: task lifecycle (add→set in_progress→list), remember, recall grouping tasks+code; `devos status` shows tasks/memory counts.
+- Logged **D-0009**; SECURITY note (tasks/memory untrusted; recall offline/no-AI). Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/KNOWN_ISSUES/README/memory.
+- **Next:** Phase 7 — Dashboard & Polish (do NOT start without planning). Stopped here per instruction.
+
 ## 2026-06-01 — Session 5: Phase 5 (Debug Assistant) complete
 - Session startup (AGENT_STATE/ROADMAP/qa.py/SECURITY) + anti-duplication check (no debug code; only a planning mention).
 - Wrote plan `docs/superpowers/plans/2026-06-01-phase5-debug-assistant.md` (5 TDD tasks); executed inline (parallel agents not beneficial — coupled).

@@ -26,6 +26,9 @@ _Active issues, limitations, and tech debt. Resolved items move to PROGRESS_LOG/
   hits the pure "no evidence" decline when the error message contains common words (OR
   retrieval matches incidentally) — but `confidence` and the evidence list still report
   honestly whether any trace files were located in the index.
+- **Task/memory search is SQL `LIKE` (substring), not ranked/fuzzy.** Sufficient at single-user
+  scale; `recall`'s code group still uses FTS/bm25 via `qa.retrieve`. Can upgrade tasks/memory to
+  FTS later (D-0009). `recall` is retrieval-only (no AI synthesis of results yet).
 
 ## Open issues
 - _None recorded yet._

@@ -32,8 +32,11 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos ask "<question>"` | Grounded Q&A over indexed code; cites `file:line` sources, declines instead of guessing. |
 | `devos explain [path]` | Explain a file (from its chunks) or a whole-project overview, with citations. |
 | `devos debug [trace]` | Diagnose an error/stack trace/log (arg, `--file`, or piped stdin): evidence, root cause, fix, verification, with `file:line` sources. |
+| `devos task <add\|list\|show\|set\|rm>` | Track tasks/bugs/features with status, priority, kind, milestone, and notes. |
+| `devos remember <title>` | Store a long-term memory (decision/summary/preference/note) with tags. |
+| `devos recall <query>` | Search across memory, tasks, and indexed code in one place (offline). |
 
-More commands (`task`, `remember`, …) arrive per the [roadmap](docs/ROADMAP.md). AI answers use an
+The dashboard and further polish arrive in Phase 7 (see [roadmap](docs/ROADMAP.md)). AI answers use an
 offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## How it's built

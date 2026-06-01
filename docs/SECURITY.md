@@ -122,6 +122,7 @@ into the AI context, a model could be manipulated.
 | Prompt-injection containment | Offline + grounding contract + retrieval-sourced attribution |
 | Mutating actions | None in Phases 4–5 (Q&A and debug are read-only) |
 | Trace/log handling (Phase 5) | Untrusted; file location is **index-only** (no filesystem reads from trace paths) |
+| Tasks/memory (Phase 6) | Untrusted stored text (display/storage only); `recall` is offline/read-only — **no AI call, no new injection surface** |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._
