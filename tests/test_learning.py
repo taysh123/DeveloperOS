@@ -151,6 +151,51 @@ class TestQuiz(LearnTestCase):
             conn.close()
 
 
+class TestExercise(LearnTestCase):
+    def test_file_mode_grounded(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ex = learning_mod.exercise(conn, "src/retrieval.py",
+                                       provider=MockAIProvider(), n=2, project="demo")
+            self.assertTrue(ex.grounded)
+            self.assertEqual(ex.n, 2)
+            self.assertTrue(any(s.rel_path == "src/retrieval.py" for s in ex.sources))
+        finally:
+            conn.close()
+
+    def test_topic_mode(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ex = learning_mod.exercise(conn, "ranked search index",
+                                       provider=MockAIProvider(), project="demo")
+            self.assertTrue(ex.grounded)
+            self.assertTrue(ex.sources)
+        finally:
+            conn.close()
+
+    def test_invalid_n_raises(self) -> None:
+        conn = self.ws.connect()
+        try:
+            with self.assertRaises(ValueError):
+                learning_mod.exercise(conn, "src/retrieval.py",
+                                      provider=MockAIProvider(), n=0, project="demo")
+        finally:
+            conn.close()
+
+    def test_declines_without_grounding(self) -> None:
+        class BoomProvider(MockAIProvider):
+            def complete(self, *a, **k):
+                raise AssertionError("provider must not be called without grounding")
+        conn = self.ws.connect()
+        try:
+            ex = learning_mod.exercise(conn, "zzz_absent_topic_qqq",
+                                       provider=BoomProvider(), project="demo")
+            self.assertFalse(ex.grounded)
+            self.assertEqual(ex.sources, [])
+        finally:
+            conn.close()
+
+
 class TestLearnCli(LearnTestCase):
     def _run(self, *argv):
         buf = io.StringIO()
