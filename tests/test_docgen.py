@@ -142,3 +142,36 @@ class TestRecordDocs(DocgenTestCase):
             self.assertFalse(doc.grounded)
         finally:
             conn.close()
+
+
+class TestDocgenCli(DocgenTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_docgen_readme_to_stdout(self) -> None:
+        code, out = self._run("docgen", "readme", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+        self.assertIn("demo", out)
+
+    def test_docgen_output_file_no_clobber(self) -> None:
+        target = Path(self._home.name) / "OUT.md"
+        code, out = self._run("docgen", "readme", "--project", "demo", "--output", str(target))
+        self.assertEqual(code, 0)
+        self.assertTrue(target.exists())
+        # second run without --force must refuse to overwrite
+        code, out = self._run("docgen", "readme", "--project", "demo", "--output", str(target))
+        self.assertEqual(code, 1)
+        self.assertIn("exists", out.lower())
+        # with --force it overwrites
+        code, out = self._run("docgen", "readme", "--project", "demo",
+                              "--output", str(target), "--force")
+        self.assertEqual(code, 0)
+
+    def test_docgen_unknown_type_errors(self) -> None:
+        code, out = self._run("docgen", "bogus", "--project", "demo")
+        self.assertEqual(code, 1)
+        self.assertIn("unknown doc type", out.lower())
