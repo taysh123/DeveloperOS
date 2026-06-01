@@ -4,6 +4,16 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 7: Phase 7 (Dashboard & Polish) complete
+- Plan-mode `/plan`: AGENT_STATE source of truth; confirmed no API/serve/dashboard code; chose frontend via AskUserQuestion → **React SPA served by a stdlib API** (offline, no npm), over full Next.js. Plan approved.
+- `devos/api/app.py`: read-only data builders (`overview`/`projects`/`tasks`/`memory`/`recall`) reusing `repo` + `modules.recall`; `route(ws, path, query) -> Response` (JSON `/api/*` + static, path-traversal-safe).
+- `devos/api/server.py`: stdlib `ThreadingHTTPServer` wrapper, **127.0.0.1 only**, per-request connection; `create_server`/`serve`.
+- Frontend `devos/api/static/`: `index.html` + `styles.css` + `app.js` (React via `htm`, no build) — overview cards, task-status board, blocked list, recent activity, "where I left off", recall search. **Vendored React/ReactDOM/htm** locally (downloaded from unpkg, committed) → fully offline. `pyproject` package-data updated.
+- `devos serve` command (loopback dashboard).
+- TDD throughout. **verification-before-completion:** full suite **115/115 pass**. Dogfooded live: started `devos serve` on 127.0.0.1:8765 against an indexed home with tasks/memory; `GET /api/overview` (correct counts + where-I-left-off + project), `GET /` (root div), `GET /static/vendor/htm.umd.js` (served offline) all 200.
+- Logged **D-0010**; SECURITY §8 (+posture row) updated for the local API. Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/KNOWN_ISSUES/README/memory. Committed + pushed to origin.
+- **Next:** Phase 8 — Documentation Automation (do NOT start without planning). Stopped here per instruction.
+
 ## 2026-06-01 — Session 6: Phase 6 (Task Manager & Memory) complete
 - Plan-mode `/plan`: read AGENT_STATE + confirmed schema (no `priority` col; `tasks`/`memory` reserved); grep confirmed no task/memory/recall code. Plan approved (`~/.claude/plans/steady-wobbling-lecun.md`). No subagents (full context; token economy).
 - Schema **v3**: added `tasks.priority` (TEXT low|medium|high, default medium) to `schema.sql` + `MIGRATIONS[3]`. Updated Phase 3 schema tests to track `SCHEMA_VERSION` and use a realistic v1 fixture (regression caught by full suite: migration 3 needs a `tasks` table).

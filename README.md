@@ -35,9 +35,11 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos task <add\|list\|show\|set\|rm>` | Track tasks/bugs/features with status, priority, kind, milestone, and notes. |
 | `devos remember <title>` | Store a long-term memory (decision/summary/preference/note) with tags. |
 | `devos recall <query>` | Search across memory, tasks, and indexed code in one place (offline). |
+| `devos serve` | Launch the local **dashboard** (read-only, 127.0.0.1) — overview, task status, blocked, recent activity, "where I left off", recall. |
 
-The dashboard and further polish arrive in Phase 7 (see [roadmap](docs/ROADMAP.md)). AI answers use an
-offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
+AI answers use an offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
+The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline. Documentation
+automation (`devos docgen`) arrives in Phase 8 (see [roadmap](docs/ROADMAP.md)).
 
 ## How it's built
 - **Python core + CLI** now; a **TypeScript/React dashboard** comes in Phase 7.

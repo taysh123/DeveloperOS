@@ -6,21 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 7 — Dashboard & Polish** is NEXT (Phases 0–6 complete). _Not started._
+**Phase 8 — Documentation Automation** is NEXT (Phases 0–7 complete). _Not started._
 
 ## Current milestone
-(Upcoming, do not start without going through planning.) TypeScript/React (Next.js)
-dashboard over a local API exposing projects, tasks, recent activity, blocked items,
-"where I left off"; CLI UX polish (consider Typer/Rich). First front-end phase.
+(Upcoming, do not start without going through planning.) Generate docs from the indexed
+project: README / architecture / API / setup / changelog / decision-log / milestone
+summaries via retrieval + the provider (`devos docgen <type>`). Grounded, human-reviewed.
 
 ## Next immediate step
-Begin Phase 7 by re-running the session-startup procedure and `/plan`. The API can call the
-existing `storage/repo` + `modules/*` (recall/qa/index/debug) directly. Decide local API
-framework + dashboard scope first. Mock provider stays default (no API keys).
+Begin Phase 8 by re-running the session-startup procedure and `/plan`. Docgen reuses
+`modules/qa` retrieval + `providers/ai` (mock default) and writes to files only with
+explicit output paths (no silent overwrites). No new schema expected.
 
 ## Tasks
 ### In progress
-- _None (Phase 6 just completed; Phase 7 not yet started)._
+- _None (Phase 7 just completed; Phase 8 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -57,6 +57,11 @@ framework + dashboard scope first. Mock provider stays default (no API keys).
       memory + tasks via LIKE + code via `qa.retrieve`); `devos task` (add/list/show/set/rm),
       `devos remember`, `devos recall`. 18 new tests (103 total) pass; dogfooded (task lifecycle,
       remember, recall grouping tasks+code; status shows counts). D-0009 logged.
+- [x] Phase 7: Dashboard & Polish — `devos/api` stdlib `http.server` (loopback, read-only): `app.py`
+      data builders + `route()` (JSON `/api/overview|projects|tasks|memory|recall` + static, traversal-safe)
+      reusing `repo`/`modules.recall`; `server.py` wrapper; **React+htm SPA** vendored offline in
+      `static/` (`devos serve`). 12 new tests (115 total) pass; dogfooded live (overview/index/static
+      served on 127.0.0.1:8765). D-0010 + SECURITY §8 updated. Mock provider unchanged.
 
 ### Blocked
 - _None._

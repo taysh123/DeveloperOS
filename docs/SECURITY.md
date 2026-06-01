@@ -103,7 +103,13 @@ into the AI context, a model could be manipulated.
 - **[FUTURE] In transit:** any future sync/API uses TLS only; no plaintext transport.
 - **[FUTURE] Key management:** OS keychain for keys; never store encryption keys beside the data.
 
-## 8. Future API security considerations  **[FUTURE — Phase 7 local API / Phase 9 cloud]**
+## 8. Local API & dashboard security  **[NOW — Phase 7; FUTURE — Phase 9 cloud]**
+- **[NOW]** The Phase 7 dashboard API (`devos/api`, `devos serve`) binds **127.0.0.1 only**
+  (loopback) and is **read-only (GET)** — no state-changing endpoints, minimal attack surface.
+  It serves only files under `devos/api/static/` (path traversal rejected) and frontend libs are
+  **vendored locally** (no third-party runtime/CDN fetch). No secrets are exposed (none stored).
+- **[PLANNED]** When write endpoints are added, require a locally-generated **token + CSRF**
+  protection and route mutations through the Safe Action Agent (§4); lock CORS to the dashboard origin.
 - Bind local API to loopback; CORS locked to the local dashboard origin; CSRF protection for
   any state-changing endpoint; auth token required (§3).
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -123,6 +129,7 @@ into the AI context, a model could be manipulated.
 | Mutating actions | None in Phases 4–5 (Q&A and debug are read-only) |
 | Trace/log handling (Phase 5) | Untrusted; file location is **index-only** (no filesystem reads from trace paths) |
 | Tasks/memory (Phase 6) | Untrusted stored text (display/storage only); `recall` is offline/read-only — **no AI call, no new injection surface** |
+| Dashboard API (Phase 7) | **Loopback-only, read-only (GET)**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._

@@ -21,3 +21,4 @@ All notable, user-visible changes. Format loosely follows Keep a Changelog.
 - `devos task` (add / list / show / set / rm): track tasks, bugs, and features with status (todo/in_progress/blocked/done), priority (low/medium/high), kind, milestone, and notes — optionally scoped to a project.
 - `devos remember`: store long-term memory entries (decision / summary / preference / note) with tags; duplicate entries are de-duplicated.
 - `devos recall`: search across your memory, tasks, and indexed code in one command (offline, with `file:line` for code). Storage upgraded to schema v3 (`tasks.priority`).
+- `devos serve`: a local **dashboard** web UI (read-only, bound to 127.0.0.1) over the existing data — project overview, task status board, blocked items, recent activity, "where I left off", and a recall search box. Built on a stdlib `http.server` JSON API with a React (htm) front-end **vendored locally** (no build step, no npm, fully offline).

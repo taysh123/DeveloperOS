@@ -39,10 +39,14 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Memory store (decision/summary/preference/note), idempotent create; recall across memory+tasks+code.
 - [x] `devos task` (add/list/show/set/rm), `devos remember`, `devos recall`. 18 tests (103 total). D-0009.
 
-## Now (Phase 7 — Dashboard & Polish)  _(not started — plan first)_
-- [ ] Local API over existing `storage/repo` + `modules/*`; TypeScript/React (Next.js) dashboard.
-- [ ] Home/overview: projects, task status, recent activity, blocked items, "where I left off".
-- [ ] CLI UX polish (consider Typer/Rich).
+## Done (Phase 7 — Dashboard & Polish) ✅
+- [x] Local API (`devos/api`, stdlib http.server, loopback, read-only) over existing repo/modules.
+- [x] React+htm SPA (vendored offline): overview, task status, blocked, recent activity, "where I left off", recall search.
+- [x] `devos serve`; static serving traversal-safe; 12 tests (115 total). D-0010, SECURITY §8.
+
+## Now (Phase 8 — Documentation Automation)  _(not started — plan first)_
+- [ ] `devos docgen <type>`: README / architecture / API / setup / changelog / decision-log / milestone summaries.
+- [ ] Grounded generation via `modules/qa` retrieval + provider; explicit output paths (no silent overwrites).
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

@@ -64,7 +64,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Memory sprawl. **Mitigation:** structured, deduped, compact entries.
 - **Dependencies:** Phase 1 (storage); integrates with Phases 3–4.
 
-## Phase 7 — Dashboard & Polish 🚧 (next)
+## Phase 7 — Dashboard & Polish ✅
 - **Goal:** Visual overview + UX polish (the portfolio centerpiece).
 - **Scope:** TypeScript/React (Next.js) dashboard over a local API exposing projects, tasks, recent activity, blocked items, "where I left off"; CLI UX polish (Rich/Typer adoption considered here).
 - **Deliverables:** Local API, dashboard app, screenshots.
@@ -72,7 +72,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Scope creep on UI. **Mitigation:** design pass via `ui-ux-pro-max`; ship MVP first.
 - **Dependencies:** Phases 2–6 (data to display).
 
-## Phase 8 — Documentation Automation ⬜
+## Phase 8 — Documentation Automation 🚧 (next)
 - **Goal:** Generate docs from the indexed project.
 - **Scope:** README / architecture / API / setup / changelog / decision-log / milestone-summary generators using retrieval + AI.
 - **Deliverables:** `devos docgen <type>`.

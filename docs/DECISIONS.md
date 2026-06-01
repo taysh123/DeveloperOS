@@ -4,6 +4,17 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0010 — Dashboard: stdlib http.server local API + vendored React SPA (offline, read-only)
+- **Date:** 2026-06-01
+- **Context:** Phase 7 adds a dashboard. Needed a UI that stays local-first/offline/verifiable and reuses existing layers (no parallel backend), consistent with the stdlib-only ethos (D-0005).
+- **Decision:**
+  - **Local API = stdlib `http.server`** (`devos/api/server.py`, `ThreadingHTTPServer`), **bound to 127.0.0.1 only** and **read-only (GET)** this phase. No web framework dependency.
+  - **Socket-free, testable core:** `devos/api/app.py` holds pure data builders (`overview`/`projects_payload`/`tasks_payload`/`memory_payload`/`recall_payload`) reusing `storage/repo` + `modules.recall`, and a `route(ws, path, query) -> Response` table unit-tested without binding a port; `server.py` is a thin wrapper (one live integration test).
+  - **Frontend = React + `htm` (no JSX build), vendored** under `devos/api/static/vendor/` (downloaded once from unpkg, committed) → fully offline, no npm/Node, no CDN at runtime. Served as static assets (path-traversal-safe). User-selected over a full Next.js app to preserve offline/zero-build/verifiable properties.
+  - **`devos serve`** runs the dashboard (loopback); `"where I left off"` is derived from the DB (latest in-progress/most-recent task + recent memory), not docs.
+- **Rationale:** Ships a genuine React dashboard that is offline, dependency-free at runtime, fully testable in the existing harness, and reuses every data/service layer. Architecture stays expansion-ready (route table + loopback + read-only; future write endpoints need a token/CSRF per SECURITY §8).
+- **Status:** Accepted.
+
 ## D-0009 — Task Manager & Memory: schema v3, repo CRUD, retrieval-only recall
 - **Date:** 2026-06-01
 - **Context:** Phase 6 activates the reserved `tasks`/`memory` tables with CRUD + cross-source recall, reusing existing layers (no parallel system, no dashboard).

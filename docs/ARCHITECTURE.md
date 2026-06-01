@@ -100,6 +100,16 @@ Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, con
 so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
 untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
 
+### Dashboard & local API (`devos/api`, Phase 7)
+`devos/api/app.py` holds read-only **data builders** (`overview`/`projects`/`tasks`/`memory`/`recall`
+payloads) that reuse `storage/repo` + `modules.recall`, plus a socket-free `route(ws, path, query)
+-> Response` table (JSON `/api/*`; static files under `static/`, path-traversal-rejected).
+`devos/api/server.py` wraps `route()` in a stdlib `ThreadingHTTPServer` **bound to 127.0.0.1 only**,
+opening a per-request connection. The frontend (`static/index.html` + `app.js`) is a **React + htm**
+SPA (no build step) with React/ReactDOM/htm **vendored locally** for offline use. `devos serve` runs
+it. Read-only this phase; future write endpoints route through the safe-action model with a
+token/CSRF (SECURITY §8). See DECISIONS.md D-0010.
+
 ### Debug Assistant (`modules/trace` + `modules/debug`)
 `modules/trace` is pure, pluggable trace/log parsing (Python/Node/generic; register a parser
 in `TRACE_PARSERS` to add a language) → `ParsedTrace(error_type, error_message, frames)`.
