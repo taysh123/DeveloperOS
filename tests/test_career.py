@@ -90,3 +90,39 @@ class TestJobRepo(CareerTestCase):
             self.assertIsNone(repo.get_job(conn, a))
         finally:
             conn.close()
+
+
+class TestJobCli(CareerTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_add_and_list(self) -> None:
+        code, out = self._run("job", "add", "Acme", "--role", "Backend Eng",
+                              "--status", "applied", "--notes", "python sqlite")
+        self.assertEqual(code, 0)
+        code, out = self._run("job", "list")
+        self.assertEqual(code, 0)
+        self.assertIn("Acme", out)
+        self.assertIn("applied", out)
+
+    def test_set_and_show_and_rm(self) -> None:
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "Globex", status="saved")
+        finally:
+            conn.close()
+        code, out = self._run("job", "set", str(jid), "--status", "interview")
+        self.assertEqual(code, 0)
+        code, out = self._run("job", "show", str(jid))
+        self.assertIn("Globex", out)
+        self.assertIn("interview", out)
+        code, out = self._run("job", "rm", str(jid))
+        self.assertEqual(code, 0)
+
+    def test_list_empty(self) -> None:
+        code, out = self._run("job", "list")
+        self.assertEqual(code, 0)
+        self.assertIn("No job", out)
