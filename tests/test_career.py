@@ -175,3 +175,47 @@ class TestJobCli(CareerTestCase):
         code, out = self._run("job", "list")
         self.assertEqual(code, 0)
         self.assertIn("No job", out)
+
+
+class TestCvInterviewCli(CareerTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_cv_against_job(self) -> None:
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "Acme", role="Backend",
+                                  notes="python sqlite rest api docker kubernetes")
+        finally:
+            conn.close()
+        cv = Path(self._home.name) / "cv.txt"
+        cv.write_text("Python developer with REST APIs and SQLite.", encoding="utf-8")
+        code, out = self._run("cv", str(cv), "--job", str(jid))
+        self.assertEqual(code, 0)
+        self.assertIn("overage", out)       # "Coverage"
+        self.assertIn("python", out.lower())
+        self.assertIn("kubernetes", out.lower())  # a missing keyword
+
+    def test_cv_missing_file_errors(self) -> None:
+        code, out = self._run("cv", str(Path(self._home.name) / "nope.txt"))
+        self.assertEqual(code, 1)
+        self.assertIn("cannot read", out.lower())
+
+    def test_interview_grounded(self) -> None:
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "Acme", role="Backend",
+                                  notes="python, sqlite, rest, testing")
+        finally:
+            conn.close()
+        code, out = self._run("interview", str(jid), "--n", "3")
+        self.assertEqual(code, 0)
+        self.assertIn("Acme", out)
+
+    def test_interview_unknown_declines(self) -> None:
+        code, out = self._run("interview", "9999")
+        self.assertEqual(code, 0)
+        self.assertIn("Not enough", out)

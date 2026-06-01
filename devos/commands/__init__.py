@@ -21,5 +21,7 @@ from devos.commands import quiz_cmd as _quiz_cmd  # noqa: F401
 from devos.commands import exercise_cmd as _exercise_cmd  # noqa: F401
 from devos.commands import grade_cmd as _grade_cmd  # noqa: F401
 from devos.commands import job_cmd as _job_cmd  # noqa: F401
+from devos.commands import cv_cmd as _cv_cmd  # noqa: F401
+from devos.commands import interview_cmd as _interview_cmd  # noqa: F401
 
 __all__ = ["COMMANDS", "Command", "register"]
