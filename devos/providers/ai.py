@@ -67,6 +67,15 @@ class MockAIProvider(AIProvider):
 _REGISTRY: dict[str, type[AIProvider]] = {"mock": MockAIProvider}
 
 
+def register_provider(name: str, cls: type[AIProvider]) -> None:
+    """Register an AI provider implementation (used by plugins; see devos/plugins.py)."""
+    _REGISTRY[name] = cls
+
+
+def available_providers() -> list[str]:
+    return sorted(_REGISTRY)
+
+
 def get_provider(name: str | None = None) -> AIProvider:
     """Return an AI provider instance.
 
