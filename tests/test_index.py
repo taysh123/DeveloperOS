@@ -107,3 +107,80 @@ class TestRepoIndexHelpers(unittest.TestCase):
                 )
             finally:
                 conn.close()
+
+
+class IndexTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self._prev = os.environ.get("DEVOS_HOME")
+        self._home = tempfile.TemporaryDirectory()
+        os.environ["DEVOS_HOME"] = self._home.name
+        self.ws = Workspace.load()
+        self.ws.initialize().close()
+        self._proj = tempfile.TemporaryDirectory()
+        self.root = Path(self._proj.name)
+        _write(self.root, "server/app.py", "\n".join(f"row{i}" for i in range(60)))
+        _write(self.root, "src/util.ts", "export const token = 'abc';")
+
+    def tearDown(self) -> None:
+        if self._prev is None:
+            os.environ.pop("DEVOS_HOME", None)
+        else:
+            os.environ["DEVOS_HOME"] = self._prev
+        self._home.cleanup()
+        self._proj.cleanup()
+
+
+class TestIndexProject(IndexTestCase):
+    def test_first_index_creates_chunks(self) -> None:
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, self.root).project_id
+            result = index_mod.index_project(conn, pid)
+            self.assertGreaterEqual(result.indexed_files, 2)
+            chunks, files = repo.chunk_stats(conn, pid)
+            self.assertGreater(chunks, 0)
+            self.assertGreaterEqual(files, 2)
+        finally:
+            conn.close()
+
+    def test_reindex_unchanged_is_noop(self) -> None:
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, self.root).project_id
+            index_mod.index_project(conn, pid)
+            chunks_before, _ = repo.chunk_stats(conn, pid)
+            result = index_mod.index_project(conn, pid)
+            self.assertEqual(result.indexed_files, 0)
+            self.assertEqual(result.unchanged_files, 2)
+            chunks_after, _ = repo.chunk_stats(conn, pid)
+            self.assertEqual(chunks_after, chunks_before)
+        finally:
+            conn.close()
+
+    def test_modified_file_is_reindexed(self) -> None:
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, self.root).project_id
+            index_mod.index_project(conn, pid)
+            _write(self.root, "src/util.ts", "export const token = 'changed';\nconst y = 2;")
+            ingest.scan_project(conn, self.root)
+            result = index_mod.index_project(conn, pid)
+            self.assertEqual(result.indexed_files, 1)
+            self.assertEqual(result.unchanged_files, 1)
+        finally:
+            conn.close()
+
+    def test_deleted_file_chunks_are_removed(self) -> None:
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, self.root).project_id
+            index_mod.index_project(conn, pid)
+            (self.root / "src/util.ts").unlink()
+            ingest.scan_project(conn, self.root)  # prunes the file row (chunks cascade)
+            index_mod.index_project(conn, pid)     # reconcile_fts cleans fts orphans
+            orphans = conn.execute(
+                "SELECT COUNT(*) FROM chunks_fts WHERE chunk_id NOT IN (SELECT id FROM chunks);"
+            ).fetchone()[0]
+            self.assertEqual(orphans, 0)
+        finally:
+            conn.close()
