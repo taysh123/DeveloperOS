@@ -105,3 +105,40 @@ class TestCodeDocs(DocgenTestCase):
             self.assertEqual(doc.sources, [])
         finally:
             conn.close()
+
+
+class TestRecordDocs(DocgenTestCase):
+    def test_decisions_from_memory(self) -> None:
+        conn = self.ws.connect()
+        try:
+            repo.create_memory(conn, self.pid, kind="decision",
+                               title="Use stdlib only", body="no external deps")
+            repo.create_memory(conn, self.pid, kind="note", title="ignore me", body="not a decision")
+            doc = docgen_mod.generate(conn, "decisions", provider=MockAIProvider(), project="demo")
+            self.assertTrue(doc.grounded)
+            self.assertIn("Use stdlib only", doc.text)
+            self.assertNotIn("ignore me", doc.text)  # only decision-kind records
+        finally:
+            conn.close()
+
+    def test_milestone_from_tasks(self) -> None:
+        conn = self.ws.connect()
+        try:
+            repo.create_task(conn, self.pid, "Ship docgen", kind="feature",
+                             status="in_progress", priority="high", milestone="M8")
+            doc = docgen_mod.generate(conn, "milestone", provider=MockAIProvider(), project="demo")
+            self.assertTrue(doc.grounded)
+            self.assertIn("Ship docgen", doc.text)
+        finally:
+            conn.close()
+
+    def test_decisions_decline_when_no_memory(self) -> None:
+        conn = self.ws.connect()
+        try:
+            class BoomProvider(MockAIProvider):
+                def complete(self, *a, **k):
+                    raise AssertionError("must not call provider without records")
+            doc = docgen_mod.generate(conn, "decisions", provider=BoomProvider(), project="demo")
+            self.assertFalse(doc.grounded)
+        finally:
+            conn.close()
