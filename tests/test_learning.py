@@ -274,3 +274,36 @@ class TestQuizCli(LearnTestCase):
         code, out = self._run("quiz", "zzz_absent_topic_qqq", "--project", "demo")
         self.assertEqual(code, 0)
         self.assertIn("don't have enough", out)
+
+
+class TestExerciseGradeCli(LearnTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_exercise_prints_sources(self) -> None:
+        code, out = self._run("exercise", "src/retrieval.py", "--n", "2", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+        self.assertIn("src/retrieval.py", out)
+
+    def test_grade_with_answer(self) -> None:
+        code, out = self._run("grade", "src/retrieval.py", "--question", "What does retrieve do?",
+                              "--answer", "It searches the index and ranks results", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+        self.assertIn("ranks results", out)
+
+    def test_grade_with_answer_file(self) -> None:
+        ans = Path(self._home.name) / "ans.txt"
+        ans.write_text("retrieve ranks results from the index", encoding="utf-8")
+        code, out = self._run("grade", "src/retrieval.py", "--answer-file", str(ans), "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("ranks results", out)
+
+    def test_grade_missing_answer_errors(self) -> None:
+        code, out = self._run("grade", "src/retrieval.py", "--project", "demo")
+        self.assertEqual(code, 1)
+        self.assertIn("answer", out.lower())

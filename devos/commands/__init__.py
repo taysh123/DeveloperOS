@@ -18,5 +18,7 @@ from devos.commands import serve_cmd as _serve_cmd  # noqa: F401
 from devos.commands import docgen_cmd as _docgen_cmd  # noqa: F401
 from devos.commands import learn_cmd as _learn_cmd  # noqa: F401
 from devos.commands import quiz_cmd as _quiz_cmd  # noqa: F401
+from devos.commands import exercise_cmd as _exercise_cmd  # noqa: F401
+from devos.commands import grade_cmd as _grade_cmd  # noqa: F401
 
 __all__ = ["COMMANDS", "Command", "register"]
