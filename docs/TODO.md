@@ -51,12 +51,13 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 
 ## Phase 9 — Future Modules (narrow slices)
 ### Done
-- [x] Slice 1 — Learning Assistant: `devos learn <path|topic> [--level eli5|intermediate|advanced]` (grounded, cites file:line, declines when ungrounded). 7 tests (133 total). D-0012.
+- [x] Slice 1 — Learning Assistant: `devos learn <path|topic> [--level eli5|intermediate|advanced]` (grounded, cites file:line, declines). 7 tests. D-0012.
+- [x] Slice 2 — Learning Quiz: `devos quiz <path|topic> [--n N]` (n grounded questions, declines). 7 tests (140 total). D-0013.
 ### Deferred (need explicit approval before building)
-- [ ] Learning quizzes/exercises.
 - [ ] Career Assistant (job leads, CV analysis, interview prep).
 - [ ] Extension/plugin seam.
 - [ ] Meeting/transcript foundation.
+- [ ] Learning exercises / interactive grading.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

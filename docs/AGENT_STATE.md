@@ -6,13 +6,13 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 9 — Future Modules** is IN PROGRESS (delivered as narrow slices). **Slice 1
-(Learning Assistant) is complete.** Phases 0–8 complete.
+**Phase 9 — Future Modules** is IN PROGRESS (delivered as narrow slices). **Slices 1–2
+(Learning Assistant + Learning Quiz) complete.** Phases 0–8 complete.
 
 ## Current milestone
-Phase 9 slice 1 (Learning Assistant, `devos learn`) done. Remaining Phase 9 directions are
-**deferred pending explicit approval** (do not build without it): learning quizzes/exercises,
-Career Assistant, extension/plugin seam, meeting/transcript foundation.
+Phase 9 slice 1 (`devos learn`) + slice 2 (`devos quiz`) done. Remaining Phase 9 directions
+are **deferred pending explicit approval** (do not build without it): Career Assistant,
+extension/plugin seam, meeting/transcript foundation (+ learning exercises/grading).
 
 ## Next immediate step
 Await approval for the next Phase 9 slice (then `/plan` it narrowly). Do NOT broaden scope
@@ -20,7 +20,7 @@ unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays
 
 ## Tasks
 ### In progress
-- _None. Phase 9 slice 1 complete; further slices await approval._
+- _None. Phase 9 slices 1–2 complete; further slices await approval._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -71,6 +71,9 @@ unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays
       repo helpers, topic mode via `qa.retrieve`, leveled eli5/intermediate/advanced prompts,
       declines when ungrounded); `devos learn <path|topic> [--level]` (reuses `ask_cmd.print_answer`).
       7 new tests (133 total) pass; dogfooded (file + topic grounding, leveled, sources). D-0012.
+- [x] Phase 9 slice 2: Learning Quiz — `learning.quiz` → `Quiz` (n grounded questions, default 5
+      clamped [1,20], file/topic mode via shared `_resolve_chunks`, declines when ungrounded);
+      `devos quiz <path|topic> [--n N]`. 7 new tests (140 total) pass; dogfooded (file/topic + reject n<1). D-0013.
 
 ### Blocked
 - _None._

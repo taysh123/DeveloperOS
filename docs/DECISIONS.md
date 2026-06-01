@@ -4,6 +4,12 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0013 — Phase 9 slice 2 = Learning Quiz (`devos quiz`)
+- **Date:** 2026-06-01
+- **Context:** Second narrow Phase 9 slice (user-approved), building on slice 1's Learning Assistant.
+- **Decision:** Add `quiz()` + `Quiz` to `modules/learning.py` (cohesive with `learn`). Extracted the shared target→chunks logic into `_resolve_chunks` (used by both `learn` and `quiz`) — DRY, **no new retrieval logic, no schema change**. `quiz` generates `n` grounded review questions (default 5, clamped to [1,20]; `n<1` → ValueError) from file-mode or topic-mode chunks; declines (no provider call) when ungrounded; cites file:line. `devos quiz` reuses `ask_cmd.print_answer`; stdout/read-only. Same grounding/anti-injection posture as `learn`.
+- **Status:** Accepted (slice 2). Remaining Phase 9 slices (career, plugin seam, meeting/transcript) still deferred pending approval.
+
 ## D-0012 — Phase 9 delivered as slices; slice 1 = Learning Assistant (`devos learn`)
 - **Date:** 2026-06-01
 - **Context:** Phase 9 ("future modules") is open-ended. To avoid scope creep we deliver it as **narrow, separately-approved slices**. Slice 1 (user-selected) is the Learning Assistant.

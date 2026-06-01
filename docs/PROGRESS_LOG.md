@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 10: Phase 9 slice 2 (Learning Quiz) complete
+- Plan-mode `/plan`: AGENT_STATE source of truth; confirmed slice 1 done + no quiz/career/plugin/meeting code. **AskUserQuestion** to pick the next narrow slice → user chose **Learning Quiz**. Plan approved (overwrote slice-1 plan).
+- `modules/learning.py`: extracted shared `_resolve_chunks` (file/topic resolution) used by both `learn` and `quiz` (DRY); added `quiz()` + `Quiz` — n grounded review questions (default 5, clamped [1,20], `n<1`→ValueError), declines (no provider call) when ungrounded. No new retrieval logic, no schema change.
+- `devos quiz <target...> [--n N] [--project] [--limit]`; reuses `ask_cmd.print_answer`.
+- TDD throughout (RED→GREEN); confirmed `learn` tests still pass after the refactor. **verification-before-completion:** full suite **140/140 pass**. Dogfooded: `quiz <file> --n 3` (grounded questions + Sources), `quiz "<topic>"` (topic mode), `--n 0` rejected.
+- Logged **D-0013**; extended SECURITY learning note/row to learn+quiz. Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/README/memory. Committed + pushed to origin.
+- **Phase 9 still in progress;** remaining slices (career, plugin seam, meeting, exercises) **deferred pending approval**. Did NOT broaden scope. Stopped here per instruction.
+
 ## 2026-06-01 — Session 9: Phase 9 slice 1 (Learning Assistant) complete
 - Plan-mode `/plan`: AGENT_STATE source of truth; confirmed no learning/career/plugin/meeting code. Honored the scoping rule — **AskUserQuestion to pick one narrow slice** → user chose **Learning Assistant**. Plan approved (overwrote Phase 8 plan). No subagents (full context).
 - `modules/learning.py`: `learn(conn, target, *, provider, level, project, limit) -> Lesson`. File mode (resolve via `repo.find_project_for_path`/`find_file_by_path`/`get_file_chunks`) or topic mode (`qa.retrieve`); leveled system prompts (eli5/intermediate/advanced); declines (no provider call) when ungrounded. Reuses `qa.assemble_context`/`resolve_project` + provider — no new retrieval logic, no schema change.

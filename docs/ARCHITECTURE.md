@@ -105,8 +105,9 @@ untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS
 leveled (eli5/intermediate/advanced) explanation: **file mode** grounds on an indexed file's
 chunks (via `repo.find_project_for_path`/`find_file_by_path`/`get_file_chunks`), **topic mode**
 via `qa.retrieve`; declines (no provider call) when ungrounded. Same compose-existing-layers
-pattern as `debug`/`docgen` — no new retrieval logic or schema. `devos learn` prints via the
-shared `ask_cmd.print_answer`. Phase 9 is built as separately-approved slices. See DECISIONS.md D-0012.
+pattern as `debug`/`docgen` — no new retrieval logic or schema. `learn` and `quiz` (grounded
+review questions) share `_resolve_chunks`; `devos learn`/`devos quiz` print via the shared
+`ask_cmd.print_answer`. Phase 9 is built as separately-approved slices. See DECISIONS.md D-0012/D-0013.
 
 ### Documentation Automation (`modules/docgen`, Phase 8)
 `docgen.generate(conn, doc_type, *, provider, project, limit)` reuses the Q&A pipeline:

@@ -82,7 +82,8 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 
 ## Phase 9 — Future Modules 🚧 (in progress — delivered as narrow slices)
 - ✅ Slice 1: **Learning Assistant** (`devos learn <path|topic> [--level]`) — grounded leveled code explanations.
-- ⬜ Deferred (need approval per slice): learning quizzes/exercises · Career Assistant · extension/plugin seam · meeting/transcript foundation.
+- ✅ Slice 2: **Learning Quiz** (`devos quiz <path|topic> [--n N]`) — grounded review questions.
+- ⬜ Deferred (need approval per slice): Career Assistant · extension/plugin seam · meeting/transcript foundation · learning exercises/grading.
 - **Goal:** Career & Learning assistants; extension seams.
 - **Scope:** Learning (explain levels, exercises, quizzes), Career (job leads, CV analysis, interview prep), plus seams for meeting assistant, multi-user, cloud sync, browser/VS Code integration, plugins, multi-agent.
 - **Deliverables:** TBD per module when reached.
