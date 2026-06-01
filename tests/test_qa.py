@@ -115,3 +115,40 @@ class TestOrSearch(QaTestCase):
             self.assertGreaterEqual(len(or_hits), 2)
         finally:
             conn.close()
+
+
+class TestRetrieve(QaTestCase):
+    def test_retrieve_returns_chunks_with_content_and_location(self) -> None:
+        conn = self.ws.connect()
+        try:
+            chunks = qa.retrieve(conn, "how does authenticate work")
+            self.assertTrue(chunks)
+            top = chunks[0]
+            self.assertIn("authenticate", top.content)
+            self.assertEqual(top.rel_path, "src/auth/login.py")
+            self.assertRegex(top.location, r"src/auth/login\.py:\d+-\d+")
+        finally:
+            conn.close()
+
+    def test_retrieve_empty_when_no_match(self) -> None:
+        conn = self.ws.connect()
+        try:
+            self.assertEqual(qa.retrieve(conn, "zzzqqq_nonexistent_term"), [])
+        finally:
+            conn.close()
+
+    def test_question_terms_drops_stopwords(self) -> None:
+        terms = qa.question_terms("How does the authentication flow work?")
+        self.assertIn("authentication", terms)
+        self.assertNotIn("how", terms)
+        self.assertNotIn("the", terms)
+
+    def test_assemble_context_tags_sources(self) -> None:
+        conn = self.ws.connect()
+        try:
+            chunks = qa.retrieve(conn, "authenticate")
+            ctx = qa.assemble_context(chunks)
+            self.assertIn("src/auth/login.py", ctx)
+            self.assertIn("[Source 1]", ctx)
+        finally:
+            conn.close()
