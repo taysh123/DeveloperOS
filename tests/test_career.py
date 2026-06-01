@@ -92,6 +92,55 @@ class TestJobRepo(CareerTestCase):
             conn.close()
 
 
+class TestCareerModule(CareerTestCase):
+    def test_analyze_cv_matched_missing_coverage(self) -> None:
+        cv = "Experienced Python developer with REST APIs and Docker."
+        target = "Looking for Python engineer with SQLite and REST experience."
+        analysis = career_mod.analyze_cv(cv, target)
+        self.assertIn("python", analysis.matched)
+        self.assertIn("rest", analysis.matched)
+        self.assertIn("sqlite", analysis.missing)
+        self.assertGreater(analysis.coverage, 0.0)
+        self.assertLessEqual(analysis.coverage, 1.0)
+
+    def test_analyze_cv_empty_target(self) -> None:
+        analysis = career_mod.analyze_cv("python developer", "")
+        self.assertEqual(analysis.matched, set())
+        self.assertEqual(analysis.coverage, 0.0)
+
+    def test_interview_prep_grounded(self) -> None:
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "Acme", role="Backend Eng",
+                                  notes="python, sqlite, rest api design, testing")
+            prep = career_mod.interview_prep(conn, jid, provider=MockAIProvider(), n=3)
+            self.assertTrue(prep.grounded)
+            self.assertTrue(prep.sources)
+            self.assertIn("Acme", prep.text)  # mock echoes the job context
+        finally:
+            conn.close()
+
+    def test_interview_prep_declines_when_no_notes(self) -> None:
+        class BoomProvider(MockAIProvider):
+            def complete(self, *a, **k):
+                raise AssertionError("provider must not be called without job notes")
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "NoNotes", notes=None)
+            prep = career_mod.interview_prep(conn, jid, provider=BoomProvider())
+            self.assertFalse(prep.grounded)
+        finally:
+            conn.close()
+
+    def test_interview_prep_unknown_job_declines(self) -> None:
+        conn = self.ws.connect()
+        try:
+            prep = career_mod.interview_prep(conn, 9999, provider=MockAIProvider())
+            self.assertFalse(prep.grounded)
+        finally:
+            conn.close()
+
+
 class TestJobCli(CareerTestCase):
     def _run(self, *argv):
         buf = io.StringIO()
