@@ -11,3 +11,6 @@ All notable, user-visible changes. Format loosely follows Keep a Changelog.
 - Editable install via `pip install -e .` exposing the `devos` command; 10 stdlib smoke tests.
 - `devos scan <path>`: ingest a project folder — walks files with sensible ignore rules (a `.gitignore` subset, `node_modules`/venvs/build dirs, binary & oversized files), classifies each file into frontend/backend/db/api/auth/test/config/other, and records an idempotent file inventory (added/updated/unchanged/removed/skipped summary + per-type breakdown).
 - `devos projects`: list registered projects with file counts and last-scanned time.
+- `devos index <path>`: scan then build/refresh a searchable index — splits files into line-ranged chunks, mirrors them into a SQLite FTS5 index, and reindexes incrementally (only changed files, via content hash). Reports (re)indexed/unchanged/skipped files and chunk counts.
+- `devos search <query>`: ranked keyword search (bm25) across indexed code/docs, returning `file:line-range` locations with highlighted snippets; supports `--project` and `--limit`.
+- Storage upgraded to schema v2 (`files.indexed_hash`) with an upgrade-capable migration runner.

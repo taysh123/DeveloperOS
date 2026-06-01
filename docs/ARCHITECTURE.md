@@ -69,16 +69,27 @@ SQLite database at the data dir (`<data>/devos.db`). Tables grow per phase; the
 foundation creates the spine:
 
 - **projects** — `id, name, root_path, created_at, last_scanned_at, meta(json)`.
-- **files** — `id, project_id, rel_path, lang, category, size, content_hash, indexed_at`
-  (category ∈ frontend/backend/db/api/auth/test/config/other; filled in Phase 2).
-- **chunks** — `id, file_id, start_line, end_line, tags, content_hash` (Phase 3).
-- **chunks_fts** — FTS5 virtual table over chunk/file content for keyword search (Phase 3).
+- **files** — `id, project_id, rel_path, lang, category, size, content_hash, indexed_hash, indexed_at`
+  (category ∈ frontend/backend/db/api/auth/test/config/other; `content_hash` = scan-time state,
+  `indexed_hash` = sha256 of the text the current chunks were built from, for incremental reindex).
+- **chunks** — `id, file_id, start_line, end_line, tags, content_hash` (Phase 3). `content_hash`
+  is per-chunk — the future cache key for embeddings.
+- **chunks_fts** — FTS5 virtual table holding chunk text; bm25-ranked keyword search (Phase 3).
+  Mirrored manually on insert/delete; `repo.reconcile_fts` sweeps orphans after cascade deletes.
 - **tasks** — `id, project_id, title, kind(task|bug|feature), status, milestone, notes, created_at, updated_at` (Phase 6).
 - **memory** — `id, project_id, kind, title, body, tags, created_at` (Phase 6).
 - **schema_migrations** — applied migration versions (foundation).
 
-A lightweight versioned migration runner applies `schema.sql` / numbered migrations
-idempotently; re-running is safe.
+A lightweight versioned migration runner (`storage/db.py`, `PRAGMA user_version`) builds
+fresh databases from `schema.sql` and upgrades existing ones via numbered `MIGRATIONS`;
+re-running is safe. Current schema version: **v2** (added `files.indexed_hash`).
+
+### Search & the semantic seam
+`modules/index` owns chunking, incremental indexing, and search. `search()` returns a
+stable `SearchHit` type; today's strategy is FTS5 keyword (bm25) search. A future
+semantic strategy will return the **same** `SearchHit`, so callers (CLI, Phase 4 Q&A)
+need no change. Per-chunk `content_hash` lets a later `embeddings(chunk_id, vector, model)`
+table attach to chunks without re-chunking. See DECISIONS.md D-0006.
 
 ## Configuration & data location
 - Data dir resolution order: `DEVOS_HOME` env var → `%APPDATA%\DeveloperOS` (Windows)

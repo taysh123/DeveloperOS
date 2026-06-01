@@ -15,13 +15,16 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] `devos projects`: list registered projects.
 - [x] Tests for ingest (TDD, 15 tests) + docs/state updates.
 
-## Now (Phase 3 — Code Indexing & Search)
-- [ ] Index service: read recorded files, split into line-ranged chunks, store in `chunks`, mirror to `chunks_fts`.
-- [ ] Incremental reindex keyed on `files.content_hash`.
-- [ ] `devos index`: build/refresh the index for a project.
-- [ ] `devos search <query>`: ranked keyword results with file:line.
-- [ ] Tests for chunking + search (TDD) + docs/state updates.
-- [ ] Phase 4: `devos ask` / `devos explain`.
+## Done (Phase 3 — Code Indexing & Search) ✅
+- [x] Index service: read recorded files, split into line-ranged chunks, store in `chunks`, mirror to `chunks_fts`.
+- [x] Incremental reindex keyed on `files.indexed_hash` (empty files handled).
+- [x] `devos index`: scan-then-index a project (incremental).
+- [x] `devos search <query>`: bm25-ranked keyword results with file:line + snippets.
+- [x] Tests for chunking + search (TDD, 20 tests) + docs/state updates + D-0006.
+
+## Now (Phase 4 — Q&A & Project Understanding)  _(not started — plan first)_
+- [ ] Retrieval over the index (reuse `index.search` → `SearchHit`) → context assembly → AI provider.
+- [ ] `devos ask "<question>"` and `devos explain [path]` with file citations (mock provider for now).
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

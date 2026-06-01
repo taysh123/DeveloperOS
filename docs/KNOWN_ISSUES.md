@@ -5,7 +5,10 @@ _Active issues, limitations, and tech debt. Resolved items move to PROGRESS_LOG/
 ## Limitations (by design, for now)
 - **AI is mocked.** Q&A/debug/docgen will return clearly-labeled stub output until a real
   Claude provider is wired in (Phase 4+). No API key is required yet.
-- **Keyword search only.** Semantic/embedding search is deferred to a later phase (D-0004).
+- **Keyword search only.** Semantic/embedding search is deferred to a later phase; the
+  architecture seam is in place (D-0004, D-0006), the embedding backend is not.
+- **Chunking is line-based, not AST-aware.** Fixed line windows (default 50) can split
+  functions/classes across chunks. AST-aware chunking is a later refinement (D-0006).
 - **No dashboard yet.** CLI is the only interface until Phase 7.
 
 ## Open issues

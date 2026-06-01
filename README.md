@@ -27,8 +27,10 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos status` | Report data location, schema version, provider, and stored counts. |
 | `devos scan <path>` | Scan a project folder and record/refresh its file inventory (classified, idempotent). |
 | `devos projects` | List registered projects with file counts and last-scanned time. |
+| `devos index <path>` | Scan then build/refresh the searchable index (chunks + FTS5, incremental). |
+| `devos search <query>` | Ranked keyword search with `file:line` references and snippets (`--project`, `--limit`). |
 
-More commands (`index`, `search`, `ask`, `debug`, `task`, …) arrive per the
+More commands (`ask`, `explain`, `debug`, `task`, …) arrive per the
 [roadmap](docs/ROADMAP.md).
 
 ## How it's built

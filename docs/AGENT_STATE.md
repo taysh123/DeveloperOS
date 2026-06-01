@@ -6,22 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 3 — Code Indexing & Search** (Phases 0–2 complete).
+**Phase 4 — Q&A & Project Understanding** is NEXT (Phases 0–3 complete). _Not started._
 
 ## Current milestone
-Build a searchable index: chunk indexed files, populate the `chunks` + `chunks_fts`
-(FTS5) tables, and add `devos index` + `devos search <query>` (keyword), with a design
-seam for embeddings/semantic search later.
+(Upcoming, do not start without going through planning.) Retrieval over the Phase 3
+index → context assembly → AI provider; `devos ask "<question>"` and `devos explain [path]`
+with file citations. The mock AI provider stays default until a real provider is wired in.
 
 ## Next immediate step
-Start Phase 3 test-first: add a `modules/index` service that reads each recorded file,
-splits it into line-ranged chunks, stores them in `chunks`, and mirrors content into
-`chunks_fts`. Implement incremental reindex keyed on `files.content_hash`. Wire up
-`devos index` and `devos search`. Write the chunking/search tests first.
+Begin Phase 4 by re-running the session-startup procedure and `/plan`. Phase 4 will reuse
+`modules/index.search` (returns `SearchHit`) for retrieval and the existing `providers/ai`
+abstraction — no redesign needed (see D-0006).
 
 ## Tasks
 ### In progress
-- _None (Phase 2 just completed; Phase 3 not yet started)._
+- _None (Phase 3 just completed; Phase 4 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -35,6 +34,12 @@ splits it into line-ranged chunks, stores them in `chunks`, and mirrors content 
       binary/size skip + heuristic classification) and `storage/repo` (idempotent upserts);
       `devos scan` + `devos projects`. 15 new tests (25 total) pass; dogfooded on this repo
       (35 files classified, idempotent rescan, no duplicate project).
+- [x] Phase 3: indexing & search — schema v2 + upgrade-capable migration runner; `modules/index`
+      (line-window `chunk_text`, incremental `index_project` keyed on `files.indexed_hash`,
+      bm25 `search` returning `SearchHit`, safe FTS query builder); `storage/repo` chunk/search
+      helpers + `reconcile_fts`; `devos index` + `devos search`. 20 new tests (45 total) pass;
+      dogfooded on this repo (40 files → 90 chunks; 2nd index 0 re-indexed/40 unchanged; ranked
+      located snippets). Architecture decision D-0006 logged (semantic-search seam).
 
 ### Blocked
 - _None._
@@ -47,7 +52,8 @@ splits it into line-ranged chunks, stores them in `chunks`, and mirrors content 
 
 ## Open decisions
 - CLI framework: stdlib `argparse` now; revisit Typer/Rich in Phase 7. _(Default chosen.)_
-- Embeddings/semantic search backend: deferred to Phase 3+. _(Open.)_
+- Semantic-search *architecture* decided (D-0006: `SearchHit` seam + per-chunk hash). The
+  embeddings *backend* (which local model/library) remains open and deferred to a later phase.
 
 ## Working context
 - Repo: `C:\Projects\DeveloperOS` · git branch: `main` · platform: Windows 11 · Python 3.13.5.

@@ -4,6 +4,19 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 3: Phase 3 (Code Indexing & Search) complete
+- Ran session startup (AGENT_STATE/ROADMAP/TODO) + anti-duplication check (no index/search code existed; `chunks`/`chunks_fts` were reserved in schema).
+- Wrote a detailed plan via writing-plans: `docs/superpowers/plans/2026-06-01-phase3-indexing-search.md` (8 TDD tasks). Executed inline (executing-plans); parallel agents judged not beneficial (tightly coupled shared state).
+- Schema **v2**: added `files.indexed_hash` + `idx_chunks_file`; upgraded `db.initialize` to an upgrade-capable migration runner (fresh→schema.sql, existing→numbered MIGRATIONS), with a defensive `schema_migrations` guard.
+- `modules/index.py`: `chunk_text` (line windows), `index_project` (incremental via `indexed_hash`, fts mirroring, orphan reconcile), `search`/`SearchHit` (bm25, snippet, file:line), `build_match_query` (safe FTS — quoted AND tokens).
+- `storage/repo.py`: chunk CRUD (`insert_chunk`/`delete_chunks_for_file`), `reconcile_fts`, `chunk_stats`, `search_chunks`, `project_id_by_name`, `list_files`, `get_project`, `set_file_indexed_hash`.
+- Commands `devos index [path]` (composes scan+index) and `devos search <query> [--project] [--limit]`.
+- TDD throughout (RED→GREEN per task). **verification-before-completion**: full suite **45/45 pass**.
+- Dogfooded on this repo: 40 files → 90 chunks; 2nd index **0 re-indexed / 40 unchanged**; searches return ranked, located, snippet-highlighted hits.
+- **Found & fixed during verification:** empty files (0 chunks) were re-indexed every run; corrected the incremental check to gate on hash equality alone (added a regression test).
+- Logged **D-0006** (indexing architecture + semantic seam). Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/KNOWN_ISSUES/ARCHITECTURE/README/memory.
+- **Next:** Phase 4 — Q&A (do NOT start without planning). Stopped here per instruction.
+
 ## 2026-06-01 — Session 2: Phase 2 (Project Ingestion) complete
 - Worked test-first (TDD): wrote `tests/test_ingest.py` (15 tests), confirmed RED (missing module), then implemented to GREEN.
 - Added `devos/modules/ingest.py`: `os.walk` with directory pruning, default ignore set + top-level `.gitignore` subset, binary detection (NUL byte) + 2 MB size cap, heuristic classification into frontend/backend/db/api/auth/test/config/other, sha256 content hashing.

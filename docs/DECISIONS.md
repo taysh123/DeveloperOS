@@ -4,6 +4,18 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0006 — Indexing architecture: line-window chunks + FTS5, with a semantic seam
+- **Date:** 2026-06-01
+- **Context:** Phase 3 needs working keyword search now, but must not require a redesign when embedding/semantic search is added later.
+- **Decision:**
+  - **Chunking** is line-based, non-overlapping windows (default 50 lines), 1-based inclusive line ranges (`modules/index.chunk_text`). AST-aware chunking is deferred.
+  - **Storage:** `chunks` holds metadata (line range, tags, per-chunk `content_hash`); chunk text lives only in the `chunks_fts` FTS5 table (no duplication). Each chunk carries its own `content_hash` — the future key for caching embeddings without re-chunking.
+  - **Incremental reindex** is keyed on a new `files.indexed_hash` (sha256 of the indexed text). Unchanged files are skipped purely on hash equality.
+  - **Search** returns a stable `SearchHit` dataclass (`modules/index.search`). Keyword (bm25) search is one strategy; a future `semantic_search` returns the same type, so callers (CLI, Phase 4 Q&A) never change. A future `embeddings(chunk_id, vector, model)` table attaches to `chunks` via `chunk_id`/`content_hash`.
+  - **FTS query safety:** free text is tokenized, each token quote-escaped and wrapped, joined with implicit AND — never passed raw to `MATCH`.
+- **Rationale:** Ships useful local-first search immediately with stdlib only, while the chunk model + result type form a clean seam for semantic search.
+- **Status:** Accepted.
+
 ## D-0005 — Stdlib-only runtime for the foundation
 - **Date:** 2026-06-01
 - **Context:** The foundation must reliably run on a clean machine; network/dep friction is a risk.

@@ -32,7 +32,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Huge repos / binary files / encoding. **Mitigation:** size caps, binary detection, streaming.
 - **Dependencies:** Phase 1.
 
-## Phase 3 — Code Indexing & Search 🚧 (next)
+## Phase 3 — Code Indexing & Search ✅
 - **Goal:** A searchable index of code & docs.
 - **Scope:** Chunking strategy (line/AST-aware later), tagging, FTS5 index, keyword search; design seam for embeddings/semantic search.
 - **Deliverables:** `devos index`, `devos search <query>` (keyword), ranked results with file:line.
@@ -40,7 +40,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Index bloat; stale index. **Mitigation:** content hashing, incremental updates.
 - **Dependencies:** Phase 2.
 
-## Phase 4 — Q&A & Project Understanding ⬜
+## Phase 4 — Q&A & Project Understanding 🚧 (next)
 - **Goal:** Answer "how does X work?" / "where is the auth flow?" with citations.
 - **Scope:** Retrieval over the index → context assembly → AI provider; plain-language project explanation; module summaries.
 - **Deliverables:** `devos ask "<question>"`, `devos explain [path]`, answers cite files.
