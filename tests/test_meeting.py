@@ -44,3 +44,45 @@ class TestSummarize(unittest.TestCase):
 
         meeting_mod.summarize(big, provider=CapProvider(), source_label="big.txt")
         self.assertLessEqual(captured["context_len"], meeting_mod.MAX_TRANSCRIPT_CHARS + 200)
+
+
+class MeetingCliTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self._prev = os.environ.get("DEVOS_HOME")
+        self._home = tempfile.TemporaryDirectory()
+        os.environ["DEVOS_HOME"] = self._home.name
+        self.ws = Workspace.load()
+        self.ws.initialize().close()
+
+    def tearDown(self) -> None:
+        if self._prev is None:
+            os.environ.pop("DEVOS_HOME", None)
+        else:
+            os.environ["DEVOS_HOME"] = self._prev
+        self._home.cleanup()
+
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_summarize_file(self) -> None:
+        f = Path(self._home.name) / "notes.txt"
+        f.write_text("Decision: ship Friday. Alice to fix login bug.", encoding="utf-8")
+        code, out = self._run("meeting", "summarize", str(f))
+        self.assertEqual(code, 0)
+        self.assertIn("Source", out)
+        self.assertIn("login bug", out)
+
+    def test_missing_file_errors(self) -> None:
+        code, out = self._run("meeting", "summarize", str(Path(self._home.name) / "nope.txt"))
+        self.assertEqual(code, 1)
+        self.assertIn("cannot read", out.lower())
+
+    def test_empty_file_declines(self) -> None:
+        f = Path(self._home.name) / "empty.txt"
+        f.write_text("   ", encoding="utf-8")
+        code, out = self._run("meeting", "summarize", str(f))
+        self.assertEqual(code, 0)
+        self.assertIn("empty", out.lower())
