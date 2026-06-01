@@ -127,7 +127,7 @@ EXPLAIN_PROJECT_SYSTEM = (
 )
 
 
-def _resolve_project(conn, project: str | None) -> "tuple[int, str] | None":
+def resolve_project(conn, project: str | None) -> "tuple[int, str] | None":
     if project:
         pid = repo.project_id_by_name(conn, project)
         return (pid, project) if pid is not None else None
@@ -161,7 +161,7 @@ def explain(conn, path: str | None = None, *, provider: AIProvider,
                                    system=EXPLAIN_FILE_SYSTEM, context=context)
         return Answer(text=result.text, sources=chunks, grounded=True, provider=result.provider)
 
-    resolved = _resolve_project(conn, project)
+    resolved = resolve_project(conn, project)
     if resolved is None:
         return Answer(text="Specify a project with --project (multiple or none are registered).",
                       grounded=False, provider=pname)

@@ -268,6 +268,33 @@ def find_project_for_path(conn: sqlite3.Connection, abs_path: str) -> sqlite3.Ro
     return best
 
 
+def find_file_by_path(
+    conn: sqlite3.Connection, project_id: int, path: str
+) -> sqlite3.Row | None:
+    """Resolve a (possibly partial / OS-style) path to an indexed file row.
+
+    Tries exact rel_path, then a path-suffix / basename match. Index-only: never
+    touches the filesystem (security: trace-supplied paths must not cause file reads).
+    """
+    norm = path.replace("\\", "/").lstrip("./")
+    row = conn.execute(
+        "SELECT id, rel_path FROM files WHERE project_id = ? AND rel_path = ?;",
+        (project_id, norm),
+    ).fetchone()
+    if row is not None:
+        return row
+    base = norm.rsplit("/", 1)[-1]
+    rows = conn.execute(
+        "SELECT id, rel_path FROM files WHERE project_id = ? "
+        "AND (rel_path = ? OR rel_path LIKE ?) ORDER BY LENGTH(rel_path);",
+        (project_id, base, "%/" + base),
+    ).fetchall()
+    for r in rows:
+        if r["rel_path"].endswith(norm):
+            return r
+    return rows[0] if rows else None
+
+
 def top_files(conn: sqlite3.Connection, project_id: int, limit: int) -> list[sqlite3.Row]:
     return conn.execute(
         """
