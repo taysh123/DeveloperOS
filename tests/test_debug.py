@@ -202,3 +202,31 @@ class TestDiagnose(DebugDataTestCase):
         parsed = trace_mod.parse_trace(PY_TRACE)
         q = debug_mod.build_debug_query(parsed)
         self.assertIn("compute", q)
+
+
+class TestDebugCli(DebugDataTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_debug_from_file_reports_evidence_and_sources(self) -> None:
+        tracefile = Path(self._home.name) / "trace.txt"
+        tracefile.write_text(PY_TRACE, encoding="utf-8")
+        code, out = self._run("debug", "--file", str(tracefile))
+        self.assertEqual(code, 0)
+        self.assertIn("Observed evidence", out)
+        self.assertIn("src/calc.py", out)
+        self.assertIn("Sources", out)
+        self.assertIn("Confidence", out)
+
+    def test_debug_inline_text(self) -> None:
+        code, out = self._run("debug", "ZeroDivisionError: division by zero at src/calc.py:3")
+        self.assertEqual(code, 0)
+        self.assertIn("src/calc.py", out)
+
+    def test_debug_no_input_errors(self) -> None:
+        code, out = self._run("debug")
+        self.assertEqual(code, 1)
+        self.assertIn("provide", out.lower())
