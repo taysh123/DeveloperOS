@@ -100,6 +100,13 @@ Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, con
 so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
 untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
 
+### Meeting / transcript (`modules/meeting`, Phase 9 slice 6)
+`meeting.summarize(text, *, provider, source_label)` produces a grounded Summary/Decisions/
+Action-items via the provider seam (transcript = data, not instructions; declines on empty;
+12k char cap; not persisted). `devos meeting summarize <file>` reads the file with `utf-8-sig`.
+Cross-cutting: `cli.main` reconfigures stdout/stderr to UTF-8 (guarded) so any non-cp1252
+content prints safely on Windows. See DECISIONS.md D-0017.
+
 ### Plugin / extension seam (`devos/plugins.py`, Phase 9 slice 5)
 `cli.main` calls `plugins.ensure_loaded()` at startup. Plugins extend DeveloperOS through the
 **existing** registries — commands via `commands.base.register` (auto-included by `build_parser`)

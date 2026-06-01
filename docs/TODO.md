@@ -55,12 +55,15 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 2 — Learning Quiz: `devos quiz <path|topic> [--n N]` (n grounded questions, declines). 7 tests (140 total). D-0013.
 - [x] Slice 3 — Exercises & Grading: `devos exercise` (n grounded tasks) + `devos grade` (answer eval). 11 tests (151 total). D-0014.
 - [x] Slice 4 — Career Assistant (1st): `devos job` + `devos cv` + `devos interview` (schema v4 `job_leads`). 16 tests. D-0015.
-- [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins (register commands/providers); fail-safe. 8 tests (176 total). D-0016.
-### Deferred (need explicit approval before building)
-- [ ] Meeting/transcript foundation.
+- [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
+- [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
+
+## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
+- [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
+- [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.
-- [ ] Further career: CV rewrite, job-board scraping/APIs (out of scope by design), persisted CV.
-- [ ] Persisted exercises/scores · interactive grading sessions.
+- [ ] Career: CV rewrite/cover-letter; (scraping/APIs intentionally excluded).
+- [ ] Semantic/embedding search (D-0006 seam); persisted exercises/scores; multi-user/cloud sync.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

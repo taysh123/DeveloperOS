@@ -79,6 +79,10 @@ into the AI context, a model could be manipulated.
   with confirmation. Context is never executed.
 - **[PLANNED] Output handling:** treat model output as untrusted (no eval, no auto-run, no
   unconfirmed file writes).
+- **[NOW] Meeting/transcript (Phase 9 slice 6):** the transcript/notes file is untrusted local
+  input → treated as **data, not instructions** (grounding contract); `meeting summarize <file>`
+  reads only the user-named path; the **transcript is not persisted** and the summary goes to stdout;
+  offline/mock default. No new external surface.
 - **[NOW] Plugin system (Phase 9 slice 5) — code execution / supply-chain surface (NEW):** loading a
   plugin **runs third-party Python in-process** with the user's full authority. Trust model:
   (1) **entry-point plugins** (group `devos.plugins`) come from packages the user deliberately
@@ -155,6 +159,7 @@ into the AI context, a model could be manipulated.
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |
 | Plugins (Phase 9.5) | **Runs third-party code**: entry-point = installed (trusted); local `.py` opt-in (`DEVOS_ENABLE_LOCAL_PLUGINS=1`); failures isolated; sandbox/signing PLANNED |
+| Meeting (Phase 9.6) | Transcript = untrusted data (not instructions); read-only, not persisted; offline/mock |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._

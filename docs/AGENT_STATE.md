@@ -6,22 +6,21 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 9 — Future Modules** is IN PROGRESS (delivered as narrow slices). **Learning (s1–3) +
-Career slice 1 (s4) + Plugin seam (s5) complete.** Phases 0–8 complete.
+**Phase 9 — Future Modules:** all originally-enumerated directions shipped — **Learning (s1–3),
+Career slice 1 (s4), Plugin seam (s5), Meeting foundation (s6).** Phases 0–9 complete.
 
 ## Current milestone
-Done: Learning (`learn`/`quiz`/`exercise`/`grade`), Career slice 1 (`job`/`cv`/`interview`,
-schema v4), Plugin seam (`devos plugins`; entry-point + opt-in local loading). Remaining
-Phase 9 direction **deferred pending explicit approval**: meeting/transcript foundation
-(+ further career CV-rewrite, plugin sandboxing — out of scope by design).
+**Roadmap Phases 0–9 have all shipped their planned scope.** No approved work pending. Future
+extensions (audio STT, action-item→tasks, plugin sandboxing/signing, CV rewrite, real AI
+providers, multi-user/cloud) are optional and require an explicit new request + `/plan`.
 
 ## Next immediate step
-Await approval for the next Phase 9 slice (then `/plan` it narrowly). Do NOT broaden scope
-unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays default.
+Nothing pending. Awaiting the owner's direction for any future extension (each would start
+with a fresh `/plan`). Real AI provider can be wired behind `providers.ai` when desired.
 
 ## Tasks
 ### In progress
-- _None. Phase 9 Learning (s1–3) + Career s1 (s4) + Plugin seam (s5) complete; meeting slice awaits approval._
+- _None. All roadmap phases (0–9) complete; future extensions are on-request only._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -75,6 +74,10 @@ unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays
 - [x] Phase 9 slice 2: Learning Quiz — `learning.quiz` → `Quiz` (n grounded questions, default 5
       clamped [1,20], file/topic mode via shared `_resolve_chunks`, declines when ungrounded);
       `devos quiz <path|topic> [--n N]`. 7 new tests (140 total) pass; dogfooded (file/topic + reject n<1). D-0013.
+- [x] Phase 9 slice 6: Meeting/Transcript foundation — `modules/meeting.summarize` (grounded
+      summary/decisions/action-items, declines on empty, 12k char cap) + `devos meeting summarize <file>`
+      (utf-8-sig read). Cross-cutting: console-safe UTF-8 stdout in `cli.main`. 7 new tests (183 total)
+      pass; dogfooded live. D-0017.
 - [x] Phase 9 slice 5: Plugin/Extension seam — `providers.ai.register_provider`; `devos/plugins.py`
       (entry-point group `devos.plugins` + opt-in local `<data_dir>/plugins/*.py` via
       `DEVOS_ENABLE_LOCAL_PLUGINS=1`; fail-safe `LOADED`/`ERRORS`; `ensure_loaded` at CLI startup);

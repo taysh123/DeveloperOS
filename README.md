@@ -45,6 +45,7 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos cv <file> [--job ID]` | Keyword-match a local CV against job notes (offline): matched/missing + coverage. |
 | `devos interview <job-id>` | Interview-prep questions grounded in a job lead's notes. |
 | `devos plugins` | List loaded plugins (extensions add commands/providers via entry points or opt-in local files). |
+| `devos meeting summarize <file>` | Summarize a local transcript/notes file: summary, decisions, action items (grounded, with source). |
 
 AI answers use an offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
 The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline.

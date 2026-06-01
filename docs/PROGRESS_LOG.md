@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 14: Phase 9 slice 6 (Meeting/Transcript) complete — roadmap 0–9 done
+- Plan-mode `/plan`: same header/body conflict as last turn (header "Meeting/Transcript"; pasted body = stale Career template). Resolved per the established pattern → built the header's slice; flagged it in the plan; ExitPlanMode = the veto gate. Confirmed no meeting code.
+- `modules/meeting.py`: `summarize(text, *, provider, source_label)` → `MeetingSummary` (Summary/Decisions/Action-items, grounded; declines on empty; 12k char cap). `devos meeting summarize <file>` (nested subcommand; `utf-8-sig` read).
+- TDD. **systematic-debugging:** dogfood crashed (`UnicodeEncodeError`) — a Windows-saved file's UTF-8 **BOM** echoed to the cp1252 console. Root-caused at the output boundary. Fixed: (1) `cli.main` reconfigures stdout/stderr to UTF-8/replace (guarded; tests' StringIO untouched) — protects ALL content-echoing commands; (2) `meeting` reads with `utf-8-sig` to strip BOM. Added a BOM regression test.
+- **verification-before-completion:** full suite **183/183 pass**. Re-dogfooded live: grounded summary + Source line, empty-file decline, missing-file error — no crash.
+- Logged **D-0017**; SECURITY transcript-as-data note + posture row. Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/README/memory. Committed + pushed.
+- **Milestone: all enumerated Phase 9 directions (learning/career/plugin/meeting) shipped → Roadmap Phases 0–9 complete.** Future extensions (real providers, STT, sandboxing, etc.) are optional/on-request. Stopped per instruction.
+
 ## 2026-06-01 — Session 13: Phase 9 slice 5 (Plugin / Extension seam) complete
 - Plan-mode `/plan`: request had a **conflict** (header said Plugin System; pasted body described the already-built Career slice and said "do not start plugin seam"). Surfaced it via **AskUserQuestion** → user confirmed **Plugin System**. Avoided rebuilding Career (anti-duplication). Plan approved.
 - `providers/ai.py`: public `register_provider` + `available_providers`.

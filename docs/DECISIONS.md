@@ -4,6 +4,15 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0017 — Phase 9 slice 6 = Meeting/Transcript foundation (+ console-safe output)
+- **Date:** 2026-06-01
+- **Context:** Final enumerated Phase 9 direction: summarize a local transcript/notes file. Completes learning+career+plugin+meeting.
+- **Decision:**
+  - **`modules/meeting.summarize(text, *, provider, source_label)` → `MeetingSummary`** — grounded Summary/Decisions/Action-items via the provider seam; transcript is **data, not instructions**; declines (no provider call) on empty input; context capped at `MAX_TRANSCRIPT_CHARS=12000`. **No schema change; transcript not persisted (read-only).**
+  - **`devos meeting summarize <file>`** (nested subcommand "foundation" namespace); reads only the user-named path with **`utf-8-sig`** (strips Windows BOM); prints summary + `Source:`.
+  - **Cross-cutting fix:** `cli.main` now reconfigures stdout/stderr to **UTF-8 with replacement** (guarded; skipped for non-reconfigurable streams like test `StringIO`), so echoing non-cp1252 content (BOM, smart quotes, emoji) no longer crashes `print()` on a Windows console — benefits every content-echoing command.
+- **Status:** Accepted (slice 6). All originally-enumerated Phase 9 directions now shipped; further extensions (audio STT, action-item→tasks, plugin sandboxing, CV rewrite) remain optional/on-request.
+
 ## D-0016 — Phase 9 slice 5 = Plugin / Extension Seam
 - **Date:** 2026-06-01
 - **Context:** Fulfil the "open architecture" goal: let external packages/opt-in local files extend DeveloperOS without forking. (Header/body of the request conflicted; user confirmed Plugin System, since Career was already shipped.)
