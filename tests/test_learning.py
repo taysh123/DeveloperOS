@@ -94,3 +94,27 @@ class TestLearn(LearnTestCase):
             self.assertEqual(lesson.sources, [])
         finally:
             conn.close()
+
+
+class TestLearnCli(LearnTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_learn_file_prints_text_and_sources(self) -> None:
+        code, out = self._run("learn", "src/retrieval.py", "--level", "eli5", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+        self.assertIn("src/retrieval.py", out)
+
+    def test_learn_topic_mode(self) -> None:
+        code, out = self._run("learn", "ranked", "search", "index", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+
+    def test_learn_declines(self) -> None:
+        code, out = self._run("learn", "zzz_absent_topic_qqq", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("don't have enough", out)
