@@ -173,3 +173,22 @@ class TestLearnCli(LearnTestCase):
         code, out = self._run("learn", "zzz_absent_topic_qqq", "--project", "demo")
         self.assertEqual(code, 0)
         self.assertIn("don't have enough", out)
+
+
+class TestQuizCli(LearnTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_quiz_file_prints_text_and_sources(self) -> None:
+        code, out = self._run("quiz", "src/retrieval.py", "--n", "3", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+        self.assertIn("src/retrieval.py", out)
+
+    def test_quiz_declines(self) -> None:
+        code, out = self._run("quiz", "zzz_absent_topic_qqq", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("don't have enough", out)

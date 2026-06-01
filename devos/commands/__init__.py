@@ -17,5 +17,6 @@ from devos.commands import recall_cmd as _recall_cmd  # noqa: F401
 from devos.commands import serve_cmd as _serve_cmd  # noqa: F401
 from devos.commands import docgen_cmd as _docgen_cmd  # noqa: F401
 from devos.commands import learn_cmd as _learn_cmd  # noqa: F401
+from devos.commands import quiz_cmd as _quiz_cmd  # noqa: F401
 
 __all__ = ["COMMANDS", "Command", "register"]
