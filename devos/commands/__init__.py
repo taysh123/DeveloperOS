@@ -14,5 +14,6 @@ from devos.commands import debug_cmd as _debug_cmd  # noqa: F401
 from devos.commands import task_cmd as _task_cmd  # noqa: F401
 from devos.commands import remember_cmd as _remember_cmd  # noqa: F401
 from devos.commands import recall_cmd as _recall_cmd  # noqa: F401
+from devos.commands import serve_cmd as _serve_cmd  # noqa: F401
 
 __all__ = ["COMMANDS", "Command", "register"]

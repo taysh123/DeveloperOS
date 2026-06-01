@@ -134,6 +134,33 @@ class TestRouting(ApiTestCase):
             self.assertTrue(resp.body)
 
 
+class TestServeCommand(unittest.TestCase):
+    def test_serve_is_registered(self) -> None:
+        from devos.commands import COMMANDS
+        names = {cls.name for cls in COMMANDS}
+        self.assertIn("serve", names)
+
+    def test_serve_pre_init_message_does_not_block(self) -> None:
+        import io
+        from contextlib import redirect_stdout
+        from devos.cli import main
+        prev = os.environ.get("DEVOS_HOME")
+        tmp = tempfile.TemporaryDirectory()
+        os.environ["DEVOS_HOME"] = tmp.name  # fresh, NOT initialized
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = main(["serve"])
+            self.assertEqual(code, 0)
+            self.assertIn("init", buf.getvalue().lower())
+        finally:
+            if prev is None:
+                os.environ.pop("DEVOS_HOME", None)
+            else:
+                os.environ["DEVOS_HOME"] = prev
+            tmp.cleanup()
+
+
 class TestLiveServer(ApiTestCase):
     def test_live_overview_and_index(self) -> None:
         from devos.api import server as api_server
