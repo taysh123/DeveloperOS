@@ -216,3 +216,40 @@ class TestExplain(QaTestCase):
             self.assertTrue(ans.sources)  # cites notable files
         finally:
             conn.close()
+
+
+class TestAskCli(QaTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_ask_prints_answer_and_sources(self) -> None:
+        code, out = self._run("ask", "how", "does", "authenticate", "work")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
+        self.assertIn("login.py", out)
+
+    def test_ask_declines_without_context(self) -> None:
+        code, out = self._run("ask", "zzzqqq_nonexistent_term")
+        self.assertEqual(code, 0)
+        self.assertIn("don't have enough", out)
+
+
+class TestExplainCli(QaTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_explain_file(self) -> None:
+        code, out = self._run("explain", str(self.root / "src" / "auth" / "login.py"))
+        self.assertEqual(code, 0)
+        self.assertIn("login.py", out)
+
+    def test_explain_project_overview(self) -> None:
+        code, out = self._run("explain", "--project", "demo")
+        self.assertEqual(code, 0)
+        self.assertIn("Sources", out)
