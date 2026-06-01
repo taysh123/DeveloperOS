@@ -122,3 +122,56 @@ class TestTaskRepo(TaskTestCase):
             self.assertEqual([t["title"] for t in hits], ["Wire Claude provider"])
         finally:
             conn.close()
+
+
+class TestTaskCli(TaskTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_add_and_list(self) -> None:
+        code, out = self._run("task", "add", "Fix", "login", "bug",
+                              "--kind", "bug", "--priority", "high")
+        self.assertEqual(code, 0)
+        code, out = self._run("task", "list")
+        self.assertEqual(code, 0)
+        self.assertIn("Fix login bug", out)
+        self.assertIn("high", out)
+
+    def test_set_status(self) -> None:
+        conn = self.ws.connect()
+        try:
+            tid = repo.create_task(conn, None, "T", kind="task", status="todo", priority="medium")
+        finally:
+            conn.close()
+        code, out = self._run("task", "set", str(tid), "--status", "done")
+        self.assertEqual(code, 0)
+        conn = self.ws.connect()
+        try:
+            self.assertEqual(repo.get_task(conn, tid)["status"], "done")
+        finally:
+            conn.close()
+
+    def test_show_and_rm(self) -> None:
+        conn = self.ws.connect()
+        try:
+            tid = repo.create_task(conn, None, "Showme", kind="task", status="todo", priority="low")
+        finally:
+            conn.close()
+        code, out = self._run("task", "show", str(tid))
+        self.assertEqual(code, 0)
+        self.assertIn("Showme", out)
+        code, out = self._run("task", "rm", str(tid))
+        self.assertEqual(code, 0)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNone(repo.get_task(conn, tid))
+        finally:
+            conn.close()
+
+    def test_list_empty(self) -> None:
+        code, out = self._run("task", "list")
+        self.assertEqual(code, 0)
+        self.assertIn("No tasks", out)
