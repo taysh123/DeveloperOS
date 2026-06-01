@@ -101,3 +101,15 @@ def assemble_context(chunks: list[RetrievedChunk], *, max_chars: int = MAX_CONTE
         blocks.append(block)
         used += len(block)
     return "\n\n".join(blocks)
+
+
+def answer(conn, question: str, *, provider: AIProvider, project: str | None = None,
+           limit: int = DEFAULT_RETRIEVAL) -> Answer:
+    """Answer a question grounded in retrieved chunks. Declines (no provider call) if empty."""
+    chunks = retrieve(conn, question, project=project, limit=limit)
+    if not chunks:
+        return Answer(text=INSUFFICIENT_MSG, sources=[], grounded=False,
+                      provider=getattr(provider, "name", "mock"))
+    context = assemble_context(chunks)
+    result = provider.complete(question, system=GROUNDING_SYSTEM, context=context)
+    return Answer(text=result.text, sources=chunks, grounded=True, provider=result.provider)

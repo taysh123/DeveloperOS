@@ -152,3 +152,37 @@ class TestRetrieve(QaTestCase):
             self.assertIn("[Source 1]", ctx)
         finally:
             conn.close()
+
+
+class TestAnswer(QaTestCase):
+    def test_answer_is_grounded_with_sources(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ans = qa.answer(conn, "how does authenticate work", provider=MockAIProvider())
+            self.assertTrue(ans.grounded)
+            self.assertTrue(ans.sources)
+            self.assertEqual(ans.sources[0].rel_path, "src/auth/login.py")
+            self.assertEqual(ans.provider, "mock")
+        finally:
+            conn.close()
+
+    def test_answer_declines_when_no_context(self) -> None:
+        conn = self.ws.connect()
+        try:
+            ans = qa.answer(conn, "zzzqqq_nonexistent_term", provider=MockAIProvider())
+            self.assertFalse(ans.grounded)
+            self.assertEqual(ans.sources, [])
+            self.assertIn("don't have enough", ans.text)
+        finally:
+            conn.close()
+
+    def test_answer_does_not_call_provider_when_empty(self) -> None:
+        class BoomProvider(MockAIProvider):
+            def complete(self, *a, **k):
+                raise AssertionError("provider must not be called without context")
+        conn = self.ws.connect()
+        try:
+            ans = qa.answer(conn, "zzzqqq_nonexistent_term", provider=BoomProvider())
+            self.assertFalse(ans.grounded)
+        finally:
+            conn.close()
