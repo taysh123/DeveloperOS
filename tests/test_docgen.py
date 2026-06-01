@@ -121,6 +121,18 @@ class TestRecordDocs(DocgenTestCase):
         finally:
             conn.close()
 
+    def test_decisions_includes_global_memory(self) -> None:
+        # A memory recorded globally (no project) should still appear in a project's decision log.
+        conn = self.ws.connect()
+        try:
+            repo.create_memory(conn, None, kind="decision",
+                               title="Global decision", body="applies everywhere")
+            doc = docgen_mod.generate(conn, "decisions", provider=MockAIProvider(), project="demo")
+            self.assertTrue(doc.grounded)
+            self.assertIn("Global decision", doc.text)
+        finally:
+            conn.close()
+
     def test_milestone_from_tasks(self) -> None:
         conn = self.ws.connect()
         try:

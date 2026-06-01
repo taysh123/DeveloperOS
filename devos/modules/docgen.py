@@ -113,8 +113,9 @@ def generate(conn, doc_type: str, *, provider: AIProvider,
 
     # record-grounded
     kind, system = _RECORD_DOCS[doc_type]
-    memory = repo.list_memory(conn, project_id=project_id, kind=kind)
-    tasks = repo.list_tasks(conn, project_id=project_id) if doc_type != "decisions" else []
+    memory = repo.list_memory(conn, project_id=project_id, kind=kind, include_global=True)
+    tasks = (repo.list_tasks(conn, project_id=project_id, include_global=True)
+             if doc_type != "decisions" else [])
     if not memory and not tasks:
         return _insufficient(doc_type, pname)
     sources: list = [dict(m) for m in memory] + [dict(t) for t in tasks]

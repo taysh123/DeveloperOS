@@ -236,10 +236,13 @@ def get_task(conn: sqlite3.Connection, task_id: int) -> sqlite3.Row | None:
 
 def list_tasks(conn: sqlite3.Connection, *, project_id: int | None = None,
                status: str | None = None, kind: str | None = None,
-               milestone: str | None = None) -> list[sqlite3.Row]:
+               milestone: str | None = None, include_global: bool = False) -> list[sqlite3.Row]:
     clauses, params = [], []
     if project_id is not None:
-        clauses.append("project_id = ?"); params.append(project_id)
+        if include_global:
+            clauses.append("(project_id = ? OR project_id IS NULL)"); params.append(project_id)
+        else:
+            clauses.append("project_id = ?"); params.append(project_id)
     if status is not None:
         clauses.append("status = ?"); params.append(status)
     if kind is not None:
@@ -316,10 +319,13 @@ def get_memory(conn: sqlite3.Connection, memory_id: int) -> sqlite3.Row | None:
 
 
 def list_memory(conn: sqlite3.Connection, *, project_id: int | None = None,
-                kind: str | None = None) -> list[sqlite3.Row]:
+                kind: str | None = None, include_global: bool = False) -> list[sqlite3.Row]:
     clauses, params = [], []
     if project_id is not None:
-        clauses.append("project_id = ?"); params.append(project_id)
+        if include_global:
+            clauses.append("(project_id = ? OR project_id IS NULL)"); params.append(project_id)
+        else:
+            clauses.append("project_id = ?"); params.append(project_id)
     if kind is not None:
         clauses.append("kind = ?"); params.append(kind)
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
