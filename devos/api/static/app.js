@@ -346,12 +346,168 @@
     </div>`;
   }
 
+  // --- PROJECTS ------------------------------------------------------------
+  function fmtWhen(s) {
+    if (!s) return "never";
+    return String(s).replace("T", " ").slice(0, 16);
+  }
+
+  function ScanResult(props) {
+    var r = props.r;
+    return html`<div class="msg ok" role="status">
+      <strong>Imported “${r.project_name}”.</strong>
+      ${r.total} file(s) recorded${r.indexed_chunks ? ", " + r.indexed_chunks + " sections indexed" : ""}.
+      <span class="muted"> (+${r.added} new, ~${r.updated} updated, ${r.skipped} skipped)</span>
+    </div>`;
+  }
+
+  // Reusable confirm-before-scan widget. Calls onDone(result) after a successful scan.
+  function ScanFlow(props) {
+    var pth = useState(props.path || ""), path = pth[0], setPath = pth[1];
+    var nm = useState(""), name = nm[0], setName = nm[1];
+    var cf = useState(false), confirming = cf[0], setConfirming = cf[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
+    var er = useState(""), err = er[0], setErr = er[1];
+    var fixedPath = !!props.path; // re-scan: path is locked to the project root
+
+    function cont(ev) {
+      ev.preventDefault();
+      if (!path.trim()) { setErr("Please enter the folder you want to import."); return; }
+      setErr(""); setConfirming(true);
+    }
+    function scanNow() {
+      setBusy(true); setErr("");
+      post("/api/projects/scan", { path: path.trim(), name: name.trim() || undefined })
+        .then(function (r) { setBusy(false); setConfirming(false); props.onDone(r); })
+        .catch(function (x) { setBusy(false); setConfirming(false); setErr(x.message); });
+    }
+
+    if (confirming) {
+      return html`<div class="confirm">
+        <p>You're about to import:</p>
+        <p><code>${path.trim()}</code></p>
+        <p class="muted">This reads the text files in that folder into your local index so you can
+          search and ask about them. Nothing leaves your computer.</p>
+        <div class="row">
+          <button class="btn" type="button" onClick=${scanNow} disabled=${busy}>
+            ${busy ? "Scanning…" : "Scan now"}</button>
+          <button class="btn ghost" type="button" onClick=${function () { setConfirming(false); }}
+                  disabled=${busy}>Cancel</button>
+        </div>
+        <${Msg} text=${err} />
+      </div>`;
+    }
+    return html`<form class="form" onSubmit=${cont}>
+      <div class="field">
+        <label for="scan-path">Folder to import</label>
+        <input id="scan-path" value=${path} readOnly=${fixedPath}
+               placeholder="e.g. C:\\Projects\\my-app"
+               onInput=${function (ev) { setPath(ev.target.value); }} />
+      </div>
+      ${!fixedPath && html`<div class="field">
+        <label for="scan-name">Name (optional)</label>
+        <input id="scan-name" value=${name} placeholder="defaults to the folder name"
+               onInput=${function (ev) { setName(ev.target.value); }} />
+      </div>`}
+      <button class="btn" type="submit">${props.cta || "Continue"}</button>
+      <${Msg} text=${err} />
+    </form>`;
+  }
+
+  function ProjectDetail(props) {
+    var data = useApi("/api/projects/detail?id=" + props.id, props.tick);
+    var rescan = useState(false), reScanning = rescan[0], setReScanning = rescan[1];
+    var done = useState(null), result = done[0], setResult = done[1];
+    if (!data) return html`<${Empty}>Loading…<//>`;
+    if (data.error) return html`<${Empty}>Couldn't load this project.<//>`;
+    var p = data.project, idx = data.index || {}, cats = data.by_category || {};
+    var catKeys = Object.keys(cats).sort();
+    function onRescanned(r) { setResult(r); setReScanning(false); props.reload(); }
+    return html`<div>
+      <button class="btn ghost small" type="button" onClick=${props.onBack}>← Back to projects</button>
+      <div class="panel detail">
+        <h2>${p.name}</h2>
+        <div class="item"><span class="muted">Folder:</span> <code>${p.root_path}</code></div>
+        <div class="grid cards">
+          <${Stat} k="todo" n=${p.file_count} label="Files" />
+          <${Stat} k="in_progress" n=${idx.chunks || 0} label="Indexed sections" />
+        </div>
+        <div class="item"><span class="muted">Last scanned:</span> ${fmtWhen(p.last_scanned_at)}</div>
+        <div class="item"><span class="muted">Status:</span>
+          ${idx.chunks ? "Indexed — ready to search and ask." : "Not indexed yet."}</div>
+        ${catKeys.length ? html`<div class="item"><span class="muted">What's inside:</span>
+          <div class="catrow">${catKeys.map(function (k) {
+            return html`<${Badge} key=${k}>${k}: ${cats[k]}<//>`; })}</div></div>` : null}
+      </div>
+      <div class="panel">
+        <div class="panelhead"><h2>Refresh this project</h2>
+          ${!reScanning && html`<button class="btn small" type="button"
+            onClick=${function () { setReScanning(true); setResult(null); }}>Re-scan</button>`}</div>
+        ${result && html`<${ScanResult} r=${result} />`}
+        ${reScanning && html`<${ScanFlow} path=${p.root_path} cta="Re-scan" onDone=${onRescanned} />`}
+        ${!reScanning && !result && html`<${Empty}>Re-scan to pick up files you've added or changed.<//>`}
+      </div>
+    </div>`;
+  }
+
+  function ProjectsView(props) {
+    var md = useState("list"), mode = md[0], setMode = md[1];
+    var sel = useState(null), selectedId = sel[0], setSelectedId = sel[1];
+    var res = useState(null), result = res[0], setResult = res[1];
+    var data = useApi("/api/projects", props.tick);
+    var projects = (data && !data.error && data.projects) || [];
+
+    function open(id) { setSelectedId(id); setMode("detail"); }
+    function onImported(r) { setResult(r); setMode("list"); props.reload(); }
+
+    if (mode === "detail" && selectedId != null) {
+      return html`<${ProjectDetail} id=${selectedId} tick=${props.tick} reload=${props.reload}
+        onBack=${function () { setMode("list"); }} />`;
+    }
+    if (mode === "import") {
+      return html`<div>
+        <button class="btn ghost small" type="button"
+          onClick=${function () { setMode("list"); }}>← Back to projects</button>
+        <div class="panel form">
+          <h2>Import a project</h2>
+          <p class="muted">Point DeveloperOS at a project folder on your computer. It reads the text
+            files inside so you can search them and ask questions. It runs entirely on your machine.</p>
+          <${ScanFlow} cta="Continue" onDone=${onImported} />
+        </div>
+      </div>`;
+    }
+    // list
+    return html`<div>
+      <div class="panelhead">
+        <h2>Your projects</h2>
+        <button class="btn" type="button" onClick=${function () { setMode("import"); }}>Import a project</button>
+      </div>
+      ${result && html`<${ScanResult} r=${result} />`}
+      ${!data ? html`<${Empty}>Loading…<//>`
+        : projects.length ? html`<div class="grid panels">
+            ${projects.map(function (p) {
+              return html`<div class="panel projcard" key=${p.id}>
+                <h2>${p.name}</h2>
+                <div class="item"><strong>${p.file_count}</strong> files
+                  <span class="muted"> · last scanned ${fmtWhen(p.last_scanned_at)}</span></div>
+                <div class="item muted"><code>${p.root_path}</code></div>
+                <button class="btn small ghost" type="button"
+                  onClick=${function () { open(p.id); }}>View</button>
+              </div>`; })}
+          </div>`
+        : html`<div class="panel"><${Empty}>No projects yet — import a folder to get started.<//>
+            <button class="btn" type="button" onClick=${function () { setMode("import"); }}>Import a project</button>
+          </div>`}
+    </div>`;
+  }
+
   // --- shell + tabs --------------------------------------------------------
   var TABS = [
     { id: "home", label: "Home" },
     { id: "tasks", label: "Tasks" },
     { id: "notes", label: "Notes" },
-    { id: "assist", label: "Search & Ask" }
+    { id: "assist", label: "Search & Ask" },
+    { id: "projects", label: "Projects" }
   ];
 
   function App() {
@@ -379,6 +535,7 @@
         ${tab === "tasks" && html`<${TasksView} tick=${tick} reload=${reload} />`}
         ${tab === "notes" && html`<${NotesView} tick=${tick} reload=${reload} />`}
         ${tab === "assist" && html`<${SearchView} />`}
+        ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
       </main>
       <div class="footer">DeveloperOS · local-first · runs only on your machine</div>
     </div>`;

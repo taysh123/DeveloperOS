@@ -145,6 +145,15 @@ into the AI context, a model could be manipulated.
   `task`/`remember` commands, so they do **not** invoke the Safe Action Agent (§4) — which remains
   reserved for filesystem/git/shell actions. Read-only AI endpoints (`/api/search|ask|explain`) reuse
   the Q&A grounding contract (§5) and the offline mock provider; no secrets reach the frontend.
+- **[NOW] Project import/scan from the dashboard (D-0019).** `POST /api/projects/scan` reads **local
+  filesystem content the user explicitly names** (then indexes it) — functionally identical to the CLI
+  `devos scan <path>`: same ignore rules, size/binary caps, and the §2 caveat that secrets in tracked
+  source can be indexed. The path is **untrusted**: validated server-side as a real directory
+  (`ingest.scan_project` resolves + `is_dir()`-checks; non-directory/missing → friendly 400) and length-
+  capped. The only new aspect — that a scan is browser-triggerable — is already contained by the D-0018
+  controls (**CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only**), so a
+  cross-origin page cannot trigger a scan; the UI also requires an **explicit confirmation step** before
+  the write. No new outbound surface; offline; mock provider unchanged.
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -166,6 +175,7 @@ into the AI context, a model could be manipulated.
 | Tasks/memory (Phase 6) | Untrusted stored text (display/storage only); `recall` is offline/read-only — **no AI call, no new injection surface** |
 | Dashboard API (Phase 7) | **Loopback-only**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
 | Dashboard writes (action slice, D-0018) | POST tasks/notes guarded by **CSRF token + Origin allowlist + JSON-only + 64 KB cap**; no CORS headers; input validated; DB writes ≈ CLI `task`/`remember` (no Safe Action Agent); search/ask/explain read-only + grounded (offline mock) |
+| Dashboard project import (Projects tab, D-0019) | `POST /api/projects/scan` reads only the user-named folder ≈ CLI `devos scan` (same ignore/size/binary rules, §2 caveat); path validated server-side; same D-0018 CSRF/Origin/no-CORS gating + UI confirm step; no new outbound surface |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

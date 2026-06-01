@@ -237,6 +237,66 @@ class TestReadAssistEndpoints(ApiTestCase):
         self.assertTrue(json.loads(resp.body)["grounded"])
 
 
+class TestProjectsEndpoints(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def test_detail_returns_overview(self) -> None:
+        resp = api_app.route(self.ws, "/api/projects/detail", {"id": str(self.pid)})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertEqual(body["project"]["name"], "demo")
+        self.assertGreaterEqual(body["project"]["file_count"], 1)
+        self.assertIn("by_category", body)
+        self.assertGreaterEqual(body["index"]["chunks"], 1)
+
+    def test_detail_unknown_id_404(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/projects/detail", {"id": "99999"}).status, 404)
+
+    def test_detail_missing_id_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/projects/detail", {}).status, 400)
+        self.assertEqual(api_app.route(self.ws, "/api/projects/detail", {"id": "x"}).status, 400)
+
+    def test_scan_creates_and_indexes(self) -> None:
+        newdir = tempfile.TemporaryDirectory()
+        self.addCleanup(newdir.cleanup)
+        _write(Path(newdir.name), "lib/util.py", "def add(a, b):\n    return a + b\n")
+        resp = self._post("/api/projects/scan", {"path": newdir.name, "name": "fresh"})
+        self.assertEqual(resp.status, 201)
+        body = json.loads(resp.body)
+        self.assertEqual(body["project_name"], "fresh")
+        self.assertGreaterEqual(body["total"], 1)
+        self.assertGreaterEqual(body["indexed_chunks"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNotNone(repo.project_id_by_name(conn, "fresh"))
+        finally:
+            conn.close()
+
+    def test_scan_is_idempotent(self) -> None:
+        newdir = tempfile.TemporaryDirectory()
+        self.addCleanup(newdir.cleanup)
+        _write(Path(newdir.name), "a.py", "x = 1\n")
+        first = json.loads(self._post("/api/projects/scan", {"path": newdir.name}).body)
+        second = json.loads(self._post("/api/projects/scan", {"path": newdir.name}).body)
+        self.assertEqual(first["project_id"], second["project_id"])
+        conn = self.ws.connect()
+        try:
+            names = [p["root_path"] for p in repo.list_projects(conn)]
+            self.assertEqual(names.count(second["root"]), 1)
+        finally:
+            conn.close()
+
+    def test_scan_bad_path_400(self) -> None:
+        resp = self._post("/api/projects/scan", {"path": "/no/such/folder/xyz123"})
+        self.assertEqual(resp.status, 400)
+
+    def test_scan_missing_path_400(self) -> None:
+        self.assertEqual(self._post("/api/projects/scan", {}).status, 400)
+        self.assertEqual(self._post("/api/projects/scan", {"path": "   "}).status, 400)
+        self.assertEqual(self._post("/api/projects/scan", {"path": 123}).status, 400)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -354,3 +414,8 @@ class TestLiveSecurity(_LiveServerMixin):
         _, port = self._start()
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/overview", timeout=5) as r:
             self.assertEqual(r.status, 200)
+
+    def test_scan_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/projects/scan", {"path": "."})
+        self.assertEqual(status, 403)

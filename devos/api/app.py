@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from devos.modules import index as index_mod
+from devos.modules import ingest
 from devos.modules import qa
 from devos.modules import recall as recall_mod
 from devos.storage import repo
@@ -98,6 +99,19 @@ def overview(conn: sqlite3.Connection) -> dict:
 
 def projects_payload(conn: sqlite3.Connection) -> dict:
     return {"projects": [_d(p) for p in repo.list_projects(conn)]}
+
+
+def project_detail(conn: sqlite3.Connection, project_id: int) -> dict | None:
+    """Full overview for one project, or None if it doesn't exist."""
+    row = next((p for p in repo.list_projects(conn) if p["id"] == project_id), None)
+    if row is None:
+        return None
+    chunks, indexed_files = repo.chunk_stats(conn, project_id)
+    return {
+        "project": _d(row),
+        "by_category": repo.category_breakdown(conn, project_id),
+        "index": {"chunks": chunks, "indexed_files": indexed_files},
+    }
 
 
 def tasks_payload(conn: sqlite3.Connection, *, status: str | None = None,
@@ -274,11 +288,52 @@ def update_note_action(conn: sqlite3.Connection, body: dict) -> Response:
     return _json({"updated": repo.update_memory(conn, mid, **fields)})
 
 
+MAX_PATH = 4096
+
+
+def scan_project_action(conn: sqlite3.Connection, body: dict) -> Response:
+    """Import/scan a folder the user named, then index it so it's searchable.
+
+    The path is untrusted: ``ingest.scan_project`` resolves + validates it as a directory
+    (non-directory/missing -> friendly 400) and applies the usual ignore/size/binary rules."""
+    path = body.get("path")
+    if not isinstance(path, str) or not path.strip():
+        return _bad("a folder path is required")
+    if len(path) > MAX_PATH:
+        return _bad("path is too long")
+    name = body.get("name")
+    if name is not None:
+        name = str(name).strip() or None
+        if name and len(name) > MAX_TITLE:
+            return _bad(f"name is too long (max {MAX_TITLE} characters)")
+    try:
+        result = ingest.scan_project(conn, path.strip(), name=name)
+    except (NotADirectoryError, FileNotFoundError):
+        return _bad("That folder doesn't exist on this computer. Check the path and try again.")
+    except OSError as exc:
+        return _bad(f"Couldn't read that folder: {exc}")
+    index_result = index_mod.index_project(conn, result.project_id)
+    return _json({
+        "project_id": result.project_id,
+        "project_name": result.project_name,
+        "root": result.root,
+        "total": result.total,
+        "added": result.added,
+        "updated": result.updated,
+        "unchanged": result.unchanged,
+        "removed": result.removed,
+        "skipped": result.skipped,
+        "by_category": result.by_category,
+        "indexed_chunks": index_result.chunks_written,
+    }, 201)
+
+
 _POST_ACTIONS = {
     "/api/tasks/create": create_task_action,
     "/api/tasks/update": update_task_action,
     "/api/notes/create": create_note_action,
     "/api/notes/update": update_note_action,
+    "/api/projects/scan": scan_project_action,
 }
 
 
@@ -312,6 +367,14 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                 return _json(overview(conn))
             if path == "/api/projects":
                 return _json(projects_payload(conn))
+            if path == "/api/projects/detail":
+                pid = query.get("id")
+                if pid is None or not str(pid).isdigit():
+                    return _bad("a valid project id is required")
+                detail = project_detail(conn, int(pid))
+                if detail is None:
+                    return _json({"error": f"no project #{pid}"}, 404)
+                return _json(detail)
             if path == "/api/tasks":
                 return _json(tasks_payload(conn, status=query.get("status"),
                                            kind=query.get("kind"), project=query.get("project")))

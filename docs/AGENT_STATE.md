@@ -6,24 +6,30 @@
 _Last updated: 2026-06-02_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard action slice 1 shipped:**
-the local dashboard is now action-oriented (Tasks/Notes write + Search/Q&A) with a guarded write API.
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1 & 2 shipped:**
+the local dashboard is action-oriented (Tasks/Notes write + Search/Q&A) **and** can import/view
+projects — Home · Tasks · Notes · Search & Ask · Projects — over a CSRF-token-guarded loopback API.
 
 ## Current milestone
-**Accessible dashboard slice 1 complete (D-0018).** The dashboard is the primary, non-programmer-
-friendly entry point for everyday work (create/update tasks, add/edit notes, search, ask), backed
-by a CSRF-token-protected loopback write API. No further approved work pending.
+**Dashboard slice 2 complete (D-0019).** Projects tab adds safe import/scan (confirm-before-write,
+server-validated path, scan+index) + a project overview, reusing existing `ingest`/`index`/`repo`.
+Slice committed on branch `feat/dashboard-projects-tab` (PR pending review; not on `main` remote yet).
 
 ## Next immediate step
-Nothing pending. Optional follow-ups (on a fresh `/plan`): scan/import UI, debug/learning/career/
-meeting UIs, richer task/note management (delete, projects in forms), real AI provider behind
-`providers.ai`. Each requires an explicit new request.
+Nothing pending. Optional follow-ups (each on a fresh `/plan`): debug/learning/career/meeting UIs;
+deletes (task/note/project) with confirmation; project picker in task/note forms; real AI provider
+behind `providers.ai`. Also: merge the open PR(s) to `main` when reviewed.
 
 ## Tasks
 ### In progress
-- _None. Dashboard action slice 1 complete; further dashboard surfaces are on-request only._
+- _None. Dashboard slice 2 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 2 (2026-06-02): Projects tab. `app.py` `project_detail` + GET
+      `/api/projects/detail` + POST `/api/projects/scan` (validate path → `ingest.scan_project` →
+      `index_mod.index_project`; in `_POST_ACTIONS`, inherits slice-1 CSRF guards). React+htm
+      Projects tab (list/detail/import) with confirm-before-write `ScanFlow` + Re-scan. TDD;
+      **216/216 tests** (+8); live smoke verified. D-0019; SECURITY §8 + posture row; KNOWN_ISSUES updated.
 - [x] Dashboard action slice 1 (2026-06-02): action-oriented, tabbed dashboard. `repo.update_memory`;
       `app.route` extended (keyword-only `method`/`body`) with POST `tasks/notes create|update` (reuse
       repo writes) + GET `search`/`ask`/`explain` (reuse `index`/`qa`, `ws.ai`); `server.py` `do_POST`

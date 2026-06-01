@@ -9,10 +9,10 @@ _Active issues, limitations, and tech debt. Resolved items move to PROGRESS_LOG/
   architecture seam is in place (D-0004, D-0006), the embedding backend is not.
 - **Chunking is line-based, not AST-aware.** Fixed line windows (default 50) can split
   functions/classes across chunks. AST-aware chunking is a later refinement (D-0006).
-- **Dashboard is read-only.** `devos serve` shows data but cannot yet edit tasks/memory from the
-  UI; mutations stay in the CLI until write endpoints + the safe-action model land (SECURITY §8).
-  Vendored React/htm live in `devos/api/static/vendor/` (committed) so the UI is fully offline;
-  re-fetch from unpkg if ever updating versions.
+- **Dashboard is action-capable (D-0018/D-0019).** `devos serve` can create/update tasks, add/edit
+  notes, search, ask, and import/scan projects from the UI (loopback + CSRF-token guarded). Vendored
+  React/htm live in `devos/api/static/vendor/` (committed) so the UI is fully offline; re-fetch from
+  unpkg if ever updating versions. Not yet exposed in the UI: deletes, debug/learning/career/meeting.
 - **Q&A answer text is a stub.** With the default mock provider, `ask`/`explain` echo the
   assembled context/prompt (clearly labeled `[MOCK AI]`); real prose arrives when a live
   provider is configured. Retrieval, grounding, and `file:line` citations are real now.

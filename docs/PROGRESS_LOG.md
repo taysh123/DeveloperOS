@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-02 — Session 16: Dashboard slice 2 — Projects tab (safe import/scan + overview)
+- `/plan`: scoped to ONE slice (Projects tab). Confirmed slice 1 complete via AGENT_STATE; read `ingest.scan_project`/`ScanResult` + `repo` project helpers directly (token-efficient, no agents) — no new scanner needed.
+- **TDD.** `app.py`: `project_detail` builder (reuses `repo.list_projects`/`category_breakdown`/`chunk_stats`); **GET `/api/projects/detail?id=`** (404 unknown / 400 bad id); **POST `/api/projects/scan`** = validate untrusted path → `ingest.scan_project` (catches `NotADirectoryError`/`FileNotFoundError` → friendly 400) → `index_mod.index_project`; registered in `_POST_ACTIONS` so it inherits slice-1 CSRF/Origin/size guards (**no `server.py` change**). **Decision D-0019: Import = scan + index.**
+- **Frontend:** new **Projects** tab (Home · Tasks · Notes · Search & Ask · Projects). `ProjectsView` (list/detail/import) + reusable `ScanFlow` (two-step **confirm-before-write**) + `ProjectDetail` (name/folder/file count/last scanned/indexed status/category breakdown + Re-scan). Plain language, accessible labels, empty states. Minor CSS only.
+- **verification-before-completion:** full suite **216/216** (+8). Scripted **live smoke**: SPA served, token-less scan → 403, bogus path → 400, import (scan+index) → 201, project in list + detail (file_count + chunks), search finds the just-imported code — all PASS.
+- Synced DECISIONS (D-0019), SECURITY §8 (bullet + posture row), KNOWN_ISSUES (retired stale "read-only" note), CHANGELOG, ARCHITECTURE, README, AGENT_STATE, TODO.
+- **Git (no review bypass):** branch `feat/dashboard-projects-tab` (carries unpushed slice-1 commit), committed slice 2, pushed branch; PR link provided. No tag (unmerged). **Slice complete; scope held.**
+
 ## 2026-06-02 — Session 15: Action-oriented dashboard (slice 1) — Tasks/Notes/Search/Q&A from the UI
 - `/plan`: scope confirmed via **AskUserQuestion** → Tasks + Notes + Search/Q&A, presented as lightweight **tabbed** UI. Explored existing read-only API/SPA + reusable module/repo fns first (no duplication); confirmed the only missing reusable fn was a memory update.
 - **TDD throughout.** `repo.update_memory` (mirrors `update_task` whitelist; memory has no `updated_at`). `app.route` extended to `(ws, path, query, *, method="GET", body=None)` — keyword-only so all existing GET call sites + tests stay unchanged. New **POST** actions reuse `repo.create_task`/`update_task`/`create_memory`/`update_memory`; new **GET** `/api/search`/`ask`/`explain` reuse `index.search`/`qa.answer`/`qa.explain` (provider via `ws.ai`). Friendly 400/404 validation at the API layer.
