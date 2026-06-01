@@ -11,16 +11,20 @@ from datetime import datetime, timezone
 from importlib import resources
 from pathlib import Path
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 # Numbered migrations applied to EXISTING databases (fresh DBs use schema.sql directly).
 MIGRATIONS: dict[int, list[str]] = {
     2: ["ALTER TABLE files ADD COLUMN indexed_hash TEXT;"],
     3: ["ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium';"],
+    4: ["CREATE TABLE IF NOT EXISTS job_leads ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, company TEXT NOT NULL, role TEXT, url TEXT, "
+        "status TEXT NOT NULL DEFAULT 'saved', notes TEXT, "
+        "created_at TEXT NOT NULL, updated_at TEXT NOT NULL);"],
 }
 
 # Tables surfaced in `devos status` (exists per current schema).
-COUNTED_TABLES = ("projects", "files", "chunks", "tasks", "memory")
+COUNTED_TABLES = ("projects", "files", "chunks", "tasks", "memory", "job_leads")
 
 
 def _now() -> str:

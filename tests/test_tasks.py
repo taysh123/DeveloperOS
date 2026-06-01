@@ -18,7 +18,7 @@ class TestSchemaV3(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             conn = db.initialize(Path(tmp) / "devos.db")
             try:
-                self.assertEqual(db.schema_version(conn), 3)
+                self.assertEqual(db.schema_version(conn), db.SCHEMA_VERSION)
                 cols = {r["name"] for r in conn.execute("PRAGMA table_info(tasks);")}
                 self.assertIn("priority", cols)
             finally:
@@ -38,7 +38,7 @@ class TestSchemaV3(unittest.TestCase):
 
             conn = db.initialize(dbp)
             try:
-                self.assertEqual(db.schema_version(conn), 3)
+                self.assertEqual(db.schema_version(conn), db.SCHEMA_VERSION)
                 cols = {r["name"] for r in conn.execute("PRAGMA table_info(tasks);")}
                 self.assertIn("priority", cols)
             finally:

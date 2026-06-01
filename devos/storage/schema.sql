@@ -62,6 +62,18 @@ CREATE TABLE IF NOT EXISTS tasks (
     updated_at  TEXT NOT NULL
 );
 
+-- Phase 9 (career): tracked job leads.
+CREATE TABLE IF NOT EXISTS job_leads (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    company     TEXT NOT NULL,
+    role        TEXT,
+    url         TEXT,
+    status      TEXT NOT NULL DEFAULT 'saved',  -- saved|applied|interview|offer|rejected|closed
+    notes       TEXT,
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+
 -- Phase 6: memory engine entries.
 CREATE TABLE IF NOT EXISTS memory (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
