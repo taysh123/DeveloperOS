@@ -96,6 +96,61 @@ class TestLearn(LearnTestCase):
             conn.close()
 
 
+class TestQuiz(LearnTestCase):
+    def test_file_mode_questions_grounded(self) -> None:
+        conn = self.ws.connect()
+        try:
+            quiz = learning_mod.quiz(conn, "src/retrieval.py",
+                                     provider=MockAIProvider(), n=3, project="demo")
+            self.assertTrue(quiz.grounded)
+            self.assertEqual(quiz.n, 3)
+            self.assertTrue(any(s.rel_path == "src/retrieval.py" for s in quiz.sources))
+            self.assertIn("retrieve", quiz.text)  # mock echoes grounded context
+        finally:
+            conn.close()
+
+    def test_topic_mode(self) -> None:
+        conn = self.ws.connect()
+        try:
+            quiz = learning_mod.quiz(conn, "ranked search index",
+                                     provider=MockAIProvider(), project="demo")
+            self.assertTrue(quiz.grounded)
+            self.assertTrue(quiz.sources)
+        finally:
+            conn.close()
+
+    def test_invalid_n_raises(self) -> None:
+        conn = self.ws.connect()
+        try:
+            with self.assertRaises(ValueError):
+                learning_mod.quiz(conn, "src/retrieval.py",
+                                  provider=MockAIProvider(), n=0, project="demo")
+        finally:
+            conn.close()
+
+    def test_n_clamped_to_max(self) -> None:
+        conn = self.ws.connect()
+        try:
+            quiz = learning_mod.quiz(conn, "src/retrieval.py",
+                                     provider=MockAIProvider(), n=999, project="demo")
+            self.assertLessEqual(quiz.n, 20)
+        finally:
+            conn.close()
+
+    def test_declines_without_grounding(self) -> None:
+        class BoomProvider(MockAIProvider):
+            def complete(self, *a, **k):
+                raise AssertionError("provider must not be called without grounding")
+        conn = self.ws.connect()
+        try:
+            quiz = learning_mod.quiz(conn, "zzz_absent_topic_qqq",
+                                     provider=BoomProvider(), project="demo")
+            self.assertFalse(quiz.grounded)
+            self.assertEqual(quiz.sources, [])
+        finally:
+            conn.close()
+
+
 class TestLearnCli(LearnTestCase):
     def _run(self, *argv):
         buf = io.StringIO()
