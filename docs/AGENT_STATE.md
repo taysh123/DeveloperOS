@@ -6,14 +6,14 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 9 — Future Modules** is IN PROGRESS (delivered as narrow slices). **Learning module
-(slices 1–3) + Career Assistant slice 1 (slice 4) complete.** Phases 0–8 complete.
+**Phase 9 — Future Modules** is IN PROGRESS (delivered as narrow slices). **Learning (s1–3) +
+Career slice 1 (s4) + Plugin seam (s5) complete.** Phases 0–8 complete.
 
 ## Current milestone
-Done: Learning (`learn`/`quiz`/`exercise`/`grade`) and Career slice 1 (`devos job`,
-`devos cv`, `devos interview`; schema v4 `job_leads`). Remaining Phase 9 directions are
-**deferred pending explicit approval**: extension/plugin seam, meeting/transcript foundation
-(+ further career: CV rewrite, scraping/APIs — out of scope by design).
+Done: Learning (`learn`/`quiz`/`exercise`/`grade`), Career slice 1 (`job`/`cv`/`interview`,
+schema v4), Plugin seam (`devos plugins`; entry-point + opt-in local loading). Remaining
+Phase 9 direction **deferred pending explicit approval**: meeting/transcript foundation
+(+ further career CV-rewrite, plugin sandboxing — out of scope by design).
 
 ## Next immediate step
 Await approval for the next Phase 9 slice (then `/plan` it narrowly). Do NOT broaden scope
@@ -21,7 +21,7 @@ unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays
 
 ## Tasks
 ### In progress
-- _None. Phase 9 Learning (s1–3) + Career slice 1 (s4) complete; further slices await approval._
+- _None. Phase 9 Learning (s1–3) + Career s1 (s4) + Plugin seam (s5) complete; meeting slice awaits approval._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -75,6 +75,11 @@ unprompted. Each slice reuses `modules/qa` + `providers/ai`; mock provider stays
 - [x] Phase 9 slice 2: Learning Quiz — `learning.quiz` → `Quiz` (n grounded questions, default 5
       clamped [1,20], file/topic mode via shared `_resolve_chunks`, declines when ungrounded);
       `devos quiz <path|topic> [--n N]`. 7 new tests (140 total) pass; dogfooded (file/topic + reject n<1). D-0013.
+- [x] Phase 9 slice 5: Plugin/Extension seam — `providers.ai.register_provider`; `devos/plugins.py`
+      (entry-point group `devos.plugins` + opt-in local `<data_dir>/plugins/*.py` via
+      `DEVOS_ENABLE_LOCAL_PLUGINS=1`; fail-safe `LOADED`/`ERRORS`; `ensure_loaded` at CLI startup);
+      `devos plugins`. 8 new tests (176 total) pass; dogfooded (gating off→on, plugin command runs).
+      D-0016 + SECURITY new code-exec/supply-chain note.
 - [x] Phase 9 slice 4: Career Assistant (slice 1) — schema **v4** (`job_leads`) + migration;
       `repo` job CRUD; `modules/career` (`analyze_cv` deterministic keyword match via `qa.question_terms`;
       `interview_prep` grounded on job notes, declines when noteless); `devos job` (add/list/show/set/rm),

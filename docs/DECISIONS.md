@@ -4,6 +4,16 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0016 — Phase 9 slice 5 = Plugin / Extension Seam
+- **Date:** 2026-06-01
+- **Context:** Fulfil the "open architecture" goal: let external packages/opt-in local files extend DeveloperOS without forking. (Header/body of the request conflicted; user confirmed Plugin System, since Career was already shipped.)
+- **Decision:**
+  - **Reuse existing registries** — plugins register commands via `commands.base.register` (auto-picked by `cli.build_parser`) and AI providers via the new public `providers.ai.register_provider`. No parallel machinery, no schema change.
+  - **`devos/plugins.py`:** discovery from (a) entry-point group `devos.plugins` (each resolves to a zero-arg registration callable) — always loaded; (b) `<data_dir>/plugins/*.py` — loaded **only when `DEVOS_ENABLE_LOCAL_PLUGINS=1`** (opt-in; off by default). `ensure_loaded()` runs once at `cli.main` startup, guarded; failures are isolated into `ERRORS` (never crash the CLI), successes into `LOADED`.
+  - **`devos plugins`** lists loaded plugins + errors. `load_entry_point_plugins(eps=...)` accepts injected entry points for testing.
+  - **Security (new surface):** loading plugins executes third-party code — a supply-chain/code-execution risk (first in the project). Entry-point plugins = packages the user installed (trusted); local `.py` are opt-in only. Documented in SECURITY.md; sandbox/signing deferred.
+- **Status:** Accepted (slice 5). Remaining Phase 9 slice (meeting/transcript) deferred pending approval.
+
 ## D-0015 — Phase 9 slice 4 = Career Assistant (first slice)
 - **Date:** 2026-06-01
 - **Context:** First Career slice (user-approved): job-lead tracking, offline CV keyword matching, grounded interview prep — no scraping/paid APIs.

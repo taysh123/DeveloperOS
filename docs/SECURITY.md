@@ -79,6 +79,14 @@ into the AI context, a model could be manipulated.
   with confirmation. Context is never executed.
 - **[PLANNED] Output handling:** treat model output as untrusted (no eval, no auto-run, no
   unconfirmed file writes).
+- **[NOW] Plugin system (Phase 9 slice 5) — code execution / supply-chain surface (NEW):** loading a
+  plugin **runs third-party Python in-process** with the user's full authority. Trust model:
+  (1) **entry-point plugins** (group `devos.plugins`) come from packages the user deliberately
+  `pip install`ed — install only trusted packages; (2) **local `.py` plugins** in `<data_dir>/plugins/`
+  are **OFF by default** and load only with `DEVOS_ENABLE_LOCAL_PLUGINS=1` — DeveloperOS never
+  auto-executes files dropped in the data dir. Plugin load failures are isolated (logged in `devos
+  plugins`), never crashing the CLI. **[PLANNED]** sandboxing / permissions / signature verification
+  and a stable versioned plugin API before any "marketplace". Users: only install/enable plugins you trust.
 - **[NOW] Career Assistant (Phase 9 slice 4: `job`/`cv`/`interview`):** job leads + CV text are
   **personal data stored locally** (SQLite under the data dir, git-ignored — same privacy model as
   memory/tasks). `cv <file>` reads only the user-named path; CV text + job notes are untrusted **data**
@@ -146,6 +154,7 @@ into the AI context, a model could be manipulated.
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |
+| Plugins (Phase 9.5) | **Runs third-party code**: entry-point = installed (trusted); local `.py` opt-in (`DEVOS_ENABLE_LOCAL_PLUGINS=1`); failures isolated; sandbox/signing PLANNED |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._

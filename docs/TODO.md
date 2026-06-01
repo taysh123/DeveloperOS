@@ -54,10 +54,11 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 1 — Learning Assistant: `devos learn <path|topic> [--level eli5|intermediate|advanced]` (grounded, cites file:line, declines). 7 tests. D-0012.
 - [x] Slice 2 — Learning Quiz: `devos quiz <path|topic> [--n N]` (n grounded questions, declines). 7 tests (140 total). D-0013.
 - [x] Slice 3 — Exercises & Grading: `devos exercise` (n grounded tasks) + `devos grade` (answer eval). 11 tests (151 total). D-0014.
-- [x] Slice 4 — Career Assistant (1st): `devos job` + `devos cv` + `devos interview` (schema v4 `job_leads`). 16 tests (167 total). D-0015.
+- [x] Slice 4 — Career Assistant (1st): `devos job` + `devos cv` + `devos interview` (schema v4 `job_leads`). 16 tests. D-0015.
+- [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins (register commands/providers); fail-safe. 8 tests (176 total). D-0016.
 ### Deferred (need explicit approval before building)
-- [ ] Extension/plugin seam.
 - [ ] Meeting/transcript foundation.
+- [ ] Plugin sandboxing/permissions/signing; plugin marketplace.
 - [ ] Further career: CV rewrite, job-board scraping/APIs (out of scope by design), persisted CV.
 - [ ] Persisted exercises/scores · interactive grading sessions.
 - [ ] Phase 5: `devos debug`.

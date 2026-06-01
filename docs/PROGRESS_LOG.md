@@ -4,6 +4,15 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 13: Phase 9 slice 5 (Plugin / Extension seam) complete
+- Plan-mode `/plan`: request had a **conflict** (header said Plugin System; pasted body described the already-built Career slice and said "do not start plugin seam"). Surfaced it via **AskUserQuestion** → user confirmed **Plugin System**. Avoided rebuilding Career (anti-duplication). Plan approved.
+- `providers/ai.py`: public `register_provider` + `available_providers`.
+- `devos/plugins.py`: `load_entry_point_plugins(eps=None)` (group `devos.plugins`, injectable for tests), `load_local_plugins(dir)`, `load_installed`/`ensure_loaded` (once, guarded), fail-safe `LOADED`/`ERRORS`. Local `*.py` loaded only when `DEVOS_ENABLE_LOCAL_PLUGINS=1` (opt-in).
+- `cli.main` calls `plugins.ensure_loaded()` at startup (registers plugin commands before parsing); `devos plugins` lists loaded + errors.
+- TDD throughout (fake entry points, temp local plugin, broken-plugin isolation). **verification-before-completion:** full suite **176/176 pass**. Dogfooded: gating OFF → "No plugins"/`devos hello` unknown; gating ON → `devos plugins` lists `hello_plugin`, `devos hello` runs the plugin command.
+- Logged **D-0016**; SECURITY: documented the **new code-execution / supply-chain surface** (trust model: entry points = installed packages; local plugins opt-in only) + posture row. Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/README/memory. Committed + pushed.
+- **Phase 9 still in progress;** only meeting/transcript slice remains, **deferred pending approval**. Did NOT broaden scope. Stopped here per instruction.
+
 ## 2026-06-01 — Session 12: Phase 9 slice 4 (Career Assistant, first slice) complete
 - Plan-mode `/plan`: AGENT_STATE source of truth; slice explicitly chosen (Career); confirmed no career/job code. Plan approved (overwrote slice-3 plan).
 - Schema **v4**: `job_leads` table + `MIGRATIONS[4]` + `COUNTED_TABLES` += job_leads. Future-proofed Phase 6 schema tests to assert `db.SCHEMA_VERSION` (regression caught by full suite).

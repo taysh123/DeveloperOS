@@ -100,6 +100,14 @@ Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, con
 so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
 untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
 
+### Plugin / extension seam (`devos/plugins.py`, Phase 9 slice 5)
+`cli.main` calls `plugins.ensure_loaded()` at startup. Plugins extend DeveloperOS through the
+**existing** registries — commands via `commands.base.register` (auto-included by `build_parser`)
+and AI providers via `providers.ai.register_provider`. Sources: entry-point group `devos.plugins`
+(always) and `<data_dir>/plugins/*.py` (only when `DEVOS_ENABLE_LOCAL_PLUGINS=1`). Loading is
+fail-safe (`LOADED`/`ERRORS`); `devos plugins` reports state. Loading executes third-party code —
+a deliberate, documented trust boundary (SECURITY §5/§8). See DECISIONS.md D-0016.
+
 ### Career Assistant (`modules/career` + `job_leads`, Phase 9 slice 4)
 Job leads live in the `job_leads` table (schema v4) with CRUD in `storage/repo` mirroring tasks
 (`devos job`). `career.analyze_cv` is deterministic/offline keyword overlap (reuses `qa.question_terms`)
