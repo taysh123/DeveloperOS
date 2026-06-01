@@ -32,6 +32,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    # Load installed/opted-in plugins (registers extra commands/providers) before parsing.
+    from devos import plugins
+    plugins.ensure_loaded()
+
     parser = build_parser()
     args = parser.parse_args(argv)
 

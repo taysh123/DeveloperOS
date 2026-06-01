@@ -107,3 +107,45 @@ class TestPluginLoading(PluginIsolationMixin, unittest.TestCase):
 
     def test_load_local_missing_dir_is_noop(self) -> None:
         self.assertEqual(plugins_mod.load_local_plugins(Path("/no/such/dir/xyz")), [])
+
+
+class TestPluginsCli(PluginIsolationMixin, unittest.TestCase):
+    def setUp(self) -> None:
+        self._snap()
+        plugins_mod.LOADED.clear()
+        plugins_mod.ERRORS.clear()
+
+    def tearDown(self) -> None:
+        self._restore()
+
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_plugins_lists_loaded(self) -> None:
+        plugins_mod.LOADED.append("demo_plugin")
+        code, out = self._run("plugins")
+        self.assertEqual(code, 0)
+        self.assertIn("demo_plugin", out)
+
+    def test_plugins_reports_errors(self) -> None:
+        plugins_mod.ERRORS.append(("badpkg", "RuntimeError: boom"))
+        code, out = self._run("plugins")
+        self.assertEqual(code, 0)
+        self.assertIn("badpkg", out)
+
+    def test_plugin_registered_command_is_reachable_via_cli(self) -> None:
+        def register_ping():
+            @cmd_base.register
+            class PingCommand(cmd_base.Command):
+                name = "pluginping"
+                help = "ping from a plugin"
+                def run(self, args, ws):
+                    print("pong")
+                    return 0
+        plugins_mod.load_entry_point_plugins(eps=[_fake_ep("pingpkg", register_ping)])
+        code, out = self._run("pluginping")
+        self.assertEqual(code, 0)
+        self.assertIn("pong", out)

@@ -96,6 +96,18 @@ def load_local_plugins(plugins_dir: Path) -> list[str]:
     return loaded
 
 
+_loaded_once = False
+
+
+def ensure_loaded() -> None:
+    """Load installed plugins exactly once per process (called at CLI startup)."""
+    global _loaded_once
+    if _loaded_once:
+        return
+    _loaded_once = True
+    load_installed()
+
+
 def load_installed() -> list[str]:
     """Load all available plugins (entry points always; local dir only if opted in). Guarded."""
     loaded: list[str] = []
