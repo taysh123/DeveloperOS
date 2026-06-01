@@ -227,3 +227,54 @@ def search_chunks(
     sql.append("ORDER BY bm25(chunks_fts) LIMIT ?;")
     params.append(limit)
     return conn.execute("\n".join(sql), params).fetchall()
+
+
+# --- retrieval (Q&A) ------------------------------------------------------
+
+def get_chunk_content(conn: sqlite3.Connection, chunk_id: int) -> str | None:
+    row = conn.execute(
+        "SELECT content FROM chunks_fts WHERE chunk_id = ?;", (chunk_id,)
+    ).fetchone()
+    return row["content"] if row else None
+
+
+def get_file_chunks(
+    conn: sqlite3.Connection, project_id: int, rel_path: str
+) -> list[sqlite3.Row]:
+    return conn.execute(
+        """
+        SELECT c.id AS chunk_id, c.start_line, c.end_line, fts.content
+        FROM chunks c
+        JOIN files f ON f.id = c.file_id
+        JOIN chunks_fts fts ON fts.chunk_id = c.id
+        WHERE f.project_id = ? AND f.rel_path = ?
+        ORDER BY c.start_line;
+        """,
+        (project_id, rel_path),
+    ).fetchall()
+
+
+def find_project_for_path(conn: sqlite3.Connection, abs_path: str) -> sqlite3.Row | None:
+    """Return the project whose root_path contains abs_path (longest match wins)."""
+    import os as _os
+    target = _os.path.normcase(_os.path.abspath(abs_path))
+    best = None
+    best_len = -1
+    for p in conn.execute("SELECT id, name, root_path FROM projects;").fetchall():
+        root = _os.path.normcase(_os.path.abspath(p["root_path"]))
+        if target == root or target.startswith(root + _os.sep):
+            if len(root) > best_len:
+                best, best_len = p, len(root)
+    return best
+
+
+def top_files(conn: sqlite3.Connection, project_id: int, limit: int) -> list[sqlite3.Row]:
+    return conn.execute(
+        """
+        SELECT f.rel_path, f.category, f.lang,
+               (SELECT COUNT(*) FROM chunks c WHERE c.file_id = f.id) AS chunk_count
+        FROM files f WHERE f.project_id = ?
+        ORDER BY chunk_count DESC, f.rel_path LIMIT ?;
+        """,
+        (project_id, limit),
+    ).fetchall()
