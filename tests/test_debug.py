@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import os
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -207,8 +208,13 @@ class TestDiagnose(DebugDataTestCase):
 class TestDebugCli(DebugDataTestCase):
     def _run(self, *argv):
         buf = io.StringIO()
-        with redirect_stdout(buf):
-            code = main(list(argv))
+        prev_stdin = sys.stdin
+        sys.stdin = io.StringIO("")  # deterministic empty, non-tty stdin (no blocking read)
+        try:
+            with redirect_stdout(buf):
+                code = main(list(argv))
+        finally:
+            sys.stdin = prev_stdin
         return code, buf.getvalue()
 
     def test_debug_from_file_reports_evidence_and_sources(self) -> None:
