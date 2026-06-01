@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 11: Phase 9 slice 3 (Exercises & Grading) complete
+- Plan-mode `/plan`: AGENT_STATE source of truth; slice explicitly chosen by user (Exercises & Grading); confirmed no exercise/grade code. Plan approved (overwrote slice-2 plan).
+- `modules/learning.py`: added `exercise()`/`Exercise` (n grounded practice tasks, default 3 clamped [1,10]) and `grade()`/`Grade` (evaluate a supplied answer vs retrieved code → Feedback/Strengths/Weaknesses + file:line). Both reuse shared `_resolve_chunks` + `qa.assemble_context` + provider. **Stateless/read-only, no schema change.** Decline (no provider call) when ungrounded; `grade` requires non-empty answer.
+- Commands `devos exercise <target> [--n]` and `devos grade <target> (--answer|--answer-file) [--question]`; reuse `ask_cmd.print_answer`; grade errors clearly when no answer source.
+- TDD throughout; learn/quiz tests stay green. **verification-before-completion:** full suite **151/151 pass**. Dogfooded: exercise (grounded tasks + Sources), grade (feedback + Sources), missing-answer error.
+- Logged **D-0014**; extended SECURITY learning note/row to learn/quiz/exercise/grade (answer text is untrusted data). Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/README/memory. Committed + pushed to origin.
+- **Phase 9 Learning module now complete (s1–s3);** remaining slices (Career, plugin seam, meeting) **deferred pending approval**. Did NOT broaden scope. Stopped here per instruction.
+
 ## 2026-06-01 — Session 10: Phase 9 slice 2 (Learning Quiz) complete
 - Plan-mode `/plan`: AGENT_STATE source of truth; confirmed slice 1 done + no quiz/career/plugin/meeting code. **AskUserQuestion** to pick the next narrow slice → user chose **Learning Quiz**. Plan approved (overwrote slice-1 plan).
 - `modules/learning.py`: extracted shared `_resolve_chunks` (file/topic resolution) used by both `learn` and `quiz` (DRY); added `quiz()` + `Quiz` — n grounded review questions (default 5, clamped [1,20], `n<1`→ValueError), declines (no provider call) when ungrounded. No new retrieval logic, no schema change.

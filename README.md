@@ -39,6 +39,8 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos docgen <type>` | Generate grounded docs (readme/architecture/api/setup/changelog/decisions/milestone); stdout or `--output` (no overwrite without `--force`). |
 | `devos learn <path\|topic>` | Learn your code at a chosen depth (`--level eli5\|intermediate\|advanced`), grounded with `file:line` sources. |
 | `devos quiz <path\|topic>` | Generate grounded review questions (`--n N`) about a file or topic, with `file:line` sources. |
+| `devos exercise <path\|topic>` | Generate grounded practice exercises (`--n N`) about a file or topic. |
+| `devos grade <path\|topic>` | Evaluate your answer (`--answer`/`--answer-file`) against the code: feedback + strengths/weaknesses + sources. |
 
 AI answers use an offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
 The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline.

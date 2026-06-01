@@ -4,6 +4,12 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0014 — Phase 9 slice 3 = Learning Exercises & Grading (`devos exercise` / `devos grade`)
+- **Date:** 2026-06-01
+- **Context:** Third narrow Phase 9 slice (user-approved), completing the Learning module's practice loop.
+- **Decision:** Add `exercise()`/`Exercise` and `grade()`/`Grade` to `modules/learning.py`, reusing the shared `_resolve_chunks` + `qa.assemble_context` + provider seam. `exercise` generates `n` grounded practice tasks (default 3, clamped [1,10]). `grade` evaluates a learner's supplied answer against freshly-retrieved code (the ground truth) and returns Feedback / Strengths / Weaknesses with file:line sources. **Stateless & read-only — no persistence, no schema change** (saving scores/exercises to memory is deferred). Both decline (no provider call) when ungrounded; `grade` requires a non-empty answer (ValueError otherwise). Learner answer + code are treated as DATA, not instructions (grounding/anti-injection posture). `devos exercise`/`devos grade` reuse `ask_cmd.print_answer`.
+- **Status:** Accepted (slice 3). Remaining Phase 9 slices (Career, plugin seam, meeting/transcript) still deferred pending approval.
+
 ## D-0013 — Phase 9 slice 2 = Learning Quiz (`devos quiz`)
 - **Date:** 2026-06-01
 - **Context:** Second narrow Phase 9 slice (user-approved), building on slice 1's Learning Assistant.
