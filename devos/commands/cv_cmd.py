@@ -34,7 +34,8 @@ class CvCommand(Command):
                 job = repo.get_job(conn, args.job)
                 if job is None:
                     print(f"No job lead #{args.job}."); return 1
-                target = " ".join(filter(None, [job["role"], job["company"], job["notes"]]))
+                # Match against the job's notes (the description) — not company/role metadata.
+                target = job["notes"] or ""
                 label = f"job #{job['id']} ({job['company']})"
             else:
                 jobs = repo.list_jobs(conn)

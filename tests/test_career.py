@@ -199,6 +199,20 @@ class TestCvInterviewCli(CareerTestCase):
         self.assertIn("python", out.lower())
         self.assertIn("kubernetes", out.lower())  # a missing keyword
 
+    def test_cv_target_is_notes_not_company_or_role(self) -> None:
+        # Company/role metadata must not pollute the keyword target; only notes count.
+        conn = self.ws.connect()
+        try:
+            jid = repo.create_job(conn, "Acme", role="Backend Engineer", notes="python sqlite")
+        finally:
+            conn.close()
+        cv = Path(self._home.name) / "cv.txt"
+        cv.write_text("python", encoding="utf-8")
+        code, out = self._run("cv", str(cv), "--job", str(jid))
+        self.assertEqual(code, 0)
+        self.assertNotIn("engineer", out.lower())  # role word must not be a keyword
+        self.assertIn("sqlite", out.lower())        # a notes keyword (missing) should show
+
     def test_cv_missing_file_errors(self) -> None:
         code, out = self._run("cv", str(Path(self._home.name) / "nope.txt"))
         self.assertEqual(code, 1)
