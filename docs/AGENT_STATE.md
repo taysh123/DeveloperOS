@@ -6,21 +6,22 @@
 _Last updated: 2026-06-01_
 
 ## Current phase
-**Phase 8 — Documentation Automation** is NEXT (Phases 0–7 complete). _Not started._
+**Phase 9 — Future Modules (Learning & Career)** is NEXT (Phases 0–8 complete). _Not started._
 
 ## Current milestone
-(Upcoming, do not start without going through planning.) Generate docs from the indexed
-project: README / architecture / API / setup / changelog / decision-log / milestone
-summaries via retrieval + the provider (`devos docgen <type>`). Grounded, human-reviewed.
+(Upcoming, do not start without going through planning.) Per ROADMAP Phase 9: Learning
+Assistant (explain levels, exercises, quizzes) and Career Assistant (job leads, CV analysis,
+interview prep), plus seams for meeting assistant / multi-user / cloud sync / VS Code / plugins.
+Core is stable; build these behind the existing architecture.
 
 ## Next immediate step
-Begin Phase 8 by re-running the session-startup procedure and `/plan`. Docgen reuses
-`modules/qa` retrieval + `providers/ai` (mock default) and writes to files only with
-explicit output paths (no silent overwrites). No new schema expected.
+Begin Phase 9 by re-running the session-startup procedure and `/plan`. Likely reuses
+`modules/qa` + `providers/ai`; may add `learning`/`career` modules and tables. Mock provider
+stays default (no API keys). This is the "future modules" phase — scope carefully.
 
 ## Tasks
 ### In progress
-- _None (Phase 7 just completed; Phase 8 not yet started)._
+- _None (Phase 8 just completed; Phase 9 not yet started)._
 
 ### Completed
 - [x] Phase 0: vision confirmed; 4 foundational decisions made (see DECISIONS.md).
@@ -62,6 +63,11 @@ explicit output paths (no silent overwrites). No new schema expected.
       reusing `repo`/`modules.recall`; `server.py` wrapper; **React+htm SPA** vendored offline in
       `static/` (`devos serve`). 12 new tests (115 total) pass; dogfooded live (overview/index/static
       served on 127.0.0.1:8765). D-0010 + SECURITY §8 updated. Mock provider unchanged.
+- [x] Phase 8: Documentation Automation — `modules/docgen` (`generate` for readme/architecture/api/
+      setup via `qa.retrieve`+project facts, and changelog/decisions/milestone via memory/tasks incl.
+      global records); declines (no provider call) when ungrounded; `devos docgen <type>` (stdout
+      default, `--output` no-clobber/`--force`); added `repo` `include_global`. 11 new tests (126
+      total) pass; dogfooded (grounded readme/decisions, no-clobber). D-0011 + SECURITY §4/§5 noted.
 
 ### Blocked
 - _None._

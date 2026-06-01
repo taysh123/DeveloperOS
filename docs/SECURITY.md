@@ -79,6 +79,10 @@ into the AI context, a model could be manipulated.
   with confirmation. Context is never executed.
 - **[PLANNED] Output handling:** treat model output as untrusted (no eval, no auto-run, no
   unconfirmed file writes).
+- **[NOW] Documentation Automation (Phase 8):** source/docs/memory/tasks fed into the provider
+  context are **data, not instructions** (same grounding contract). Generated text is model
+  output and is **never executed**; it is written only to an explicit `--output` path and
+  **never overwrites without `--force`** (no silent writes, §4). Offline (mock default).
 - **[NOW] Debug Assistant (Phase 5):** errors/stack traces/logs are untrusted input. File
   references in a trace are resolved **only against the SQLite index** (`repo.find_file_by_path`);
   DeveloperOS never opens a filesystem path named in a trace, and absolute paths outside a known
@@ -130,6 +134,7 @@ into the AI context, a model could be manipulated.
 | Trace/log handling (Phase 5) | Untrusted; file location is **index-only** (no filesystem reads from trace paths) |
 | Tasks/memory (Phase 6) | Untrusted stored text (display/storage only); `recall` is offline/read-only — **no AI call, no new injection surface** |
 | Dashboard API (Phase 7) | **Loopback-only, read-only (GET)**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
+| Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 
 _Update this file whenever a phase introduces a new risk (new provider, action agent, API,
 sync, or stored secret)._

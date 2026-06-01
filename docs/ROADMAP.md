@@ -72,7 +72,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Scope creep on UI. **Mitigation:** design pass via `ui-ux-pro-max`; ship MVP first.
 - **Dependencies:** Phases 2–6 (data to display).
 
-## Phase 8 — Documentation Automation 🚧 (next)
+## Phase 8 — Documentation Automation ✅
 - **Goal:** Generate docs from the indexed project.
 - **Scope:** README / architecture / API / setup / changelog / decision-log / milestone-summary generators using retrieval + AI.
 - **Deliverables:** `devos docgen <type>`.
@@ -80,7 +80,7 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 - **Risks:** Accuracy. **Mitigation:** grounded generation + human review step.
 - **Dependencies:** Phases 3–4.
 
-## Phase 9 — Future Modules ⬜
+## Phase 9 — Future Modules 🚧 (next)
 - **Goal:** Career & Learning assistants; extension seams.
 - **Scope:** Learning (explain levels, exercises, quizzes), Career (job leads, CV analysis, interview prep), plus seams for meeting assistant, multi-user, cloud sync, browser/VS Code integration, plugins, multi-agent.
 - **Deliverables:** TBD per module when reached.

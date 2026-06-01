@@ -44,9 +44,15 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] React+htm SPA (vendored offline): overview, task status, blocked, recent activity, "where I left off", recall search.
 - [x] `devos serve`; static serving traversal-safe; 12 tests (115 total). D-0010, SECURITY §8.
 
-## Now (Phase 8 — Documentation Automation)  _(not started — plan first)_
-- [ ] `devos docgen <type>`: README / architecture / API / setup / changelog / decision-log / milestone summaries.
-- [ ] Grounded generation via `modules/qa` retrieval + provider; explicit output paths (no silent overwrites).
+## Done (Phase 8 — Documentation Automation) ✅
+- [x] `devos docgen <type>`: readme / architecture / api / setup / changelog / decisions / milestone.
+- [x] Grounded via `modules/qa` retrieval (code docs) + memory/tasks (record docs); declines when ungrounded.
+- [x] stdout default; `--output` no-clobber + `--force`. 11 tests (126 total). D-0011.
+
+## Now (Phase 9 — Future Modules: Learning & Career)  _(not started — plan first)_
+- [ ] Learning Assistant: explain at levels, exercises, quizzes (reuse qa/provider).
+- [ ] Career Assistant: job leads, CV analysis, interview prep.
+- [ ] Keep behind existing architecture; seams for meeting/multi-user/cloud/VS Code/plugins.
 - [ ] Phase 5: `devos debug`.
 - [ ] Phase 6: `devos task` / `devos remember` / `devos recall`.
 - [ ] Phase 7: local API + React dashboard; CLI UX polish.

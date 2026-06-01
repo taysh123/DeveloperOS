@@ -4,6 +4,15 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-01 — Session 8: Phase 8 (Documentation Automation) complete
+- Plan-mode `/plan`: AGENT_STATE source of truth; confirmed no docgen code; plan approved (overwrote Phase 7 plan). No subagents (full context; token economy).
+- `modules/docgen.py`: `generate(conn, doc_type, *, provider, project, limit)` → `GeneratedDoc`. Code docs (readme/architecture/api/setup) reuse `qa.retrieve` + project facts (`category_breakdown`/`top_files`); record docs (changelog/decisions/milestone) use `repo.list_memory`/`list_tasks`. Declines (no provider call) when ungrounded. Reuses `qa.assemble_context`/`resolve_project` + `providers.ai` — no parallel pipeline.
+- `devos docgen <type>` (`--project`/`--output`/`--force`/`--limit`): stdout by default; `--output` refuses to overwrite without `--force`; prints a Sources footer (file:line for code, titles for records).
+- TDD throughout. **systematic-debugging:** dogfood showed `docgen decisions` declined after a *global* `remember` (project-less) — fixed by adding `include_global` to `repo.list_memory`/`list_tasks` and having record docs include global records (regression test added).
+- **verification-before-completion:** full suite **126/126 pass**. Dogfooded: grounded README/architecture drafts with Sources; decisions grounded after recording one; `--output` no-clobber then `--force`.
+- Logged **D-0011**; SECURITY §4/§5 + posture row updated (untrusted inputs as data; no silent/overwriting writes; output never executed). Synced AGENT_STATE/ROADMAP/TODO/CHANGELOG/ARCHITECTURE/KNOWN_ISSUES/README/memory. Committed + pushed to origin.
+- **Next:** Phase 9 — Future Modules (Learning & Career). Do NOT start without planning. Stopped here per instruction.
+
 ## 2026-06-01 — Session 7: Phase 7 (Dashboard & Polish) complete
 - Plan-mode `/plan`: AGENT_STATE source of truth; confirmed no API/serve/dashboard code; chose frontend via AskUserQuestion → **React SPA served by a stdlib API** (offline, no npm), over full Next.js. Plan approved.
 - `devos/api/app.py`: read-only data builders (`overview`/`projects`/`tasks`/`memory`/`recall`) reusing `repo` + `modules.recall`; `route(ws, path, query) -> Response` (JSON `/api/*` + static, path-traversal-safe).

@@ -100,6 +100,14 @@ Generation is provider-agnostic (`get_provider()`/`complete(prompt, system=, con
 so real Claude/OpenAI/Ollama providers slot in without caller changes. Context is treated as
 untrusted data (prompt-injection posture — see SECURITY.md §5). See DECISIONS.md D-0007.
 
+### Documentation Automation (`modules/docgen`, Phase 8)
+`docgen.generate(conn, doc_type, *, provider, project, limit)` reuses the Q&A pipeline:
+code docs (readme/architecture/api/setup) ground on `qa.retrieve` + project facts; record
+docs (changelog/decisions/milestone) ground on `repo.list_memory`/`list_tasks` (including
+global records). One `provider.complete()` call → `GeneratedDoc`; declines (no provider call)
+when ungrounded. `devos docgen` prints to stdout by default and writes to `--output` only
+(no overwrite without `--force`); attribution is retrieval/record-derived. See DECISIONS.md D-0011.
+
 ### Dashboard & local API (`devos/api`, Phase 7)
 `devos/api/app.py` holds read-only **data builders** (`overview`/`projects`/`tasks`/`memory`/`recall`
 payloads) that reuse `storage/repo` + `modules.recall`, plus a socket-free `route(ws, path, query)

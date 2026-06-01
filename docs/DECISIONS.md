@@ -4,6 +4,17 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0011 — Documentation Automation: grounded docgen reusing the Q&A pipeline
+- **Date:** 2026-06-01
+- **Context:** Phase 8 generates project docs without a parallel pipeline, staying grounded/offline.
+- **Decision:**
+  - **`modules/docgen.generate(conn, doc_type, *, provider, project, limit)`** with two grounding families: code docs (`readme`/`architecture`/`api`/`setup`) ground on **`qa.retrieve`** (type-specific seed query) + project facts (`repo.category_breakdown`/`top_files`); record docs (`changelog`/`decisions`/`milestone`) ground on `repo.list_memory`/`list_tasks`. Both → `qa.assemble_context`-style context → one `provider.complete()` → `GeneratedDoc`. No new retrieval logic.
+  - **Grounded / no-guess:** ungrounded types (nothing indexed / no records) return `grounded=False` with a clear message and **no provider call**.
+  - **Record docs include global (project-less) memory/tasks** for the resolved project (added `include_global` to `repo.list_memory`/`list_tasks`), so user-recorded decisions surface even when not project-scoped.
+  - **Output safe by default:** stdout; `--output PATH` writes but **never overwrites without `--force`** (no silent writes, SECURITY §4). Generated text is model output, never executed. Attribution (file:line / record titles) from retrieval/records, not the model.
+  - Provider-agnostic via `providers.ai` (mock default); future real providers improve prose unchanged. A future dashboard/API can call `docgen.generate` directly.
+- **Status:** Accepted.
+
 ## D-0010 — Dashboard: stdlib http.server local API + vendored React SPA (offline, read-only)
 - **Date:** 2026-06-01
 - **Context:** Phase 7 adds a dashboard. Needed a UI that stays local-first/offline/verifiable and reuses existing layers (no parallel backend), consistent with the stdlib-only ethos (D-0005).
