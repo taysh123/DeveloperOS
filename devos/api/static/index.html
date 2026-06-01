@@ -1,5 +1,17 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>DeveloperOS</title></head>
-<body><div id="root">Loading DeveloperOS dashboard...</div></body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeveloperOS Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div id="root">Loading DeveloperOS dashboard...</div>
+  <!-- Vendored locally for offline use (no CDN, no build). -->
+  <script src="/static/vendor/react.production.min.js"></script>
+  <script src="/static/vendor/react-dom.production.min.js"></script>
+  <script src="/static/vendor/htm.umd.js"></script>
+  <script src="/static/app.js"></script>
+</body>
 </html>

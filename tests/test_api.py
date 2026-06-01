@@ -124,6 +124,15 @@ class TestRouting(ApiTestCase):
         resp = api_app.route(self.ws, "/static/../../devos/config.py", {})
         self.assertEqual(resp.status, 404)
 
+    def test_static_assets_served(self) -> None:
+        for path, ct in [("/static/app.js", "javascript"),
+                         ("/static/styles.css", "css"),
+                         ("/static/vendor/react.production.min.js", "javascript")]:
+            resp = api_app.route(self.ws, path, {})
+            self.assertEqual(resp.status, 200, path)
+            self.assertIn(ct, resp.content_type, path)
+            self.assertTrue(resp.body)
+
 
 class TestLiveServer(ApiTestCase):
     def test_live_overview_and_index(self) -> None:

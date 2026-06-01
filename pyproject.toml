@@ -25,4 +25,4 @@ devos = "devos.cli:main"
 include = ["devos*"]
 
 [tool.setuptools.package-data]
-devos = ["storage/*.sql"]
+devos = ["storage/*.sql", "api/static/*", "api/static/vendor/*"]
