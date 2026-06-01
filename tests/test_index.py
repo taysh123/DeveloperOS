@@ -184,3 +184,55 @@ class TestIndexProject(IndexTestCase):
             self.assertEqual(orphans, 0)
         finally:
             conn.close()
+
+
+class TestMatchQuery(unittest.TestCase):
+    def test_tokens_are_quoted_and_anded(self) -> None:
+        self.assertEqual(index_mod.build_match_query("auth login"), '"auth" "login"')
+
+    def test_special_chars_are_escaped_not_injected(self) -> None:
+        q = index_mod.build_match_query('def(x): "y"')
+        self.assertNotIn('("', q)
+        self.assertTrue(q.startswith('"'))
+
+    def test_empty_query_is_empty(self) -> None:
+        self.assertEqual(index_mod.build_match_query("   "), "")
+
+
+class TestSearch(IndexTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        _write(self.root, "src/auth/login.py",
+               "def authenticate(token):\n    return verify(token)")
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, self.root).project_id
+            index_mod.index_project(conn, pid)
+        finally:
+            conn.close()
+
+    def test_search_finds_token_with_location(self) -> None:
+        conn = self.ws.connect()
+        try:
+            hits = index_mod.search(conn, "authenticate")
+            self.assertTrue(hits)
+            top = hits[0]
+            self.assertEqual(top.rel_path, "src/auth/login.py")
+            self.assertGreaterEqual(top.start_line, 1)
+            self.assertIn("authenticate", top.snippet.lower())
+        finally:
+            conn.close()
+
+    def test_no_match_returns_empty(self) -> None:
+        conn = self.ws.connect()
+        try:
+            self.assertEqual(index_mod.search(conn, "zzz_no_such_token_qqq"), [])
+        finally:
+            conn.close()
+
+    def test_special_char_query_does_not_raise(self) -> None:
+        conn = self.ws.connect()
+        try:
+            index_mod.search(conn, 'def(token):')  # must not raise sqlite errors
+        finally:
+            conn.close()

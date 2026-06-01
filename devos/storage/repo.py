@@ -194,3 +194,36 @@ def chunk_stats(conn: sqlite3.Connection, project_id: int) -> tuple[int, int]:
         (project_id,),
     ).fetchone()
     return int(row["chunks"]), int(row["files"])
+
+
+# --- search ---------------------------------------------------------------
+
+def project_id_by_name(conn: sqlite3.Connection, name: str) -> int | None:
+    row = conn.execute(
+        "SELECT id FROM projects WHERE name = ? ORDER BY id LIMIT 1;", (name,)
+    ).fetchone()
+    return int(row["id"]) if row else None
+
+
+def search_chunks(
+    conn: sqlite3.Connection, match_query: str, *,
+    project_id: int | None = None, limit: int = 10,
+) -> list[sqlite3.Row]:
+    sql = [
+        "SELECT c.id AS chunk_id, f.rel_path, c.start_line, c.end_line, c.tags,",
+        "       p.name AS project,",
+        "       snippet(chunks_fts, 0, '[', ']', '...', 12) AS snippet,",
+        "       bm25(chunks_fts) AS score",
+        "FROM chunks_fts",
+        "JOIN chunks c ON c.id = chunks_fts.chunk_id",
+        "JOIN files f ON f.id = c.file_id",
+        "JOIN projects p ON p.id = f.project_id",
+        "WHERE chunks_fts MATCH ?",
+    ]
+    params: list[object] = [match_query]
+    if project_id is not None:
+        sql.append("AND p.id = ?")
+        params.append(project_id)
+    sql.append("ORDER BY bm25(chunks_fts) LIMIT ?;")
+    params.append(limit)
+    return conn.execute("\n".join(sql), params).fetchall()

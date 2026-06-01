@@ -109,3 +109,49 @@ def index_project(
 
     conn.commit()
     return result
+
+
+@dataclass
+class SearchHit:
+    project: str
+    rel_path: str
+    start_line: int
+    end_line: int
+    score: float
+    snippet: str
+    tags: str | None
+    chunk_id: int
+
+    @property
+    def location(self) -> str:
+        return f"{self.rel_path}:{self.start_line}-{self.end_line}"
+
+
+def build_match_query(query: str) -> str:
+    """Turn free text into a safe FTS5 MATCH string: AND of quoted tokens."""
+    tokens = query.split()
+    return " ".join('"' + t.replace('"', '""') + '"' for t in tokens)
+
+
+def search(conn, query: str, *, project: str | None = None, limit: int = 10) -> list[SearchHit]:
+    """Keyword search over the index. Returns ranked SearchHits (best first).
+
+    This is the stable result type a future semantic strategy will also return, so
+    callers (CLI now, Q&A in Phase 4) never need to change (see docs/DECISIONS.md D-0006).
+    """
+    match_query = build_match_query(query)
+    if not match_query:
+        return []
+    project_id = repo.project_id_by_name(conn, project) if project else None
+    if project and project_id is None:
+        return []
+    rows = repo.search_chunks(conn, match_query, project_id=project_id, limit=limit)
+    return [
+        SearchHit(
+            project=r["project"], rel_path=r["rel_path"],
+            start_line=r["start_line"], end_line=r["end_line"],
+            score=float(r["score"]), snippet=r["snippet"],
+            tags=r["tags"], chunk_id=r["chunk_id"],
+        )
+        for r in rows
+    ]
