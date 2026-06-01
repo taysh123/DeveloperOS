@@ -285,6 +285,69 @@ def search_tasks(conn: sqlite3.Connection, query: str, *, project_id: int | None
     ).fetchall()
 
 
+# --- memory ---------------------------------------------------------------
+
+_MEM_COLS = "id, project_id, kind, title, body, tags, created_at"
+
+
+def create_memory(conn: sqlite3.Connection, project_id: int | None, *, kind: str = "note",
+                  title: str, body: str, tags: str | None = None) -> int:
+    """Insert a memory; idempotent on (project_id, title, body) -> returns existing id."""
+    existing = conn.execute(
+        "SELECT id FROM memory WHERE IFNULL(project_id,-1) = IFNULL(?,-1) "
+        "AND title = ? AND body = ?;",
+        (project_id, title, body),
+    ).fetchone()
+    if existing is not None:
+        return int(existing["id"])
+    cur = conn.execute(
+        "INSERT INTO memory (project_id, kind, title, body, tags, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?);",
+        (project_id, kind, title, body, tags, _now()),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_memory(conn: sqlite3.Connection, memory_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        f"SELECT {_MEM_COLS} FROM memory WHERE id = ?;", (memory_id,)
+    ).fetchone()
+
+
+def list_memory(conn: sqlite3.Connection, *, project_id: int | None = None,
+                kind: str | None = None) -> list[sqlite3.Row]:
+    clauses, params = [], []
+    if project_id is not None:
+        clauses.append("project_id = ?"); params.append(project_id)
+    if kind is not None:
+        clauses.append("kind = ?"); params.append(kind)
+    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    return conn.execute(
+        f"SELECT {_MEM_COLS} FROM memory{where} ORDER BY id DESC;", params
+    ).fetchall()
+
+
+def delete_memory(conn: sqlite3.Connection, memory_id: int) -> int:
+    cur = conn.execute("DELETE FROM memory WHERE id = ?;", (memory_id,))
+    conn.commit()
+    return cur.rowcount
+
+
+def search_memory(conn: sqlite3.Connection, query: str, *, project_id: int | None = None,
+                  limit: int = 10) -> list[sqlite3.Row]:
+    clauses = ["(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\' "
+               "OR IFNULL(tags,'') LIKE ? ESCAPE '\\')"]
+    params: list[object] = [_like(query), _like(query), _like(query)]
+    if project_id is not None:
+        clauses.append("project_id = ?"); params.append(project_id)
+    params.append(limit)
+    return conn.execute(
+        f"SELECT {_MEM_COLS} FROM memory WHERE {' AND '.join(clauses)} "
+        f"ORDER BY id DESC LIMIT ?;", params
+    ).fetchall()
+
+
 def search_chunks(
     conn: sqlite3.Connection, match_query: str, *,
     project_id: int | None = None, limit: int = 10,
