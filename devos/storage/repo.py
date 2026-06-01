@@ -205,6 +205,86 @@ def project_id_by_name(conn: sqlite3.Connection, name: str) -> int | None:
     return int(row["id"]) if row else None
 
 
+def _like(term: str) -> str:
+    """Escape LIKE wildcards in user text; pair with ESCAPE '\\' in the query."""
+    return "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
+# --- tasks ----------------------------------------------------------------
+
+_TASK_COLS = "id, project_id, title, kind, status, priority, milestone, notes, created_at, updated_at"
+
+
+def create_task(conn: sqlite3.Connection, project_id: int | None, title: str, *,
+                kind: str = "task", status: str = "todo", priority: str = "medium",
+                milestone: str | None = None, notes: str | None = None) -> int:
+    now = _now()
+    cur = conn.execute(
+        "INSERT INTO tasks (project_id, title, kind, status, priority, milestone, notes, "
+        "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        (project_id, title, kind, status, priority, milestone, notes, now, now),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_task(conn: sqlite3.Connection, task_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        f"SELECT {_TASK_COLS} FROM tasks WHERE id = ?;", (task_id,)
+    ).fetchone()
+
+
+def list_tasks(conn: sqlite3.Connection, *, project_id: int | None = None,
+               status: str | None = None, kind: str | None = None,
+               milestone: str | None = None) -> list[sqlite3.Row]:
+    clauses, params = [], []
+    if project_id is not None:
+        clauses.append("project_id = ?"); params.append(project_id)
+    if status is not None:
+        clauses.append("status = ?"); params.append(status)
+    if kind is not None:
+        clauses.append("kind = ?"); params.append(kind)
+    if milestone is not None:
+        clauses.append("milestone = ?"); params.append(milestone)
+    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    return conn.execute(
+        f"SELECT {_TASK_COLS} FROM tasks{where} ORDER BY id;", params
+    ).fetchall()
+
+
+_TASK_UPDATABLE = {"title", "kind", "status", "priority", "milestone", "notes"}
+
+
+def update_task(conn: sqlite3.Connection, task_id: int, **fields) -> int:
+    sets = [(k, v) for k, v in fields.items() if k in _TASK_UPDATABLE and v is not None]
+    if not sets:
+        return 0
+    assignments = ", ".join(f"{k} = ?" for k, _ in sets) + ", updated_at = ?"
+    params = [v for _, v in sets] + [_now(), task_id]
+    cur = conn.execute(f"UPDATE tasks SET {assignments} WHERE id = ?;", params)
+    conn.commit()
+    return cur.rowcount
+
+
+def delete_task(conn: sqlite3.Connection, task_id: int) -> int:
+    cur = conn.execute("DELETE FROM tasks WHERE id = ?;", (task_id,))
+    conn.commit()
+    return cur.rowcount
+
+
+def search_tasks(conn: sqlite3.Connection, query: str, *, project_id: int | None = None,
+                 limit: int = 10) -> list[sqlite3.Row]:
+    clauses = ["(title LIKE ? ESCAPE '\\' OR IFNULL(notes,'') LIKE ? ESCAPE '\\')"]
+    params: list[object] = [_like(query), _like(query)]
+    if project_id is not None:
+        clauses.append("project_id = ?"); params.append(project_id)
+    params.append(limit)
+    return conn.execute(
+        f"SELECT {_TASK_COLS} FROM tasks WHERE {' AND '.join(clauses)} "
+        f"ORDER BY id DESC LIMIT ?;", params
+    ).fetchall()
+
+
 def search_chunks(
     conn: sqlite3.Connection, match_query: str, *,
     project_id: int | None = None, limit: int = 10,
