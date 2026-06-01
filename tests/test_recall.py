@@ -128,3 +128,45 @@ class TestRecallModule(RecallTestCase):
             self.assertEqual(result.code, [])
         finally:
             conn.close()
+
+
+class TestRememberRecallCli(RecallTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_remember_creates_memory(self) -> None:
+        code, out = self._run("remember", "Use", "FTS5", "for", "search",
+                              "--kind", "decision", "--tags", "search,sqlite")
+        self.assertEqual(code, 0)
+        conn = self.ws.connect()
+        try:
+            mems = repo.list_memory(conn)
+            self.assertEqual(len(mems), 1)
+            self.assertEqual(mems[0]["title"], "Use FTS5 for search")
+            self.assertEqual(mems[0]["kind"], "decision")
+        finally:
+            conn.close()
+
+    def test_recall_groups_results(self) -> None:
+        conn = self.ws.connect()
+        try:
+            repo.create_memory(conn, None, kind="decision",
+                               title="Claude provider plan", body="wire claude later")
+            repo.create_task(conn, None, "Implement Claude provider", kind="feature",
+                             status="todo", priority="high")
+        finally:
+            conn.close()
+        code, out = self._run("recall", "claude")
+        self.assertEqual(code, 0)
+        self.assertIn("Memory", out)
+        self.assertIn("Tasks", out)
+        self.assertIn("Code", out)
+        self.assertIn("src/provider.py", out)
+
+    def test_recall_nothing_found(self) -> None:
+        code, out = self._run("recall", "zzzqqq_absent_term_xyz")
+        self.assertEqual(code, 0)
+        self.assertIn("Nothing", out)
