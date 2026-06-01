@@ -130,19 +130,27 @@ class SearchHit:
         return f"{self.rel_path}:{self.start_line}-{self.end_line}"
 
 
-def build_match_query(query: str) -> str:
-    """Turn free text into a safe FTS5 MATCH string: AND of quoted tokens."""
-    tokens = query.split()
-    return " ".join('"' + t.replace('"', '""') + '"' for t in tokens)
+def build_match_query(query: str, *, op: str = "AND") -> str:
+    """Turn free text into a safe FTS5 MATCH string.
+
+    op="AND" -> all tokens required (implicit AND). op="OR" -> any token (better for
+    natural-language questions). Tokens are quote-escaped; never inject raw input.
+    """
+    tokens = ['"' + t.replace('"', '""') + '"' for t in query.split()]
+    if not tokens:
+        return ""
+    joiner = " OR " if op.upper() == "OR" else " "
+    return joiner.join(tokens)
 
 
-def search(conn, query: str, *, project: str | None = None, limit: int = 10) -> list[SearchHit]:
+def search(conn, query: str, *, project: str | None = None, limit: int = 10,
+           op: str = "AND") -> list[SearchHit]:
     """Keyword search over the index. Returns ranked SearchHits (best first).
 
     This is the stable result type a future semantic strategy will also return, so
     callers (CLI now, Q&A in Phase 4) never need to change (see docs/DECISIONS.md D-0006).
     """
-    match_query = build_match_query(query)
+    match_query = build_match_query(query, op=op)
     if not match_query:
         return []
     project_id = repo.project_id_by_name(conn, project) if project else None

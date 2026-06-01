@@ -93,3 +93,25 @@ class TestRepoRetrievalHelpers(QaTestCase):
             self.assertIn("chunk_count", files[0].keys())
         finally:
             conn.close()
+
+
+class TestOrQuery(unittest.TestCase):
+    def test_or_mode_joins_with_or(self) -> None:
+        self.assertEqual(index_mod.build_match_query("auth login", op="OR"),
+                         '"auth" OR "login"')
+
+    def test_and_mode_is_default(self) -> None:
+        self.assertEqual(index_mod.build_match_query("auth login"), '"auth" "login"')
+
+
+class TestOrSearch(QaTestCase):
+    def test_or_search_matches_any_term(self) -> None:
+        conn = self.ws.connect()
+        try:
+            # 'authenticate' and 'greeting' live in different files; AND finds neither
+            and_hits = index_mod.search(conn, "authenticate greeting")
+            or_hits = index_mod.search(conn, "authenticate greeting", op="OR")
+            self.assertEqual(and_hits, [])
+            self.assertGreaterEqual(len(or_hits), 2)
+        finally:
+            conn.close()
