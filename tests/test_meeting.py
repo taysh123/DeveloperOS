@@ -80,6 +80,15 @@ class MeetingCliTestCase(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("cannot read", out.lower())
 
+    def test_bom_file_no_stray_char(self) -> None:
+        # Files saved as "UTF-8 with BOM" (common on Windows) must not leak ﻿ into output.
+        f = Path(self._home.name) / "bom.txt"
+        f.write_bytes(b"\xef\xbb\xbfDecision: ship Friday.")
+        code, out = self._run("meeting", "summarize", str(f))
+        self.assertEqual(code, 0)
+        self.assertNotIn("﻿", out)
+        self.assertIn("ship Friday", out)
+
     def test_empty_file_declines(self) -> None:
         f = Path(self._home.name) / "empty.txt"
         f.write_text("   ", encoding="utf-8")

@@ -27,7 +27,8 @@ class MeetingCommand(Command):
             print("usage: devos meeting summarize <file>")
             return 1
         try:
-            text = open(args.file, "r", encoding="utf-8", errors="ignore").read()
+            # utf-8-sig strips a leading BOM (common on Windows-saved files).
+            text = open(args.file, "r", encoding="utf-8-sig", errors="ignore").read()
         except OSError as exc:
             print(f"error: cannot read transcript file: {exc}")
             return 1

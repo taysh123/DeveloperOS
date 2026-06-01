@@ -31,7 +31,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _make_output_console_safe() -> None:
+    """Avoid UnicodeEncodeError when printing non-cp1252 content on a Windows console.
+
+    Reconfigures real stdio streams to UTF-8 with replacement. Guarded: streams without
+    ``reconfigure`` (e.g. a StringIO used in tests) are left untouched.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    _make_output_console_safe()
     # Load installed/opted-in plugins (registers extra commands/providers) before parsing.
     from devos import plugins
     plugins.ensure_loaded()
