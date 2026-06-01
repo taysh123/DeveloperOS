@@ -157,6 +157,20 @@ class TestIndexProject(IndexTestCase):
         finally:
             conn.close()
 
+    def test_empty_file_is_unchanged_on_reindex(self) -> None:
+        # An empty file yields no chunks; it must still count as "unchanged" on a
+        # second index rather than being re-processed every run.
+        _write(self.root, "pkg/__init__.py", "")
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, self.root).project_id
+            index_mod.index_project(conn, pid)
+            result = index_mod.index_project(conn, pid)
+            self.assertEqual(result.indexed_files, 0)
+            self.assertEqual(result.unchanged_files, 3)  # app.py, util.ts, __init__.py
+        finally:
+            conn.close()
+
     def test_modified_file_is_reindexed(self) -> None:
         conn = self.ws.connect()
         try:
@@ -236,3 +250,37 @@ class TestSearch(IndexTestCase):
             index_mod.search(conn, 'def(token):')  # must not raise sqlite errors
         finally:
             conn.close()
+
+
+class TestIndexCli(IndexTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_index_command_reports_chunks(self) -> None:
+        code, out = self._run("index", str(self.root))
+        self.assertEqual(code, 0)
+        self.assertIn("chunk", out.lower())
+
+
+class TestSearchCli(IndexTestCase):
+    def _run(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_search_after_index(self) -> None:
+        _write(self.root, "src/auth/login.py", "def authenticate(token):\n    return token")
+        self._run("index", str(self.root))
+        code, out = self._run("search", "authenticate")
+        self.assertEqual(code, 0)
+        self.assertIn("login.py", out)
+
+    def test_search_no_results_message(self) -> None:
+        self._run("index", str(self.root))
+        code, out = self._run("search", "zzz_nope_qqq")
+        self.assertEqual(code, 0)
+        self.assertIn("No matches", out)

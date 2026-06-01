@@ -94,7 +94,10 @@ def index_project(
             continue
 
         cur_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        if not reindex_all and f["indexed_hash"] == cur_hash and f["chunk_count"]:
+        # A matching indexed_hash means the content is byte-identical to what we last
+        # indexed, so the stored chunks are already correct (including 0 chunks for an
+        # empty file). Do not gate on chunk_count, or empty files re-process every run.
+        if not reindex_all and f["indexed_hash"] == cur_hash:
             result.unchanged_files += 1
             continue
 
