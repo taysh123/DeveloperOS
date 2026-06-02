@@ -110,9 +110,13 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   `modules/learning`; grounded, read-only, offline). D-0023. Fills the **Grow** IA group.
 - ✅ **Slice 7 — CRUD polish** (delete tasks/notes/projects with proportional confirmation + project
   pickers + inline task-title edit; `repo.delete_project` cascade + `reconcile_fts`, index-only). D-0024.
-- ⬜ **Next priority — Career tab** (`modules/career`), then Meeting Summary tab, Plugins/Extensions UI,
-  design-system/a11y polish. See `docs/FUTURE_ROADMAP.md` for the full product-level roadmap and
-  prioritization. **Recommend tagging `v0.5.0`** once slices 6–7 are merged to `main`.
+- ✅ **Slice 8 — Career tab** (`repo` job CRUD + `career.analyze_cv`/`interview_prep`; `GET /api/jobs`,
+  `GET /api/jobs/interview`, `POST /api/jobs/{create,update,delete}`, `POST /api/cv`; CV text not
+  persisted). D-0025. Dashboard now at **near-CLI-parity**.
+- ⬜ **Next priority — Meeting Summary tab** (`modules/meeting`; last CLI-parity gap → dashboard
+  feature-complete, **v0.6.0** candidate), then design-system/a11y polish, Plugins/Extensions UI, and the
+  first **real AI provider** (Ollama-first) behind the Settings seam. See `docs/FUTURE_ROADMAP.md`.
+  **Recommend tagging `v0.5.0`** once slices 6–8 are merged to `main`.
 
 ---
 

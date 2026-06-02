@@ -3,35 +3,46 @@
 > Read this FIRST every session. It is the authoritative record of where the project
 > stands and what to do next. Update it after every meaningful work session.
 
-_Last updated: 2026-06-02_
+_Last updated: 2026-06-03_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–7 shipped:**
-Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) · **Settings
-& AI Management** · **Learning Center**, plus **CRUD polish** (deletes + project pickers + inline edit),
-over a CSRF-token-guarded loopback API. Slices 1–6 merged to `main` (PRs #1–#5); slice 7 on branch
-`feat/dashboard-crud-polish` (PR pending). The **long-term dashboard roadmap** is recorded
-(D-0021…D-0024 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System. **Project is at v0.5.0.**
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–8 shipped:**
+Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) · **Learning
+Center** · **Career** · **Settings & AI Management**, plus **CRUD polish** (deletes + project pickers +
+inline edit), over a CSRF-token-guarded loopback API. Slices 1–7 merged to `main` (PRs #1–#6); slice 8 on
+branch `feat/dashboard-career-tab` (PR pending). The **long-term dashboard roadmap** is recorded
+(D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System. **Project is at v0.5.0.**
+Dashboard is at **near-CLI-parity** — only the Meeting surface remains.
 
 ## Current milestone
-**Dashboard slice 7 complete (D-0024).** CRUD polish: delete tasks/notes (two-step confirm) and projects
-(**type-to-confirm**, **index-only — never deletes disk files**); project pickers on the add-task/add-note
-forms; inline task-title editing. New `repo.delete_project` (cascade via existing `ON DELETE CASCADE` FKs
-+ `reconcile_fts`); `POST /api/{tasks,notes,projects}/delete` in `_POST_ACTIONS` (id-validated → 400,
-unknown → 404), reusing `repo.delete_task`/`delete_memory`. Inherits D-0018 guards; no `server.py`/schema
-change. TDD **272/272** (+12); live socket smoke verified (full flow incl. project cascade + token guard).
+**Dashboard slice 8 complete (D-0025).** Career tab surfacing `modules/career` — three plain-language
+sections: **Track a job application** (job-lead CRUD: add, inline status select, edit, two-step delete),
+**Interview prep** (pick a lead → grounded questions from its notes; declines when noteless), and **CV
+match check** (paste CV + compare vs a lead's notes or a pasted description → coverage % + matched/missing
+keyword chips). `GET /api/jobs`, `GET /api/jobs/interview`, `POST /api/jobs/{create,update,delete}`,
+`POST /api/cv` (inline; **CV text not persisted**). Reuse `repo` job CRUD + `career.analyze_cv`/
+`interview_prep`; no schema/`server.py` change. TDD **294/294** (+22); live socket smoke verified.
 
 ## Next immediate step
-Open a PR for `feat/dashboard-crud-polish` and merge to `main`. Per the recorded roadmap, the next
-highest-leverage slice is the **Career tab** (`modules/career`: job leads / CV match / interview prep),
-then the **Meeting Summary tab** (`modules/meeting`), Plugins/Extensions UI, and a design-system/a11y
-pass. **Recommend tagging `v0.5.0`** once slices 6–7 are merged to `main` (do not tag before the PRs merge).
+Open a PR for `feat/dashboard-career-tab` and merge to `main`. Per the recorded roadmap, the next
+highest-leverage slice is the **Meeting Summary tab** (`modules/meeting.summarize` → summary/decisions/
+action-items, + an "action items → tasks" bridge) — the **last CLI-parity gap**. Then: design-system/a11y
+pass; first **real AI provider** (Ollama-first) behind the prepared Settings seam. **Recommend tagging
+`v0.5.0`** once slices 6–8 are merged to `main`; a **`v0.6.0`** ("feature-complete dashboard") is the
+natural milestone once Meeting lands. (Do not tag before the PRs merge.)
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 8 (2026-06-03): Career tab. `app.py` `jobs_payload`/`interview_payload`/`cv_payload`
+      (+ `create_job_action`/`update_job_action`/`delete_job_action`, `_clean_optional`); `GET /api/jobs`
+      + `GET /api/jobs/interview` + `POST /api/jobs/{create,update,delete}` + inline `POST /api/cv`.
+      Reuse `repo` job CRUD + `repo.JOB_STATUSES` + `career.analyze_cv`/`interview_prep`. React+htm
+      **Career** tab (AddJob/JobRow with inline status+edit+ConfirmDelete; InterviewPrep; CvCheck with
+      coverage% + matched/missing chips). **CV text not persisted**; no schema/`server.py` change. TDD
+      **294/294** (+22); live smoke verified (CRUD + interview + CV + 403). D-0025; SECURITY §5/§9/§8.
 - [x] Dashboard slice 7 (2026-06-02): CRUD polish. `repo.delete_project` (cascade via FKs + `reconcile_fts`;
       index-only, no disk deletion). `app.py` `delete_task_action`/`delete_note_action`/`delete_project_action`
       (+ `_require_id`) in `_POST_ACTIONS`; reuse `repo.delete_task`/`delete_memory`. React+htm: reusable

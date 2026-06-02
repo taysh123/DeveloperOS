@@ -4,6 +4,16 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-03 — Session 22: Dashboard slice 8 — Career tab
+- Slice 7 PR (#6) merged to `main`; branched `feat/dashboard-career-tab` off the merged base. `/plan` (approved): scoped to surfacing `modules/career` (job leads + interview prep + CV check), reusing the existing engine.
+- **Reuse findings:** `repo` already has full `job_leads` CRUD (`create_job`/`get_job`/`list_jobs`/`update_job`/`delete_job`, `JOB_STATUSES`, `_JOB_UPDATABLE`); `career.analyze_cv` is deterministic/offline and `career.interview_prep` is grounded on a lead's notes (declines when noteless). → no schema/engine work.
+- **TDD.** `app.py`: `jobs_payload`/`interview_payload`/`cv_payload` + `create_job_action`/`update_job_action`/`delete_job_action` (+ `_clean_optional`). `GET /api/jobs?status=` + `GET /api/jobs/interview?id=&n=` (n clamped 1–15; unknown→404); `POST /api/jobs/{create,update,delete}` in `_POST_ACTIONS`; inline **`POST /api/cv`** (multi-line CV like `/api/grade`; deterministic; **CV text not persisted**; target = job notes via `job_id` or pasted `target_text`). D-0025.
+- **systematic-debugging:** 2 CV tests failed (400≠404/200) — root cause: the inline CV handler reused `_require_id` which reads `body["id"]`, but the CV body uses `job_id`. Fixed by validating `job_id` directly. Re-ran → green.
+- **Frontend:** new **Career** tab (… · Learn · **Career** · Settings). `AddJob`/`JobRow` (inline status select + edit + slice-7 `ConfirmDelete`), `InterviewPrep` (lead → grounded questions; friendly decline), `CvCheck` (paste CV + compare vs a lead or pasted description → coverage % + matched/missing `Badge` chips). Reused existing components/CSS; **no new CSS**.
+- **verification-before-completion:** `node --check app.js` OK; full suite **294/294** (+22). Scripted **live socket smoke**: job create/list/status-update, interview prep grounded (+ noteless decline), CV vs job-notes and vs pasted target (coverage + matched/missing), delete, and `POST /api/cv` + `/api/jobs/create` without token → **403** — all PASS.
+- Synced DECISIONS (D-0025), SECURITY (§5/§9 career dashboard note + §8 entry + posture row), ROADMAP (slice 8; next = Meeting tab; v0.6.0 candidate), ARCHITECTURE (career endpoints), CHANGELOG, AGENT_STATE, TODO, FUTURE_ROADMAP (Career marked shipped).
+- **Git:** committed on branch (`git commit -F`). **Slice complete; scope held** — no Meeting UI, no semantic search, no real providers. Dashboard now at near-CLI-parity (Meeting is the last gap).
+
 ## 2026-06-02 — Session 21: Dashboard slice 7 — CRUD polish
 - Slice 6 PR (#5) merged to `main`; branched `feat/dashboard-crud-polish` off the merged base. `/plan` (approved): scoped to deletes + project pickers + inline edit, reusing existing storage/API foundations.
 - **Key reuse findings:** `repo.delete_task`/`delete_memory` already existed; `db.connect` sets `PRAGMA foreign_keys=ON` and `files`/`chunks`/`tasks`/`memory` cascade on `projects(id)`, so project delete only needs one `DELETE` + the existing `reconcile_fts` (FTS5 isn't cascade-covered). `create_task/note_action` already accept a `project` name → pickers are frontend-only; `update_task` already supports `title` → inline edit is free.

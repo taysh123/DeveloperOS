@@ -25,18 +25,17 @@ safe actions only with explicit consent.** Every idea below inherits those const
 A local-first, offline, **CLI + loopback dashboard** for understanding and working a codebase: scan/index,
 keyword search, grounded Q&A, debug assistant, tasks & memory, docgen, learning/career/meeting modules,
 a plugin seam, and a maturing dashboard (Home · Tasks · Notes · Search & Ask · Debug · Projects · Study ·
-**Settings** · **Learn**) with everyday **CRUD polish** (delete tasks/notes/projects with confirmation,
-project pickers, inline edit). AI is an offline mock by design — no key, nothing leaves the machine.
-**Remaining dashboard gaps to v1.0 parity:** Career tab and Meeting tab.
+**Settings** · **Learn** · **Career**) with everyday **CRUD polish** (delete tasks/notes/projects with
+confirmation, project pickers, inline edit). AI is an offline mock by design — no key, nothing leaves the
+machine. **Remaining dashboard gap to v1.0 parity:** the Meeting tab.
 
 ### Vision for v1.0 — "Your codebase, understood and under control, on your machine"
 The polished, trustworthy daily driver for a single developer.
 - **One real AI provider, opt-in and safe** [Core] — wire **one** provider (likely local **Ollama** first
   for the privacy story, then **Claude**) behind the existing `providers.ai` seam. Keys from env/keychain;
   a clear in-dashboard consent step before the first outbound call; offline mock stays the default.
-- **Dashboard reaches feature-parity with the CLI** [Core] — ✅ Learning tab + ✅ CRUD polish (deletes,
-  project pickers, inline edit) shipped; remaining: **Career tab** and **Meeting tab** so a non-technical
-  user never needs the terminal.
+- **Dashboard reaches feature-parity with the CLI** [Core] — ✅ Learning tab + ✅ CRUD polish + ✅ Career
+  tab shipped; remaining: **Meeting tab** so a non-technical user never needs the terminal.
 - **Trustworthy grounding everywhere** [Core] — every AI surface cites `file:line`, declines when
   unsure, and visibly distinguishes "from your code" vs "model commentary."
 - **Onboarding that earns trust in 60 seconds** [Core] — first-run flow: pick a folder → scan/index →
@@ -63,9 +62,9 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
 - ✅ **Learning tab** [Core] — surfaced `modules/learning` (learn / quiz / exercise / grade). (slice 6)
 - ✅ **CRUD polish** [Core] — delete tasks/notes/projects (proportional confirm), project pickers on
   create, inline task-title edit. (slice 7)
-- **Career tab** [High] — `modules/career` (job leads, CV keyword match, interview prep). **← next**
-- **Meeting tab** [High] — `modules/meeting.summarize` (paste/upload notes → summary/decisions/actions),
-  and a "turn action items into tasks" bridge [High].
+- ✅ **Career tab** [High] — `modules/career` (job leads, CV keyword match, interview prep). (slice 8)
+- **Meeting tab** [High] — `modules/meeting.summarize` (paste notes → summary/decisions/actions),
+  and a "turn action items into tasks" bridge [High]. **← next (last CLI-parity gap → v0.6.0)**
 - **Plugins/Extensions UI** [Nice] — list loaded plugins, show errors, toggle the local-plugin opt-in.
 - **Design-system + a11y pass** [High] — tokens, components, keyboard/ARIA, theming, responsive.
 - **Activity timeline & insights** [Nice] — richer "where I left off," streaks, weekly digest.
@@ -104,7 +103,7 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
 - **Personalized difficulty** from past performance [Research].
 
 ## 6. Career roadmap
-- **Career tab** (job leads, CV keyword match, interview prep) [High].
+- ✅ **Career tab** (job leads, CV keyword match, interview prep) [High]. (slice 8)
 - **Project → portfolio/resume bullets** [High] — grounded, generated from indexed projects + memory.
 - **CV rewrite / cover-letter drafting** [Nice] — grounded, user-edited; **no scraping, no paid APIs**
   (explicitly excluded by current policy).
