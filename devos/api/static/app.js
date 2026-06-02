@@ -57,6 +57,23 @@
 
   function Empty(props) { return html`<div class="muted empty">${props.children}</div>`; }
 
+  // Lightweight two-step delete: ghost "Delete" -> inline "Yes, delete / Cancel".
+  // Used for low-impact deletes (tasks, notes). Projects use a stricter type-to-confirm.
+  function ConfirmDelete(props) {
+    var c = useState(false), confirming = c[0], setConfirming = c[1];
+    if (confirming) {
+      return html`<span class="confirmdelete">
+        <span class="muted">${props.prompt || "Delete?"}</span>
+        <button class="btn small danger" type="button" disabled=${props.busy}
+          onClick=${function () { props.onConfirm(); }}>Yes, delete</button>
+        <button class="btn small ghost" type="button" disabled=${props.busy}
+          onClick=${function () { setConfirming(false); }}>Cancel</button>
+      </span>`;
+    }
+    return html`<button class="btn small ghost danger-text" type="button"
+      onClick=${function () { setConfirming(true); }}>${props.label || "Delete"}</button>`;
+  }
+
   // --- HOME ----------------------------------------------------------------
   function Activity(props) {
     var items = props.items || [];
@@ -109,11 +126,14 @@
   function AddTask(props) {
     var t = useState(""), title = t[0], setTitle = t[1];
     var p = useState("medium"), prio = p[0], setPrio = p[1];
+    var pj = useState(""), proj = pj[0], setProj = pj[1];
     var e = useState(""), err = e[0], setErr = e[1];
+    var data = useApi("/api/projects", 0);
+    var projects = (data && !data.error && data.projects) || [];
     function submit(ev) {
       ev.preventDefault();
       if (!title.trim()) { setErr("Please type what you want to get done."); return; }
-      post("/api/tasks/create", { title: title.trim(), priority: prio })
+      post("/api/tasks/create", { title: title.trim(), priority: prio, project: proj || undefined })
         .then(function () { setTitle(""); setPrio("medium"); setErr(""); props.onDone(); })
         .catch(function (x) { setErr(x.message); });
     }
@@ -133,6 +153,14 @@
             <option value="high">High</option>
           </select>
         </div>
+        <div class="field">
+          <label for="task-project">Project</label>
+          <select id="task-project" value=${proj} onChange=${function (ev) { setProj(ev.target.value); }}>
+            <option value="">No project</option>
+            ${projects.map(function (p) {
+              return html`<option key=${p.id} value=${p.name}>${p.name}</option>`; })}
+          </select>
+        </div>
         <button class="btn" type="submit">Add task</button>
       </div>
       <${Msg} text=${err} />
@@ -142,9 +170,36 @@
   function TaskRow(props) {
     var t = props.t;
     var e = useState(""), err = e[0], setErr = e[1];
+    var ed = useState(false), editing = ed[0], setEditing = ed[1];
+    var ti = useState(t.title), title = ti[0], setTitle = ti[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
     function change(status) {
       post("/api/tasks/update", { id: t.id, status: status })
         .then(props.onDone).catch(function (x) { setErr(x.message); });
+    }
+    function saveTitle() {
+      if (!title.trim()) { setErr("A task needs a title."); return; }
+      post("/api/tasks/update", { id: t.id, title: title.trim() })
+        .then(function () { setEditing(false); setErr(""); props.onDone(); })
+        .catch(function (x) { setErr(x.message); });
+    }
+    function remove() {
+      setBusy(true);
+      post("/api/tasks/delete", { id: t.id })
+        .then(props.onDone).catch(function (x) { setBusy(false); setErr(x.message); });
+    }
+    if (editing) {
+      return html`<div class="item taskrow">
+        <div class="field grow"><label class="sr-only" for=${"tt" + t.id}>Edit task title</label>
+          <input id=${"tt" + t.id} value=${title}
+                 onInput=${function (ev) { setTitle(ev.target.value); }} /></div>
+        <div class="taskactions">
+          <button class="btn small" type="button" onClick=${saveTitle}>Save</button>
+          <button class="btn small ghost" type="button"
+            onClick=${function () { setEditing(false); setTitle(t.title); setErr(""); }}>Cancel</button>
+        </div>
+        <${Msg} text=${err} />
+      </div>`;
     }
     return html`<div class="item taskrow">
       <div class="taskmeta">
@@ -163,6 +218,9 @@
           <option value="blocked">Blocked</option>
           <option value="done">Done</option>
         </select>
+        <button class="btn small ghost" type="button"
+          onClick=${function () { setEditing(true); }}>Edit</button>
+        <${ConfirmDelete} busy=${busy} prompt="Delete this task?" onConfirm=${remove} />
       </div>
       <${Msg} text=${err} />
     </div>`;
@@ -201,11 +259,14 @@
   function AddNote(props) {
     var t = useState(""), title = t[0], setTitle = t[1];
     var b = useState(""), body = b[0], setBody = b[1];
+    var pj = useState(""), proj = pj[0], setProj = pj[1];
     var e = useState(""), err = e[0], setErr = e[1];
+    var data = useApi("/api/projects", 0);
+    var projects = (data && !data.error && data.projects) || [];
     function submit(ev) {
       ev.preventDefault();
       if (!title.trim() || !body.trim()) { setErr("Please give your note a title and some text."); return; }
-      post("/api/notes/create", { title: title.trim(), body: body.trim() })
+      post("/api/notes/create", { title: title.trim(), body: body.trim(), project: proj || undefined })
         .then(function () { setTitle(""); setBody(""); setErr(""); props.onDone(); })
         .catch(function (x) { setErr(x.message); });
     }
@@ -221,6 +282,14 @@
         <textarea id="note-body" rows="3" value=${body} placeholder="Write what you want to remember…"
                   onInput=${function (ev) { setBody(ev.target.value); }}></textarea>
       </div>
+      <div class="field">
+        <label for="note-project">Project</label>
+        <select id="note-project" value=${proj} onChange=${function (ev) { setProj(ev.target.value); }}>
+          <option value="">No project</option>
+          ${projects.map(function (p) {
+            return html`<option key=${p.id} value=${p.name}>${p.name}</option>`; })}
+        </select>
+      </div>
       <button class="btn" type="submit">Save note</button>
       <${Msg} text=${err} />
     </form>`;
@@ -232,10 +301,16 @@
     var t = useState(m.title), title = t[0], setTitle = t[1];
     var b = useState(m.body), body = b[0], setBody = b[1];
     var e = useState(""), err = e[0], setErr = e[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
     function save() {
       post("/api/notes/update", { id: m.id, title: title.trim(), body: body.trim() })
         .then(function () { setEditing(false); setErr(""); props.onDone(); })
         .catch(function (x) { setErr(x.message); });
+    }
+    function remove() {
+      setBusy(true);
+      post("/api/notes/delete", { id: m.id })
+        .then(props.onDone).catch(function (x) { setBusy(false); setErr(x.message); });
     }
     if (editing) {
       return html`<div class="item">
@@ -255,9 +330,13 @@
     return html`<div class="item">
       <div class="row spread">
         <div><${Badge}>${m.kind}<//> <strong>${m.title}</strong></div>
-        <button class="btn small ghost" type="button" onClick=${function () { setEditing(true); }}>Edit</button>
+        <div class="row">
+          <button class="btn small ghost" type="button" onClick=${function () { setEditing(true); }}>Edit</button>
+          <${ConfirmDelete} busy=${busy} prompt="Delete this note?" onConfirm=${remove} />
+        </div>
       </div>
       <div class="muted notebody">${m.body}</div>
+      <${Msg} text=${err} />
     </div>`;
   }
 
@@ -491,11 +570,20 @@
     var data = useApi("/api/projects/detail?id=" + props.id, props.tick);
     var rescan = useState(false), reScanning = rescan[0], setReScanning = rescan[1];
     var done = useState(null), result = done[0], setResult = done[1];
+    var dn = useState(""), delName = dn[0], setDelName = dn[1];
+    var db = useState(false), delBusy = db[0], setDelBusy = db[1];
+    var de = useState(""), delErr = de[0], setDelErr = de[1];
     if (!data) return html`<${Empty}>Loading…<//>`;
     if (data.error) return html`<${Empty}>Couldn't load this project.<//>`;
     var p = data.project, idx = data.index || {}, cats = data.by_category || {};
     var catKeys = Object.keys(cats).sort();
     function onRescanned(r) { setResult(r); setReScanning(false); props.reload(); }
+    function removeProject() {
+      setDelBusy(true); setDelErr("");
+      post("/api/projects/delete", { id: props.id })
+        .then(function () { props.reload(); props.onBack(); })
+        .catch(function (x) { setDelBusy(false); setDelErr(x.message); });
+    }
     return html`<div>
       <button class="btn ghost small" type="button" onClick=${props.onBack}>← Back to projects</button>
       <div class="panel detail">
@@ -521,6 +609,21 @@
         ${result && html`<${ScanResult} r=${result} />`}
         ${reScanning && html`<${ScanFlow} path=${p.root_path} cta="Re-scan" onDone=${onRescanned} />`}
         ${!reScanning && !result && html`<${Empty}>Re-scan to pick up files you've added or changed.<//>`}
+      </div>
+      <div class="panel danger-zone">
+        <h2>Danger zone</h2>
+        <p class="muted">Deleting removes <strong>${p.name}</strong> from DeveloperOS — its index, and any
+          tasks and notes attached to this project. <strong>Your files on disk are not touched.</strong>
+          This can't be undone.</p>
+        <div class="field">
+          <label for="del-confirm">Type the project name <code>${p.name}</code> to confirm</label>
+          <input id="del-confirm" value=${delName} placeholder=${p.name} autoComplete="off"
+                 onInput=${function (ev) { setDelName(ev.target.value); }} />
+        </div>
+        <button class="btn danger" type="button"
+          disabled=${delBusy || delName.trim() !== p.name}
+          onClick=${removeProject}>${delBusy ? "Deleting…" : "Delete this project"}</button>
+        <${Msg} text=${delErr} />
       </div>
     </div>`;
   }

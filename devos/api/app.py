@@ -460,6 +460,44 @@ def update_note_action(conn: sqlite3.Connection, body: dict) -> Response:
     return _json({"updated": repo.update_memory(conn, mid, **fields)})
 
 
+def _require_id(body: dict, noun: str) -> "tuple[int | None, Response | None]":
+    """Validate a positive integer ``id`` from a delete request body."""
+    rid = body.get("id")
+    if not isinstance(rid, int) or isinstance(rid, bool) or rid <= 0:
+        return None, _bad(f"a valid {noun} id is required")
+    return rid, None
+
+
+def delete_task_action(conn: sqlite3.Connection, body: dict) -> Response:
+    tid, err = _require_id(body, "task")
+    if err:
+        return err
+    if repo.get_task(conn, tid) is None:
+        return _json({"error": f"no task #{tid}"}, 404)
+    return _json({"deleted": repo.delete_task(conn, tid)})
+
+
+def delete_note_action(conn: sqlite3.Connection, body: dict) -> Response:
+    mid, err = _require_id(body, "note")
+    if err:
+        return err
+    if repo.get_memory(conn, mid) is None:
+        return _json({"error": f"no note #{mid}"}, 404)
+    return _json({"deleted": repo.delete_memory(conn, mid)})
+
+
+def delete_project_action(conn: sqlite3.Connection, body: dict) -> Response:
+    """Remove a project from DeveloperOS. Cascades to that project's tasks, notes, file
+    inventory, chunks, and FTS rows (see repo.delete_project) — but never deletes the
+    user's files on disk."""
+    pid, err = _require_id(body, "project")
+    if err:
+        return err
+    if repo.get_project(conn, pid) is None:
+        return _json({"error": f"no project #{pid}"}, 404)
+    return _json({"deleted": repo.delete_project(conn, pid)})
+
+
 MAX_PATH = 4096
 
 
@@ -503,9 +541,12 @@ def scan_project_action(conn: sqlite3.Connection, body: dict) -> Response:
 _POST_ACTIONS = {
     "/api/tasks/create": create_task_action,
     "/api/tasks/update": update_task_action,
+    "/api/tasks/delete": delete_task_action,
     "/api/notes/create": create_note_action,
     "/api/notes/update": update_note_action,
+    "/api/notes/delete": delete_note_action,
     "/api/projects/scan": scan_project_action,
+    "/api/projects/delete": delete_project_action,
 }
 
 

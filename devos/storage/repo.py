@@ -130,6 +130,17 @@ def get_project(conn: sqlite3.Connection, project_id: int) -> sqlite3.Row | None
     ).fetchone()
 
 
+def delete_project(conn: sqlite3.Connection, project_id: int) -> int:
+    """Remove a project and all DeveloperOS data derived from it (index-only — never the
+    files on disk). Relies on the ``ON DELETE CASCADE`` foreign keys (files -> chunks,
+    tasks, memory; foreign_keys pragma is enabled in ``db.connect``) and then reconciles
+    the FTS mirror, which is a virtual table not covered by cascades."""
+    cur = conn.execute("DELETE FROM projects WHERE id = ?;", (project_id,))
+    reconcile_fts(conn)
+    conn.commit()
+    return cur.rowcount
+
+
 def list_files(conn: sqlite3.Connection, project_id: int) -> list[sqlite3.Row]:
     return conn.execute(
         """
