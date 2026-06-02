@@ -6,35 +6,39 @@
 _Last updated: 2026-06-02_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–5 shipped:**
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–6 shipped:**
 Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) · **Settings
-& AI Management**, over a CSRF-token-guarded loopback API. Slices 1–4 merged to `main` (PRs #1–#3); slice
-5 on branch `feat/dashboard-settings-ai` (PR pending). A **long-term dashboard roadmap** is recorded
-(D-0021/D-0022 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System. **Project is at
-v0.5.0.**
+& AI Management** · **Learning Center**, over a CSRF-token-guarded loopback API. Slices 1–5 merged to
+`main` (PRs #1–#4); slice 6 on branch `feat/dashboard-learning-ui` (PR pending). The **long-term dashboard
+roadmap** is recorded (D-0021…D-0023 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System
+— the **Grow** group now exists. **Project is at v0.5.0.**
 
 ## Current milestone
-**Dashboard slice 5 complete (D-0022).** Settings & AI Management: new **Settings** tab with **System
-status** (local-first/offline/AI on-off/active provider/version/roadmap phase/indexed count/maturity) +
-**AI settings** (enable toggle + provider selector: mock/ollama/claude/openai with privacy+cost badges)
-+ prepared (disabled) provider-config panel. New `devos/settings.py` (non-secret `settings.json` store +
-provider catalog; `effective_provider_name` falls back to offline mock; `key_present` boolean only).
-`GET /api/system`, `GET /api/settings`, `POST /api/settings` (whitelists `ai_enabled`/`ai_provider` — no
-secrets). **No API keys in SQLite/JSON/frontend** (env-var/keychain only). Version 0.1.0→**0.5.0**. TDD
-**247/247** (+20); live socket smoke verified (no key leak). Also authored `docs/FUTURE_ROADMAP.md`
-(planning only).
+**Dashboard slice 6 complete (D-0023).** Learning Center: new **Learn** tab surfacing the existing
+`modules/learning` (learn/quiz/exercise/grade) — pick a file/topic + optional project + depth
+(Beginner/Intermediate/Advanced), then Explain / Quiz me / Give me exercises, plus a "Check my
+understanding" box that grades a free-text answer. Read-only AI: `GET /api/learn|quiz|exercise` +
+`POST /api/grade` (multi-line answer; inline like `/api/debug`; inherits D-0018 guards). Pure reuse, no
+new engine; grounded with `file:line` sources, declines when nothing indexed matches. TDD **260/260**
+(+13); live socket smoke verified (all four endpoints + token guard).
 
 ## Next immediate step
-Open a PR for `feat/dashboard-settings-ai` and merge to `main`. Per the recorded roadmap, the next
-highest-leverage slice is the **Learning tab** (own `/plan`; surface `modules/learning` learn/quiz/
-exercise/grade in the dashboard). Other follow-ups: CRUD polish (deletes + project pickers), Career tab,
-Meeting Summary tab, Plugins/Extensions UI, design/a11y polish. Consider tag `v0.5.0` once merged.
+Open a PR for `feat/dashboard-learning-ui` and merge to `main`. Per the recorded roadmap, the next
+highest-leverage slice is **CRUD polish** (deletes + project pickers + inline edit) or the **Career tab**
+(`modules/career`: job leads / CV match / interview prep). Other follow-ups: Meeting Summary tab,
+Plugins/Extensions UI, design/a11y polish. Consider tag `v0.5.0` once these dashboard slices are settled.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 6 (2026-06-02): Learning Center. `app.py` `learn_payload`/`quiz_payload`/
+      `exercise_payload`/`grade_payload` (+ shared `_chunk_sources`) reusing `modules/learning`;
+      `GET /api/learn|quiz|exercise` (target required; level validated; `n` clamped 20/10) +
+      inline `POST /api/grade` (multi-line answer; inherits D-0018 guards). React+htm **Learn** tab
+      (target/project/depth + Explain/Quiz/Exercises + grade box; shared `AnswerBlock`); no new CSS.
+      Read-only/grounded; declines when unindexed. TDD **260/260** (+13); live smoke verified. D-0023; SECURITY §5/§8.
 - [x] Dashboard slice 5 (2026-06-02): Settings & AI Management. New `devos/settings.py` (non-secret
       `settings.json` store + provider catalog mock/ollama/claude/openai with privacy/cost metadata;
       `effective_provider_name` → offline mock when disabled/unavailable; `key_present` boolean only).

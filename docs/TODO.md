@@ -58,6 +58,10 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 6 — Learning Center UI ✅
+- [x] **Learn** tab (… · Projects · **Learn** · Settings): pick a file/topic + optional project + depth (Beginner/Intermediate/Advanced) → **Explain it** / **Quiz me** / **Give me exercises**, plus a **Check my understanding** box that grades a free-text answer. Reuses existing components + `AnswerBlock` (grounded text + sources, honest ungrounded note); no new CSS.
+- [x] `GET /api/learn|quiz|exercise` (target required, level validated, `n` clamped 1–20/1–10) + inline `POST /api/grade` (multi-line answer; inherits D-0018 CSRF/Origin/JSON/size guards). Pure reuse of `modules/learning` (learn/quiz/exercise/grade) — no new engine; read-only, grounded with `file:line`, declines when nothing indexed matches. D-0023; SECURITY §5/§8. 260 tests (+13), live socket smoke verified.
+
 ## Post-roadmap: Dashboard slice 5 — Settings & AI Management ✅
 - [x] **Settings** tab (Home · Tasks · Notes · Search & Ask · Debug · Projects · Settings): **System status** (local-first, offline, AI on/off, active provider, version, roadmap phase, projects indexed, dashboard maturity), **AI settings** (enable toggle + provider radio list with privacy/cost badges + key-detection hints), and a prepared (disabled) **provider-config** panel.
 - [x] `devos/settings.py`: non-secret settings store (`settings.json`) + provider catalog (mock/ollama/claude/openai); `effective_provider_name` falls back to offline mock when disabled/unavailable; `key_present` returns a boolean only. Config/Workspace resolve provider via env → settings → mock (backward compatible).
@@ -84,7 +88,7 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021/D-0022): ~~Settings + AI-provider toggle~~ ✅ (slice 5), then **Learning tab** (lead), CRUD polish (deletes + project pickers), Career tab, Meeting Summary tab, Plugins/Extensions UI, design/a11y polish.
+- [ ] Dashboard (roadmap order, D-0021…D-0023): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), then **CRUD polish** (deletes + project pickers + inline edit) / **Career tab** (lead), Meeting Summary tab, Plugins/Extensions UI, design/a11y polish.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.
