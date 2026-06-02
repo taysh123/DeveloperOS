@@ -108,9 +108,11 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   settings store + provider catalog; env-var/keychain keys only, mock default). D-0022. **(v0.5.0)**
 - ✅ **Slice 6 — Learning Center** (`GET /api/learn|quiz|exercise`, `POST /api/grade`; reuses
   `modules/learning`; grounded, read-only, offline). D-0023. Fills the **Grow** IA group.
-- ⬜ **Next priority — CRUD polish** (deletes + project pickers + inline edit) / **Career tab**, then
-  Meeting Summary tab, Plugins/Extensions UI, design/a11y polish. See `docs/FUTURE_ROADMAP.md` for the
-  full product-level roadmap and prioritization.
+- ✅ **Slice 7 — CRUD polish** (delete tasks/notes/projects with proportional confirmation + project
+  pickers + inline task-title edit; `repo.delete_project` cascade + `reconcile_fts`, index-only). D-0024.
+- ⬜ **Next priority — Career tab** (`modules/career`), then Meeting Summary tab, Plugins/Extensions UI,
+  design-system/a11y polish. See `docs/FUTURE_ROADMAP.md` for the full product-level roadmap and
+  prioritization. **Recommend tagging `v0.5.0`** once slices 6–7 are merged to `main`.
 
 ---
 

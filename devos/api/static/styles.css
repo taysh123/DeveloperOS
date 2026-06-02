@@ -113,6 +113,15 @@ input[readonly] { opacity: .8; cursor: not-allowed; }
 /* debug */
 textarea.mono { font-family: ui-monospace, "Cascadia Code", "Consolas", monospace; font-size: 13px; }
 
+/* destructive actions (CRUD polish) */
+.btn.danger { background: var(--blocked); color: #1a0808; }
+.btn.danger:disabled { opacity: .45; }
+.btn.ghost.danger-text { color: #ff9b9b; }
+.btn.ghost.danger-text:hover { border-color: var(--blocked); }
+.confirmdelete { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.danger-zone { border-color: var(--blocked); }
+.danger-zone h2 { color: #ff9b9b; }
+
 /* settings / system status */
 .statusrow { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
 .statusrow .statusval { text-align: right; }

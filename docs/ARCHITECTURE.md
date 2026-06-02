@@ -146,10 +146,15 @@ when ungrounded. `devos docgen` prints to stdout by default and writes to `--out
 `search`/`ask`/`explain` payloads + the `*_action` write handlers) that reuse `storage/repo` +
 `modules.recall`/`index`/`qa`, plus a socket-free `route(ws, path, query, *, method, body)
 -> Response` table (JSON `/api/*`; static files under `static/`, path-traversal-rejected).
-**GET** endpoints are read-only; **POST** endpoints (`/api/tasks/create|update`,
-`/api/notes/create|update`, `/api/projects/scan`) perform guarded writes via the same `repo`/`ingest`/
-`index` functions the CLI uses (project import = `ingest.scan_project` + `index_mod.index_project`;
-`/api/projects/detail` adds a per-project overview). Untrusted scan paths are validated server-side.
+**GET** endpoints are read-only; **POST** endpoints (`/api/tasks/create|update|delete`,
+`/api/notes/create|update|delete`, `/api/projects/scan|delete`) perform guarded writes via the same
+`repo`/`ingest`/`index` functions the CLI uses (project import = `ingest.scan_project` +
+`index_mod.index_project`; `/api/projects/detail` adds a per-project overview). Untrusted scan paths are
+validated server-side. The **delete** handlers (slice 7) validate a positive int id (400) / unknown (404)
+and reuse `repo.delete_task`/`delete_memory`/`delete_project`; **`delete_project` is index-only** — it
+relies on the schema's `ON DELETE CASCADE` (files→chunks, tasks, memory) then `repo.reconcile_fts`, and
+never touches files on disk. Read GET endpoints also include the learning surfaces
+(`/api/learn|quiz|exercise`) and `POST /api/grade` (multi-line answer; reuses `modules/learning`).
 `POST /api/debug` is read-only but POSTs the multi-line trace body (reuses `debug.diagnose`; inline in
 `route()` so it gets `ws.ai`); the trace is data-not-instructions, file location is index-only, and the
 diagnosis is not persisted. `GET /api/projects/study` is a read-only Deep Dive aggregator (reuses

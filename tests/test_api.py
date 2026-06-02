@@ -499,6 +499,96 @@ class TestLearningEndpoints(ApiTestCase):
         self.assertEqual(self._post("/api/grade", {"target": "main", "answer": 123}).status, 400)
 
 
+class TestDeleteEndpoints(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def test_delete_task(self) -> None:
+        conn = self.ws.connect()
+        try:
+            tid = repo.create_task(conn, None, "to delete", kind="task",
+                                   status="todo", priority="low")
+        finally:
+            conn.close()
+        resp = self._post("/api/tasks/delete", {"id": tid})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["deleted"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNone(repo.get_task(conn, tid))
+        finally:
+            conn.close()
+
+    def test_delete_task_unknown_id_404(self) -> None:
+        self.assertEqual(self._post("/api/tasks/delete", {"id": 99999}).status, 404)
+
+    def test_delete_task_bad_id_400(self) -> None:
+        self.assertEqual(self._post("/api/tasks/delete", {}).status, 400)
+        self.assertEqual(self._post("/api/tasks/delete", {"id": "x"}).status, 400)
+        self.assertEqual(self._post("/api/tasks/delete", {"id": 0}).status, 400)
+
+    def test_delete_note(self) -> None:
+        conn = self.ws.connect()
+        try:
+            mid = repo.create_memory(conn, None, kind="note", title="bye", body="remove me")
+        finally:
+            conn.close()
+        resp = self._post("/api/notes/delete", {"id": mid})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["deleted"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNone(repo.get_memory(conn, mid))
+        finally:
+            conn.close()
+
+    def test_delete_note_unknown_id_404(self) -> None:
+        self.assertEqual(self._post("/api/notes/delete", {"id": 99999}).status, 404)
+
+    def test_repo_delete_project_cascades(self) -> None:
+        conn = self.ws.connect()
+        try:
+            chunks_before, _ = repo.chunk_stats(conn, self.pid)
+            self.assertGreater(chunks_before, 0)
+            n = repo.delete_project(conn, self.pid)
+            self.assertEqual(n, 1)
+            self.assertIsNone(repo.get_project(conn, self.pid))
+            self.assertEqual(repo.list_tasks(conn, project_id=self.pid), [])
+            self.assertEqual(repo.list_memory(conn, project_id=self.pid), [])
+            self.assertEqual(repo.list_files(conn, self.pid), [])
+            chunks_after, _ = repo.chunk_stats(conn, self.pid)
+            self.assertEqual(chunks_after, 0)
+            hits = index_mod.search(conn, "main", op="OR")
+            self.assertFalse(any(h.project == "demo" for h in hits))  # FTS reconciled
+        finally:
+            conn.close()
+
+    def test_delete_project_endpoint_cascades(self) -> None:
+        resp = self._post("/api/projects/delete", {"id": self.pid})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["deleted"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNone(repo.get_project(conn, self.pid))
+            self.assertEqual(repo.list_tasks(conn, project_id=self.pid), [])
+        finally:
+            conn.close()
+        # a search that used to find the project's code now returns nothing for it
+        body = json.loads(api_app.route(self.ws, "/api/search", {"q": "main"}).body)
+        self.assertFalse(any(r["project"] == "demo" for r in body["results"]))
+
+    def test_delete_project_unknown_id_404(self) -> None:
+        self.assertEqual(self._post("/api/projects/delete", {"id": 99999}).status, 404)
+
+    def test_delete_project_bad_id_400(self) -> None:
+        self.assertEqual(self._post("/api/projects/delete", {}).status, 400)
+        self.assertEqual(self._post("/api/projects/delete", {"id": "x"}).status, 400)
+
+    def test_get_does_not_hit_delete_actions(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/tasks/delete", {}).status, 404)
+        self.assertEqual(api_app.route(self.ws, "/api/projects/delete", {}).status, 404)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -641,4 +731,14 @@ class TestLiveSecurity(_LiveServerMixin):
     def test_grade_without_token_403(self) -> None:
         _, port = self._start()
         status, _ = self._post(port, "/api/grade", {"target": "main", "answer": "x"})
+        self.assertEqual(status, 403)
+
+    def test_task_delete_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/tasks/delete", {"id": 1})
+        self.assertEqual(status, 403)
+
+    def test_project_delete_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/projects/delete", {"id": 1})
         self.assertEqual(status, 403)

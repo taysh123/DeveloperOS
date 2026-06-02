@@ -58,6 +58,11 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 7 — CRUD polish ✅
+- [x] Delete from the UI: **tasks** and **notes** (lightweight two-step confirm) and **projects** (**type-to-confirm** the project name, in a clearly-marked danger zone). Project delete is **index-only — never deletes files on disk**.
+- [x] **Project pickers** on the add-task and add-note forms (dropdown of existing projects → reuses the create endpoints' existing `project` field). **Inline task-title editing** (reuses `tasks/update`).
+- [x] Backend: new `repo.delete_project` (cascade via existing `ON DELETE CASCADE` FKs → files/chunks/tasks/memory, then `reconcile_fts`); `POST /api/{tasks,notes,projects}/delete` in `_POST_ACTIONS` (id-validated → 400, unknown → 404), reusing `repo.delete_task`/`delete_memory`. Inherits D-0018 CSRF/Origin/JSON/size guards; **no `server.py`/schema change**. D-0024; SECURITY §8. 272 tests (+12), live socket smoke verified.
+
 ## Post-roadmap: Dashboard slice 6 — Learning Center UI ✅
 - [x] **Learn** tab (… · Projects · **Learn** · Settings): pick a file/topic + optional project + depth (Beginner/Intermediate/Advanced) → **Explain it** / **Quiz me** / **Give me exercises**, plus a **Check my understanding** box that grades a free-text answer. Reuses existing components + `AnswerBlock` (grounded text + sources, honest ungrounded note); no new CSS.
 - [x] `GET /api/learn|quiz|exercise` (target required, level validated, `n` clamped 1–20/1–10) + inline `POST /api/grade` (multi-line answer; inherits D-0018 CSRF/Origin/JSON/size guards). Pure reuse of `modules/learning` (learn/quiz/exercise/grade) — no new engine; read-only, grounded with `file:line`, declines when nothing indexed matches. D-0023; SECURITY §5/§8. 260 tests (+13), live socket smoke verified.
@@ -88,7 +93,7 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021…D-0023): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), then **CRUD polish** (deletes + project pickers + inline edit) / **Career tab** (lead), Meeting Summary tab, Plugins/Extensions UI, design/a11y polish.
+- [ ] Dashboard (roadmap order, D-0021…D-0024): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), then **Career tab** (lead), Meeting Summary tab, Plugins/Extensions UI, design-system/a11y polish.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

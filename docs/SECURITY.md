@@ -192,6 +192,17 @@ into the AI context, a model could be manipulated.
   (same pattern as `/api/debug`). All reuse `modules/learning` (grounding contract §5, retrieval-derived
   `file:line`, declines when unindexed, **nothing persisted**); POST inherits the D-0018 CSRF/Origin/JSON/
   size/no-CORS gating. No new write surface, no new outbound calls, offline/mock default.
+- **[NOW] CRUD polish — destructive deletes (slice 7, D-0024).** New **state-changing** endpoints
+  `POST /api/{tasks,notes,projects}/delete` are registered in `_POST_ACTIONS`, so they inherit the D-0018
+  controls (**CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only**). Each
+  validates a positive integer `id` (else 400) and returns 404 for unknown ids; mutations are scoped DB
+  deletes equivalent to the CLI `task rm` / memory delete — they do **not** invoke the Safe Action Agent
+  (§4). **Project deletion is index-only:** `repo.delete_project` removes the project row (cascading to its
+  files/chunks/tasks/memory via `ON DELETE CASCADE`, then `reconcile_fts`) but **never touches the user's
+  files on disk** — no filesystem writes/deletes occur. The UI requires **explicit, proportional
+  confirmation**: a two-step confirm for tasks/notes and a stricter **type-the-project-name** gate for the
+  cascading project delete. All input remains untrusted and validated server-side; no new outbound surface;
+  offline/mock default.
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -218,6 +229,7 @@ into the AI context, a model could be manipulated.
 | Dashboard study (Deep Dive, D-0021) | `GET /api/projects/study` read-only aggregator over index-only `qa.explain`/`learning.quiz`/`repo`; project resolved from a validated integer id; outputs are data (React-escaped); no write surface; offline/mock |
 | Dashboard settings (Settings tab, D-0022) | `GET /api/system`/`GET /api/settings` read-only; `POST /api/settings` persists **only** `ai_enabled`/`ai_provider` to `settings.json` (not SQLite), ignores any `api_key`/`endpoint`; same D-0018 CSRF/Origin/JSON/size/no-CORS gating. **No keys stored/transmitted** — env-var/keychain only, **presence boolean** surfaced; effective provider stays offline mock until a real provider ships |
 | Dashboard learning (Learn tab, D-0023) | `GET /api/learn|quiz|exercise` + `POST /api/grade` reuse `modules/learning`: grounded (code + learner answer = data), retrieval-derived `file:line`, **read-only/not persisted**, declines when unindexed; POST inherits D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
+| Dashboard deletes (CRUD polish, D-0024) | `POST /api/{tasks,notes,projects}/delete` in `_POST_ACTIONS` → same D-0018 CSRF/Origin/JSON/size/no-CORS gating; id-validated (400) / unknown (404); scoped DB deletes ≈ CLI `task rm` (no Safe Action Agent). **Project delete is index-only** (cascade + `reconcile_fts`); **never deletes disk files**. UI requires explicit confirm — type-to-confirm for projects |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |
