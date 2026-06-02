@@ -40,6 +40,13 @@ _Last updated: 2026-06-01 · Living document._
   rules limit blast radius** because nothing leaves the machine.
 - **[NOW] Never echo secrets:** CLI output and any future logs must not print environment
   variables or file contents flagged as secrets.
+- **[NOW] Dashboard key-detection is presence-only (slice 5, D-0022):** the Settings tab can show whether
+  a provider's API-key environment variable (e.g. `ANTHROPIC_API_KEY`) is **set**, computed server-side as
+  a **boolean** (`settings.key_present`) — the key **value is never read into a payload, never sent to the
+  frontend, never logged**. The persisted settings store (`<data_dir>/settings.json`) holds **only**
+  `ai_enabled` + `ai_provider`; `settings.save()` is keyword-only on those two fields so a secret cannot be
+  written, and `POST /api/settings` ignores any `api_key`/`endpoint` in the request body. **No keys in
+  SQLite, no keys in the JSON store, no keys in the browser.**
 
 ## 3. Future authentication model  **[FUTURE — Phase 7+ / multi-user]**
 - Single power user now → **no auth** by design (local OS account is the trust boundary).
@@ -165,6 +172,16 @@ into the AI context, a model could be manipulated.
   **resolved from a validated integer `id`** (not raw client text); `id`/`n` are validated/clamped.
   Rendered code/file content is **data** (React-escaped; grounding contract treats context as data, not
   instructions). No new write surface, no new outbound calls, offline/mock default.
+- **[NOW] Settings & AI Management (slice 5, D-0022).** `GET /api/system` and `GET /api/settings` are
+  **read-only**; `POST /api/settings` persists **only non-secret preferences** (`ai_enabled`,
+  `ai_provider`) to `<data_dir>/settings.json` (not SQLite). The handler reads **only those two fields**
+  (a smuggled `api_key`/`endpoint` is dropped), validates the provider against a fixed catalog, and
+  inherits the D-0018 controls (**CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS,
+  loopback-only**). **Provider keys are never stored or transmitted** — they come from environment
+  variables / an OS keychain (§2); the UI shows only a **presence boolean**. Selecting a not-yet-wired
+  provider changes a stored preference but the **effective** provider stays the offline mock
+  (`settings.effective_provider_name`), so **no external request is made and no key is required** — the
+  local-first/offline default (§0/§1) is preserved.
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -189,6 +206,7 @@ into the AI context, a model could be manipulated.
 | Dashboard project import (Projects tab, D-0019) | `POST /api/projects/scan` reads only the user-named folder ≈ CLI `devos scan` (same ignore/size/binary rules, §2 caveat); path validated server-side; same D-0018 CSRF/Origin/no-CORS gating + UI confirm step; no new outbound surface |
 | Dashboard debug (Debug tab, D-0020) | `POST /api/debug` (read-only) reuses `debug.diagnose`: trace = untrusted **data**, file location **index-only**, diagnosis **not persisted**; same D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
 | Dashboard study (Deep Dive, D-0021) | `GET /api/projects/study` read-only aggregator over index-only `qa.explain`/`learning.quiz`/`repo`; project resolved from a validated integer id; outputs are data (React-escaped); no write surface; offline/mock |
+| Dashboard settings (Settings tab, D-0022) | `GET /api/system`/`GET /api/settings` read-only; `POST /api/settings` persists **only** `ai_enabled`/`ai_provider` to `settings.json` (not SQLite), ignores any `api_key`/`endpoint`; same D-0018 CSRF/Origin/JSON/size/no-CORS gating. **No keys stored/transmitted** — env-var/keychain only, **presence boolean** surfaced; effective provider stays offline mock until a real provider ships |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

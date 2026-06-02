@@ -4,6 +4,17 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-02 — Session 19: Dashboard slice 5 — Settings & AI Management (+ FUTURE_ROADMAP)
+- Confirmed roadmap position from AGENT_STATE (slices 1–4 merged; recorded next priority = Settings + AI-provider toggle, D-0021). Branched `feat/dashboard-settings-ai`.
+- **Part A (planning only):** authored **`docs/FUTURE_ROADMAP.md`** as Lead Architect + Product Manager — v1.0/v2.0 vision; dashboard/AI/productivity/learning/career/enterprise roadmaps; stretch goals; ideas backlog; every idea tagged Core / High Value / Nice-to-Have / Future Research. No code from it.
+- **Part B — TDD.** New **`devos/settings.py`**: non-secret settings store (`<data_dir>/settings.json`) + provider catalog (mock/ollama/claude/openai) carrying privacy(local/cloud)+cost(free/paid) metadata. `effective_provider_name()` falls back to the offline mock when AI is disabled or a chosen provider isn't registered yet (no external call, no key); `key_present()` returns a **boolean only** from env vars. Config/Workspace resolve provider via `DEVOS_AI_PROVIDER` env → settings → mock + an `ai_enabled` toggle — **backward compatible** (defaults keep `ws.ai == mock`).
+- **API:** `GET /api/system` (local-first/offline/ai_enabled/provider selected+effective/version/roadmap phase/indexed count/maturity + catalog) and `GET /api/settings` (catalog + key-detection booleans). `POST /api/settings` handled **inline in `route()`** (writes the JSON file, needs `ws` not `conn`) — **whitelists `ai_enabled`/`ai_provider` only**, so a smuggled `api_key`/`endpoint` can never reach disk; inherits the D-0018 CSRF/Origin/JSON/64 KB guards (no `server.py` change). D-0022.
+- **Frontend:** new **Settings** tab. `SystemStatus` rows; `SettingsView` with enable toggle + provider radio list (`ProviderChoice` with Local/Cloud + Free/Paid badges, Coming-soon + key-detected hints) + honest offline/mock and cloud privacy+cost messaging; prepared (disabled) `ProviderDetails` config panel. Small CSS additions.
+- Version **0.1.0 → 0.5.0** (`__init__.py` + `pyproject.toml`); surfaced in System status and `devos --version`.
+- **verification-before-completion:** full suite **247/247** (+20: 14 settings + 6 API). Scripted **live socket smoke**: `/api/system` 200 (effective=mock, v0.5.0), `POST /api/settings` persists `claude`/disabled, `key_present` boolean True while `available` False, `settings.json` holds only the two fields — **API key value never appears in any payload or on disk**.
+- Synced DECISIONS (D-0022), SECURITY (§2 env-var key-detection note + §8 entry + posture row), CHANGELOG, ROADMAP, AGENT_STATE, TODO; created FUTURE_ROADMAP.
+- **Security focus:** no secrets in SQLite/JSON/frontend; keys from env vars / OS keychain; presence-only boolean. Default stays mock + offline + free + no key.
+
 ## 2026-06-02 — Session 18: Dashboard slice 4 — Project Deep Dive / Study (+ long-term roadmap)
 - Merged slice-3 PR (#2) into `main`; synced; branched `feat/dashboard-deep-dive`.
 - `/plan`: recorded the **long-term dashboard vision/roadmap** (IA: Work·Understand·Grow·System; prioritized future slices led by Settings + AI-provider toggle reusing the `get_provider(config.ai_provider)`/`ws.ai` seam, keys from env/keychain, mock default) — planning only. Then implemented ONE narrow slice.
