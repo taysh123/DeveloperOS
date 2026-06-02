@@ -107,6 +107,11 @@ into the AI context, a model could be manipulated.
   contract as Q&A — indexed code **and the learner's answer** (`grade`) are **data to evaluate, not
   instructions**; ground truth is retrieved code; attribution is retrieval-derived; read-only/stateless;
   offline (mock default). `--answer-file` reads only the user-named path. No new external surface.
+  - **[NOW] Dashboard exposure (slice 6, D-0023):** the same engine is now reachable from the UI via
+    read-only **`GET /api/learn|quiz|exercise`** and **`POST /api/grade`** (POST only because the learner's
+    answer is multi-line text). All the above safety properties are unchanged — grounding contract,
+    retrieval-derived `file:line`, read-only, **nothing persisted** — and the POST is gated by the D-0018
+    controls (CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback). Offline/mock default.
 - **[NOW] Documentation Automation (Phase 8):** source/docs/memory/tasks fed into the provider
   context are **data, not instructions** (same grounding contract). Generated text is model
   output and is **never executed**; it is written only to an explicit `--output` path and
@@ -182,6 +187,11 @@ into the AI context, a model could be manipulated.
   provider changes a stored preference but the **effective** provider stays the offline mock
   (`settings.effective_provider_name`), so **no external request is made and no key is required** — the
   local-first/offline default (§0/§1) is preserved.
+- **[NOW] Learning Center (slice 6, D-0023).** `GET /api/learn|quiz|exercise` are **read-only** (reuse
+  `ws.ai` like `/api/ask`); `POST /api/grade` is also **read-only** but POSTs the multi-line learner answer
+  (same pattern as `/api/debug`). All reuse `modules/learning` (grounding contract §5, retrieval-derived
+  `file:line`, declines when unindexed, **nothing persisted**); POST inherits the D-0018 CSRF/Origin/JSON/
+  size/no-CORS gating. No new write surface, no new outbound calls, offline/mock default.
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -207,6 +217,7 @@ into the AI context, a model could be manipulated.
 | Dashboard debug (Debug tab, D-0020) | `POST /api/debug` (read-only) reuses `debug.diagnose`: trace = untrusted **data**, file location **index-only**, diagnosis **not persisted**; same D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
 | Dashboard study (Deep Dive, D-0021) | `GET /api/projects/study` read-only aggregator over index-only `qa.explain`/`learning.quiz`/`repo`; project resolved from a validated integer id; outputs are data (React-escaped); no write surface; offline/mock |
 | Dashboard settings (Settings tab, D-0022) | `GET /api/system`/`GET /api/settings` read-only; `POST /api/settings` persists **only** `ai_enabled`/`ai_provider` to `settings.json` (not SQLite), ignores any `api_key`/`endpoint`; same D-0018 CSRF/Origin/JSON/size/no-CORS gating. **No keys stored/transmitted** — env-var/keychain only, **presence boolean** surfaced; effective provider stays offline mock until a real provider ships |
+| Dashboard learning (Learn tab, D-0023) | `GET /api/learn|quiz|exercise` + `POST /api/grade` reuse `modules/learning`: grounded (code + learner answer = data), retrieval-derived `file:line`, **read-only/not persisted**, declines when unindexed; POST inherits D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

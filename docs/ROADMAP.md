@@ -106,9 +106,11 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
 - ✅ **Slice 4 — Project Deep Dive / Study** (`GET /api/projects/study`). D-0021.
 - ✅ **Slice 5 — Settings & AI Management** (`GET /api/system`, `GET/POST /api/settings`; non-secret
   settings store + provider catalog; env-var/keychain keys only, mock default). D-0022. **(v0.5.0)**
-- ⬜ **Next priority — Learning tab**, then CRUD polish (deletes + project pickers), Career tab, Meeting
-  Summary tab, Plugins/Extensions UI, design/a11y polish. See `docs/FUTURE_ROADMAP.md` for the full
-  product-level roadmap and prioritization.
+- ✅ **Slice 6 — Learning Center** (`GET /api/learn|quiz|exercise`, `POST /api/grade`; reuses
+  `modules/learning`; grounded, read-only, offline). D-0023. Fills the **Grow** IA group.
+- ⬜ **Next priority — CRUD polish** (deletes + project pickers + inline edit) / **Career tab**, then
+  Meeting Summary tab, Plugins/Extensions UI, design/a11y polish. See `docs/FUTURE_ROADMAP.md` for the
+  full product-level roadmap and prioritization.
 
 ---
 

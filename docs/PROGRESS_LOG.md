@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-02 — Session 20: Dashboard slice 6 — Learning Center UI
+- Slice 5 PR (#4) merged to `main`; branched `feat/dashboard-learning-ui` off the merged base. Read `modules/learning` directly (token-efficient, no agents) — pure reuse of `learn`/`quiz`/`exercise`/`grade`, no new engine.
+- **TDD.** `app.py`: `learn_payload`/`quiz_payload`/`exercise_payload`/`grade_payload` (+ shared `_chunk_sources`). **`GET /api/learn?target=&level=&project=`**, **`GET /api/quiz?target=&n=`**, **`GET /api/exercise?target=&n=`** (read-only, reuse `ws.ai`; target required → 400; level validated; `n` clamped 20/10). **`POST /api/grade`** `{target, answer, question?, project?}` — read-only but POSTs the multi-line answer; handled **inline in `route()`** before `_POST_ACTIONS` (like `/api/debug`); validates non-empty string target/answer → 400; inherits D-0018 CSRF/Origin/JSON/64 KB guards. No `server.py` change. D-0023.
+- **Frontend:** new **Learn** tab (… · Projects · **Learn** · Settings). `LearningView`: target input + project dropdown + depth select (Beginner/Intermediate/Advanced); **Explain it / Quiz me / Give me exercises**; **Check my understanding** answer box → grade. New shared `AnswerBlock` (grounded text + `file:line` sources + honest ungrounded note). Reused existing CSS; **no new CSS**.
+- **verification-before-completion:** `node --check app.js` OK; full suite **260/260** (+13: 12 endpoint + 1 live-token). Scripted **live socket smoke**: learn (grounded, level=eli5, sources), quiz (n clamped to 20), exercise (n=3), learn declines on no-match, grade (grounded + sources), grade without token → **403** — all PASS.
+- Synced DECISIONS (D-0023), SECURITY (§5 dashboard note + §8 entry + posture row), CHANGELOG, ROADMAP (slice 6, fills **Grow** IA group), AGENT_STATE, TODO.
+- **Git:** committed on branch (`git commit -F` via message file). **Slice complete; scope held** — no persisted scores, no Career/Meeting UIs, no real providers.
+
 ## 2026-06-02 — Session 19: Dashboard slice 5 — Settings & AI Management (+ FUTURE_ROADMAP)
 - Confirmed roadmap position from AGENT_STATE (slices 1–4 merged; recorded next priority = Settings + AI-provider toggle, D-0021). Branched `feat/dashboard-settings-ai`.
 - **Part A (planning only):** authored **`docs/FUTURE_ROADMAP.md`** as Lead Architect + Product Manager — v1.0/v2.0 vision; dashboard/AI/productivity/learning/career/enterprise roadmaps; stretch goals; ideas backlog; every idea tagged Core / High Value / Nice-to-Have / Future Research. No code from it.

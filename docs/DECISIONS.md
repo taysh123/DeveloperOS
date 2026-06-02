@@ -4,6 +4,34 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0023 — Dashboard Learning Center (`/api/learn|quiz|exercise|grade`)
+- **Date:** 2026-06-02
+- **Context:** The Learning Assistant (`modules/learning`: `learn`/`quiz`/`exercise`/`grade`) — grounded,
+  leveled explanations, review questions, practice exercises, and answer grading — was CLI-only. It's the
+  "Grow" group of the recorded dashboard IA (D-0021) and the next prioritized slice. Surface it for
+  non-programmers without a parallel engine.
+- **Decision:**
+  - **Payload builders** (`learn_payload`/`quiz_payload`/`exercise_payload`/`grade_payload`, sharing a
+    `_chunk_sources` serializer) wrap `modules/learning` 1:1 (topic/level/n, text, grounded, provider,
+    `file:line` sources).
+  - **`GET /api/learn?target=&level=&project=`**, **`GET /api/quiz?target=&n=&project=`**, and
+    **`GET /api/exercise?target=&n=&project=`** are read-only (reuse `ws.ai`, like `/api/ask`/`/api/explain`).
+    `target` is required → friendly 400; `level` validated against `learning.LEVELS`; `n` clamped (quiz
+    1–20, exercise 1–10) via the existing `_int` helper.
+  - **`POST /api/grade` `{target, answer, question?, project?}`** is **read-only** but uses POST because the
+    learner's answer is multi-line free text (same rationale/placement as `/api/debug` — handled inline in
+    `route()`'s POST branch, before `_POST_ACTIONS`). Validates non-empty string `target`/`answer` → 400.
+    Inherits the D-0018 CSRF token + Origin allowlist + JSON-only + 64 KB guards. No `server.py` change.
+  - **UI:** a **Learn** tab (… · Projects · **Learn** · Settings) — target input + project dropdown +
+    depth select; **Explain it / Quiz me / Give me exercises** buttons; and a **Check my understanding**
+    answer box. A shared `AnswerBlock` renders grounded text + sources with an honest ungrounded note.
+    Reused existing components/CSS; no new CSS.
+- **Rationale:** Pure reuse of the grounded learning pipeline (`qa.retrieve`/`assemble_context` + provider),
+  which already declines (no provider call) when nothing is indexed and derives `file:line` attribution
+  from retrieval (SECURITY §5). No new write surface, no new outbound calls, offline/mock default.
+- **Status:** Accepted (dashboard slice 6). Persisted progress (quiz/exercise scores) and a guided
+  "learn this repo" path remain **on-request** (see `docs/FUTURE_ROADMAP.md`).
+
 ## D-0022 — Dashboard Settings & AI Management (`/api/system`, `/api/settings`) + settings store
 - **Date:** 2026-06-02
 - **Context:** The dashboard had no way to see or control AI behavior; provider selection lived only in

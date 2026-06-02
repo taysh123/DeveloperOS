@@ -821,6 +821,130 @@
     </div>`;
   }
 
+  // --- LEARNING CENTER -----------------------------------------------------
+  function qurl(base, params) {
+    var parts = [];
+    Object.keys(params).forEach(function (k) {
+      if (params[k] != null && params[k] !== "") parts.push(k + "=" + encodeURIComponent(params[k]));
+    });
+    return base + (parts.length ? "?" + parts.join("&") : "");
+  }
+
+  // Renders a grounded answer (text + sources) with a friendly note when ungrounded.
+  function AnswerBlock(props) {
+    var d = props.d;
+    return html`<div>
+      ${!d.grounded ? html`<${Msg} kind="error"
+        text="Not enough of your indexed code matched this. Try a file path, different words, or import/re-scan the project in the Projects tab." />` : null}
+      <div class="answer"><p>${d.text}</p>
+        ${d.sources && d.sources.length ? html`<div class="sources">
+          <div class="muted">Based on your code:</div>
+          ${d.sources.map(function (s, i) {
+            return html`<div class="item" key=${i}><code>${s.location}</code>
+              <span class="muted"> [${s.project}]</span></div>`; })}
+        </div>` : null}</div>
+    </div>`;
+  }
+
+  function LearningView() {
+    var tg = useState(""), target = tg[0], setTarget = tg[1];
+    var pr = useState(""), project = pr[0], setProject = pr[1];
+    var lv = useState("intermediate"), level = lv[0], setLevel = lv[1];
+    var rk = useState(null), kind = rk[0], setKind = rk[1];
+    var rs = useState(null), result = rs[0], setResult = rs[1];
+    var er = useState(""), err = er[0], setErr = er[1];
+    var an = useState(""), answer = an[0], setAnswer = an[1];
+    var gr = useState(null), grade = gr[0], setGrade = gr[1];
+    var ge = useState(""), gErr = ge[0], setGErr = ge[1];
+
+    var pj = useApi("/api/projects", 0);
+    var projects = (pj && !pj.error && pj.projects) || [];
+
+    function run(which) {
+      if (!target.trim()) { setErr("Type a file path or a topic to learn about."); return; }
+      setErr(""); setKind(which); setResult("loading");
+      var ep = which === "learn" ? "/api/learn" : which === "quiz" ? "/api/quiz" : "/api/exercise";
+      var params = { target: target.trim(), project: project || undefined };
+      if (which === "learn") params.level = level;
+      fetch(qurl(ep, params)).then(function (r) { return r.json(); })
+        .then(setResult).catch(function () { setResult({ error: true }); });
+    }
+    function runGrade(ev) {
+      ev.preventDefault();
+      if (!target.trim()) { setGErr("Fill in what you're learning about (the box at the top) first."); return; }
+      if (!answer.trim()) { setGErr("Write your answer first."); return; }
+      setGErr(""); setGrade("loading");
+      post("/api/grade", { target: target.trim(), answer: answer.trim(), project: project || undefined })
+        .then(setGrade).catch(function (x) { setGrade({ error: true, message: x.message }); });
+    }
+
+    var resultTitle = kind === "learn" ? "Explanation" : kind === "quiz" ? "Quiz" : "Exercises";
+
+    return html`<div>
+      <div class="panel form">
+        <h2>Learn from your code</h2>
+        <p class="muted">Pick a file or a topic from a project you've indexed, then have DeveloperOS
+          explain it, quiz you, or set practice exercises — all grounded in your real code, offline.</p>
+        <div class="field">
+          <label for="learn-target">File path or topic</label>
+          <input id="learn-target" value=${target} placeholder="e.g. src/app.py — or a topic like “routing”"
+                 onInput=${function (ev) { setTarget(ev.target.value); }} />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="learn-project">Project (optional)</label>
+            <select id="learn-project" value=${project}
+                    onChange=${function (ev) { setProject(ev.target.value); }}>
+              <option value="">Any project</option>
+              ${projects.map(function (p) {
+                return html`<option key=${p.id} value=${p.name}>${p.name}</option>`; })}
+            </select>
+          </div>
+          <div class="field">
+            <label for="learn-level">Explanation depth</label>
+            <select id="learn-level" value=${level} onChange=${function (ev) { setLevel(ev.target.value); }}>
+              <option value="eli5">Beginner (plain English)</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn" type="button" onClick=${function () { run("learn"); }}>Explain it</button>
+          <button class="btn ghost" type="button" onClick=${function () { run("quiz"); }}>Quiz me</button>
+          <button class="btn ghost" type="button" onClick=${function () { run("exercise"); }}>Give me exercises</button>
+        </div>
+        <${Msg} text=${err} />
+      </div>
+
+      ${result === "loading" && html`<div class="panel"><${Empty}>Working on it…<//></div>`}
+      ${result && result !== "loading" && html`<div class="panel">
+        <h2>${resultTitle}</h2>
+        ${result.error ? html`<${Msg} text="Something went wrong. Try again." />`
+          : html`<${AnswerBlock} d=${result} />`}
+      </div>`}
+
+      <form class="panel form" onSubmit=${runGrade}>
+        <h2>Check my understanding</h2>
+        <p class="muted">Explain the file or topic above in your own words and get grounded feedback.</p>
+        <div class="field">
+          <label for="learn-answer">Your answer</label>
+          <textarea id="learn-answer" rows="4" value=${answer}
+            placeholder="Write what you understand…"
+            onInput=${function (ev) { setAnswer(ev.target.value); }}></textarea>
+        </div>
+        <button class="btn" type="submit">Grade my answer</button>
+        <${Msg} text=${gErr} />
+      </form>
+      ${grade === "loading" && html`<div class="panel"><${Empty}>Grading…<//></div>`}
+      ${grade && grade !== "loading" && html`<div class="panel">
+        <h2>Feedback</h2>
+        ${grade.error ? html`<${Msg} text=${grade.message || "Couldn't grade that."} />`
+          : html`<${AnswerBlock} d=${grade} />`}
+      </div>`}
+    </div>`;
+  }
+
   // --- shell + tabs --------------------------------------------------------
   var TABS = [
     { id: "home", label: "Home" },
@@ -829,6 +953,7 @@
     { id: "assist", label: "Search & Ask" },
     { id: "debug", label: "Debug" },
     { id: "projects", label: "Projects" },
+    { id: "learning", label: "Learn" },
     { id: "settings", label: "Settings" }
   ];
 
@@ -859,6 +984,7 @@
         ${tab === "assist" && html`<${SearchView} />`}
         ${tab === "debug" && html`<${DebugView} />`}
         ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
+        ${tab === "learning" && html`<${LearningView} />`}
         ${tab === "settings" && html`<${SettingsView} />`}
       </main>
       <div class="footer">DeveloperOS · local-first · runs only on your machine</div>
