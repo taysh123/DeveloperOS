@@ -16,13 +16,12 @@ keychain; mock default), then Learning, CRUD polish, Career, Meeting, Plugins UI
 ## Current milestone
 **Dashboard slice 4 complete (D-0021).** Project Deep Dive / Study: read-only `GET /api/projects/study`
 aggregator (reuses `qa.explain` + `learning.quiz` + `repo` structure + deterministic interview checklist)
-surfaced as a **Study this project** view. Committed on branch `feat/dashboard-deep-dive` (PR pending;
-not yet on `main`).
+surfaced as a **Study this project** view. Merged to `main` via PR #3 (`ce7072a`).
 
 ## Next immediate step
 Nothing pending. Per the recorded roadmap, the highest-leverage next slice is **Settings + AI-provider
 toggle** (own `/plan`). Other follow-ups: Learning/Career/Meeting UIs; deletes + project pickers. Also:
-merge the open `feat/dashboard-deep-dive` PR; consider tag `v0.4.0-dashboard` post-merge.
+consider tag `v0.4.0-dashboard` now that slices 1–4 are all on `main`.
 
 ## Tasks
 ### In progress
