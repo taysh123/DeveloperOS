@@ -6,25 +6,29 @@
 _Last updated: 2026-06-02_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1 & 2 shipped:**
-the local dashboard is action-oriented (Tasks/Notes write + Search/Q&A) **and** can import/view
-projects — Home · Tasks · Notes · Search & Ask · Projects — over a CSRF-token-guarded loopback API.
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–3 shipped:**
+the local dashboard is action-oriented and covers Home · Tasks · Notes · Search & Ask · **Debug** ·
+Projects over a CSRF-token-guarded loopback API. Slices 1+2 are merged to `main` (PR #1).
 
 ## Current milestone
-**Dashboard slice 2 complete (D-0019).** Projects tab adds safe import/scan (confirm-before-write,
-server-validated path, scan+index) + a project overview, reusing existing `ingest`/`index`/`repo`.
-Slice committed on branch `feat/dashboard-projects-tab` (PR pending review; not on `main` remote yet).
+**Dashboard slice 3 complete (D-0020).** Debug tab: paste an error/trace/log → grounded root-cause +
+fix + sources, reusing `modules/debug.diagnose` via read-only `POST /api/debug`. Committed on branch
+`feat/dashboard-debug-tab` (PR pending review; not yet on `main`).
 
 ## Next immediate step
-Nothing pending. Optional follow-ups (each on a fresh `/plan`): debug/learning/career/meeting UIs;
-deletes (task/note/project) with confirmation; project picker in task/note forms; real AI provider
-behind `providers.ai`. Also: merge the open PR(s) to `main` when reviewed.
+Nothing pending. Optional follow-ups (each on a fresh `/plan`): Learning/Career/Meeting UIs; deletes
+(task/note/project) with confirmation; project picker in task/note forms; real AI provider behind
+`providers.ai`. Also: merge the open `feat/dashboard-debug-tab` PR; consider tag `v0.3.0-dashboard` post-merge.
 
 ## Tasks
 ### In progress
-- _None. Dashboard slice 2 complete; further dashboard surfaces are on-request only._
+- _None. Dashboard slice 3 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 3 (2026-06-02): Debug tab. `app.py` `debug_payload` + read-only `POST /api/debug`
+      (inline in `route()`, reuses `debug.diagnose`, inherits slice-1 CSRF; trace=data, index-only, not
+      persisted). React+htm Debug tab (paste → Analyze → result cards). TDD; **222/222** (+6); live smoke
+      verified (high-confidence diagnosis w/ sources). D-0020; SECURITY §5 + §8.
 - [x] Dashboard slice 2 (2026-06-02): Projects tab. `app.py` `project_detail` + GET
       `/api/projects/detail` + POST `/api/projects/scan` (validate path → `ingest.scan_project` →
       `index_mod.index_project`; in `_POST_ACTIONS`, inherits slice-1 CSRF guards). React+htm

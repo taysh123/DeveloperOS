@@ -4,6 +4,16 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-02 — Session 17: Dashboard slice 3 — Debug Assistant tab
+- Merged slice-1+2 PR (#1) into `main`; synced local `main`; branched `feat/dashboard-debug-tab`.
+- `/plan`: user picked Debug tab (of 4 options). Read `modules/debug.py` + `trace.py` directly (token-efficient, no agents) — pure reuse of `debug.diagnose`, no new engine.
+- **TDD.** `app.py`: `debug_payload` (serializes `DebugDiagnosis`: error type/msg, frames, located, analysis, confidence, grounded, sources) + **`POST /api/debug`** handled **inline in `route()`'s POST branch** (read-only but POSTs the multi-line trace; needs `ws.ai`; before `_POST_ACTIONS`). Validates non-empty string trace → friendly 400. Inherits slice-1 CSRF/Origin/JSON/64 KB guards. D-0020.
+- **systematic-debugging:** caught a pre-existing flaky live test (`test_post_*_403`/`413`) — `do_POST` responded to early rejections *before* reading the body, desyncing HTTP/1.1 keep-alive → intermittent client connection reset. Root-caused at the HTTP boundary. Fixed: read the bounded body up front (so early rejects leave the connection clean), `Connection: close` on size-cap rejects; test tolerates 413-or-abort for oversized. Verified **6/6** clean `test_api` runs.
+- **Frontend:** new **Debug** tab (Home · Tasks · Notes · Search & Ask · Debug · Projects). `DebugView`: large mono paste area + Analyze/Clear, loading/error/empty states, result cards (summary + confidence badge, "What we think is going on" w/ ungrounded note, "Where it points", "Sources"). Reused `post`/`Msg`/`Empty`/`Badge`/CSS; tiny CSS add.
+- **verification-before-completion:** full suite **222/222** (+6). Scripted **live smoke**: SPA served, token-less debug → 403, empty trace → 400, real `ZeroDivisionError` traceback → **high**-confidence grounded diagnosis pointing to `src/app.py:2` with sources — all PASS.
+- Synced DECISIONS (D-0020), SECURITY §5 + §8 posture row, CHANGELOG, ARCHITECTURE, README, AGENT_STATE, TODO.
+- **Git:** committed on branch, pushed, PR link provided. Proposed an annotated tag `v0.3.0-dashboard` **after merge** (not on unmerged commit). **Slice complete; scope held.**
+
 ## 2026-06-02 — Session 16: Dashboard slice 2 — Projects tab (safe import/scan + overview)
 - `/plan`: scoped to ONE slice (Projects tab). Confirmed slice 1 complete via AGENT_STATE; read `ingest.scan_project`/`ScanResult` + `repo` project helpers directly (token-efficient, no agents) — no new scanner needed.
 - **TDD.** `app.py`: `project_detail` builder (reuses `repo.list_projects`/`category_breakdown`/`chunk_stats`); **GET `/api/projects/detail?id=`** (404 unknown / 400 bad id); **POST `/api/projects/scan`** = validate untrusted path → `ingest.scan_project` (catches `NotADirectoryError`/`FileNotFoundError` → friendly 400) → `index_mod.index_project`; registered in `_POST_ACTIONS` so it inherits slice-1 CSRF/Origin/size guards (**no `server.py` change**). **Decision D-0019: Import = scan + index.**

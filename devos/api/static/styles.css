@@ -109,3 +109,6 @@ input:focus, textarea:focus, select:focus, button:focus-visible {
 .catrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ghost.small + h2, .detail .cards { margin-top: 12px; }
 input[readonly] { opacity: .8; cursor: not-allowed; }
+
+/* debug */
+textarea.mono { font-family: ui-monospace, "Cascadia Code", "Consolas", monospace; font-size: 13px; }

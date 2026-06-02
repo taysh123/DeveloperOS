@@ -35,7 +35,7 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos task <add\|list\|show\|set\|rm>` | Track tasks/bugs/features with status, priority, kind, milestone, and notes. |
 | `devos remember <title>` | Store a long-term memory (decision/summary/preference/note) with tags. |
 | `devos recall <query>` | Search across memory, tasks, and indexed code in one place (offline). |
-| `devos serve` | Launch the local **dashboard** (127.0.0.1) — the easy, click-driven way to work. Tabs for **Home** (overview), **Tasks** (add / mark done / change status), **Notes** (add / edit), **Search & Ask** (keyword search + plain-English Q&A), and **Projects** (import/scan a folder + project overview). Writes are CSRF-token protected; offline. |
+| `devos serve` | Launch the local **dashboard** (127.0.0.1) — the easy, click-driven way to work. Tabs for **Home** (overview), **Tasks** (add / mark done / change status), **Notes** (add / edit), **Search & Ask** (keyword search + plain-English Q&A), **Debug** (paste an error/trace/log → grounded root-cause + fix), and **Projects** (import/scan a folder + project overview). Writes are CSRF-token protected; offline. |
 | `devos docgen <type>` | Generate grounded docs (readme/architecture/api/setup/changelog/decisions/milestone); stdout or `--output` (no overwrite without `--force`). |
 | `devos learn <path\|topic>` | Learn your code at a chosen depth (`--level eli5\|intermediate\|advanced`), grounded with `file:line` sources. |
 | `devos quiz <path\|topic>` | Generate grounded review questions (`--n N`) about a file or topic, with `file:line` sources. |

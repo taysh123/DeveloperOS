@@ -4,6 +4,33 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0020 — Dashboard Debug Assistant tab (`POST /api/debug`)
+- **Date:** 2026-06-02
+- **Context:** The Debug Assistant (`modules/debug.diagnose`) — paste an error/trace/log → grounded
+  root-cause + fix with `file:line` evidence — was CLI-only (`devos debug`). Surface it in the dashboard
+  for non-programmers without a parallel debugging engine.
+- **Decision:**
+  - **`debug_payload(conn, ws, trace_text, project=None)`** serializes `DebugDiagnosis` (error_type/
+    message, frames, located frames, analysis, confidence, grounded, provider, sources) to JSON.
+  - **`POST /api/debug`** `{trace, project?}`: **read-only** (no DB write) but uses POST because the
+    trace/log is multi-line text (awkward/oversized for a GET query string). Handled **inline in
+    `route()`'s POST branch** (it needs `ws.ai` and is read-only — unlike the DB-write `_POST_ACTIONS`),
+    **before** the `_POST_ACTIONS` lookup. Validates `trace` is a non-empty string → friendly 400.
+    Inherits the D-0018 CSRF token + Origin + JSON-only + 64 KB guards.
+  - **`server.py` `do_POST` hardening (incidental):** read the bounded request body **before** the
+    auth checks so an early rejection can't desync the HTTP/1.1 keep-alive connection (was an
+    intermittent client-side connection reset instead of a clean status); size-cap rejections now
+    send `Connection: close`. Behavior-preserving; fixes a pre-existing flaky test.
+  - **UI:** a **Debug** tab (Home · Tasks · Notes · Search & Ask · Debug · Projects) — a large paste
+    area + **Analyze** + Clear, loading/error/empty states, and result cards: summary (error +
+    confidence badge), "What we think is going on" (the grounded analysis; friendly note when
+    ungrounded), "Where it points" (located frames), and "Sources" (attribution).
+- **Rationale:** Pure reuse of `debug.diagnose` (which reuses `qa.retrieve`/`assemble_context` +
+  `trace.parse_trace`). The pasted trace is untrusted **data, not instructions** (grounding contract,
+  §5); file location stays **index-only** (never reads trace-named paths); the diagnosis is **not
+  persisted**. Offline, mock provider unchanged.
+- **Status:** Accepted (dashboard slice 3). Learning/Career/Meeting UIs and persistence remain on-request.
+
 ## D-0019 — Dashboard Projects tab: safe import/scan + project overview
 - **Date:** 2026-06-02
 - **Context:** After the action slice (D-0018), onboarding a project still required the CLI

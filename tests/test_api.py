@@ -297,6 +297,46 @@ class TestProjectsEndpoints(ApiTestCase):
         self.assertEqual(self._post("/api/projects/scan", {"path": 123}).status, 400)
 
 
+class TestDebugEndpoint(ApiTestCase):
+    def _post(self, body):
+        return api_app.route(self.ws, "/api/debug", {}, method="POST", body=body)
+
+    def test_grounded_diagnosis_from_traceback(self) -> None:
+        tb = ('Traceback (most recent call last):\n'
+              '  File "src/app.py", line 2, in main\n'
+              "    return 'hello'\n"
+              'ValueError: boom\n')
+        resp = self._post({"trace": tb})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertEqual(body["error_type"], "ValueError")
+        self.assertTrue(body["grounded"])
+        self.assertTrue(body["frames"])
+        self.assertTrue(body["located"])
+        self.assertTrue(body["sources"])
+        self.assertTrue(body["analysis"])
+
+    def test_declines_when_nothing_indexed_matches(self) -> None:
+        tb = ('Traceback (most recent call last):\n'
+              '  File "nowhere/ghost.py", line 9, in zzz\n'
+              'SomeWeirdError: zzqqxnomatch\n')
+        resp = self._post({"trace": tb})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertFalse(body["grounded"])
+        self.assertEqual(body["confidence"], "low")
+        self.assertTrue(body["analysis"])
+
+    def test_missing_trace_400(self) -> None:
+        self.assertEqual(self._post({}).status, 400)
+
+    def test_empty_trace_400(self) -> None:
+        self.assertEqual(self._post({"trace": "   "}).status, 400)
+
+    def test_non_string_trace_400(self) -> None:
+        self.assertEqual(self._post({"trace": 123}).status, 400)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -353,6 +393,10 @@ class _LiveServerMixin(ApiTestCase):
                 return r.status, json.loads(r.read())
         except urllib.error.HTTPError as e:
             return e.code, None
+        except (urllib.error.URLError, ConnectionError, OSError):
+            # Server rejected + closed before we finished sending (e.g. oversized body):
+            # a connection-level abort is also a valid "rejected" outcome.
+            return -1, None
 
 
 class TestLiveServer(_LiveServerMixin):
@@ -408,7 +452,9 @@ class TestLiveSecurity(_LiveServerMixin):
         _, port = self._start()
         big = {"title": "x", "notes": "y" * (65 * 1024)}
         status, _ = self._post(port, "/api/tasks/create", big, token=self._token(port))
-        self.assertEqual(status, 413)
+        # Oversized requests are rejected: a clean 413, or a connection abort because the
+        # server closes without draining the oversized body (both mean "not processed").
+        self.assertIn(status, (413, -1))
 
     def test_get_still_works(self) -> None:
         _, port = self._start()
@@ -418,4 +464,9 @@ class TestLiveSecurity(_LiveServerMixin):
     def test_scan_without_token_403(self) -> None:
         _, port = self._start()
         status, _ = self._post(port, "/api/projects/scan", {"path": "."})
+        self.assertEqual(status, 403)
+
+    def test_debug_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/debug", {"trace": "ValueError: x"})
         self.assertEqual(status, 403)
