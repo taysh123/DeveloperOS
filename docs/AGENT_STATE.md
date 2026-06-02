@@ -6,33 +6,38 @@
 _Last updated: 2026-06-02_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–6 shipped:**
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–7 shipped:**
 Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) · **Settings
-& AI Management** · **Learning Center**, over a CSRF-token-guarded loopback API. Slices 1–5 merged to
-`main` (PRs #1–#4); slice 6 on branch `feat/dashboard-learning-ui` (PR pending). The **long-term dashboard
-roadmap** is recorded (D-0021…D-0023 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System
-— the **Grow** group now exists. **Project is at v0.5.0.**
+& AI Management** · **Learning Center**, plus **CRUD polish** (deletes + project pickers + inline edit),
+over a CSRF-token-guarded loopback API. Slices 1–6 merged to `main` (PRs #1–#5); slice 7 on branch
+`feat/dashboard-crud-polish` (PR pending). The **long-term dashboard roadmap** is recorded
+(D-0021…D-0024 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System. **Project is at v0.5.0.**
 
 ## Current milestone
-**Dashboard slice 6 complete (D-0023).** Learning Center: new **Learn** tab surfacing the existing
-`modules/learning` (learn/quiz/exercise/grade) — pick a file/topic + optional project + depth
-(Beginner/Intermediate/Advanced), then Explain / Quiz me / Give me exercises, plus a "Check my
-understanding" box that grades a free-text answer. Read-only AI: `GET /api/learn|quiz|exercise` +
-`POST /api/grade` (multi-line answer; inline like `/api/debug`; inherits D-0018 guards). Pure reuse, no
-new engine; grounded with `file:line` sources, declines when nothing indexed matches. TDD **260/260**
-(+13); live socket smoke verified (all four endpoints + token guard).
+**Dashboard slice 7 complete (D-0024).** CRUD polish: delete tasks/notes (two-step confirm) and projects
+(**type-to-confirm**, **index-only — never deletes disk files**); project pickers on the add-task/add-note
+forms; inline task-title editing. New `repo.delete_project` (cascade via existing `ON DELETE CASCADE` FKs
++ `reconcile_fts`); `POST /api/{tasks,notes,projects}/delete` in `_POST_ACTIONS` (id-validated → 400,
+unknown → 404), reusing `repo.delete_task`/`delete_memory`. Inherits D-0018 guards; no `server.py`/schema
+change. TDD **272/272** (+12); live socket smoke verified (full flow incl. project cascade + token guard).
 
 ## Next immediate step
-Open a PR for `feat/dashboard-learning-ui` and merge to `main`. Per the recorded roadmap, the next
-highest-leverage slice is **CRUD polish** (deletes + project pickers + inline edit) or the **Career tab**
-(`modules/career`: job leads / CV match / interview prep). Other follow-ups: Meeting Summary tab,
-Plugins/Extensions UI, design/a11y polish. Consider tag `v0.5.0` once these dashboard slices are settled.
+Open a PR for `feat/dashboard-crud-polish` and merge to `main`. Per the recorded roadmap, the next
+highest-leverage slice is the **Career tab** (`modules/career`: job leads / CV match / interview prep),
+then the **Meeting Summary tab** (`modules/meeting`), Plugins/Extensions UI, and a design-system/a11y
+pass. **Recommend tagging `v0.5.0`** once slices 6–7 are merged to `main` (do not tag before the PRs merge).
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 7 (2026-06-02): CRUD polish. `repo.delete_project` (cascade via FKs + `reconcile_fts`;
+      index-only, no disk deletion). `app.py` `delete_task_action`/`delete_note_action`/`delete_project_action`
+      (+ `_require_id`) in `_POST_ACTIONS`; reuse `repo.delete_task`/`delete_memory`. React+htm: reusable
+      `ConfirmDelete` (two-step) on task/note rows; inline task-title edit; project pickers on add-task/
+      add-note; `ProjectDetail` **danger zone** with type-to-confirm project delete. Small danger CSS. No
+      `server.py`/schema change. TDD **272/272** (+12); live smoke verified (cascade + 403). D-0024; SECURITY §8.
 - [x] Dashboard slice 6 (2026-06-02): Learning Center. `app.py` `learn_payload`/`quiz_payload`/
       `exercise_payload`/`grade_payload` (+ shared `_chunk_sources`) reusing `modules/learning`;
       `GET /api/learn|quiz|exercise` (target required; level validated; `n` clamped 20/10) +

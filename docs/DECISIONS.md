@@ -4,6 +4,35 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0024 — Dashboard CRUD polish (delete endpoints, project pickers, inline edit)
+- **Date:** 2026-06-02
+- **Context:** The dashboard could create/update tasks & notes and import projects, but a non-CLI user
+  couldn't **delete** anything, choose a new item's **project**, or rename a task in place. This is the
+  recorded next slice (CRUD polish). Goal: everyday practicality with **zero parallel CRUD engine**.
+- **Decision:**
+  - **`repo.delete_project(conn, id)`** (new): a single `DELETE FROM projects` relies on the existing
+    `ON DELETE CASCADE` foreign keys (files → chunks, tasks, memory; `PRAGMA foreign_keys` is enabled in
+    `db.connect`) and then calls the existing **`reconcile_fts`** to purge the FTS5 mirror (a virtual table
+    not covered by cascades). **Index-only — it never deletes the user's files on disk.** `delete_task`
+    and `delete_memory` already existed and are reused as-is.
+  - **`POST /api/tasks/delete`, `/api/notes/delete`, `/api/projects/delete`** registered in the existing
+    `_POST_ACTIONS` table (so they inherit the D-0018 CSRF token + Origin allowlist + JSON-only + 64 KB
+    guards — **no `server.py` change**). Shared `_require_id` validates a positive int id → 400; unknown →
+    404 (via `get_task`/`get_memory`/`get_project`); success returns `{"deleted": n}`. No schema change.
+  - **Project pickers** are **frontend-only** — `create_task_action`/`create_note_action` already accept a
+    `project` name (resolved via `_resolve_project`). Inline **task-title** edit reuses `tasks/update`.
+  - **UI:** a reusable **two-step `ConfirmDelete`** for the low-impact task/note deletes; project deletion
+    is gated behind a **type-to-confirm** (must type the project name) **danger zone** on the project
+    detail, with a warning that disk files are untouched. Reused existing components/CSS + a small danger
+    style. **Confirmation strength chosen with the user:** lightweight for tasks/notes, strict
+    type-to-confirm for the cascading, high-impact project delete.
+- **Rationale:** Reuses the secure write boundary and storage layer end-to-end; the only new storage code
+  is one cascade-aware `delete_project`. Destructive actions require explicit, proportional confirmation;
+  the most destructive (project, which cascades to its tasks/notes) is the hardest to trigger and is
+  clearly scoped to DeveloperOS's own data.
+- **Status:** Accepted (dashboard slice 7). Future: undo/soft-delete, bulk actions, and reassigning an
+  existing task/note's project remain **on-request** (see `docs/FUTURE_ROADMAP.md`).
+
 ## D-0023 — Dashboard Learning Center (`/api/learn|quiz|exercise|grade`)
 - **Date:** 2026-06-02
 - **Context:** The Learning Assistant (`modules/learning`: `learn`/`quiz`/`exercise`/`grade`) — grounded,
