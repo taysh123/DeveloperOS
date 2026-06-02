@@ -4,6 +4,64 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0019 — Dashboard Projects tab: safe import/scan + project overview
+- **Date:** 2026-06-02
+- **Context:** After the action slice (D-0018), onboarding a project still required the CLI
+  (`devos scan`). To make the dashboard a complete entry point, non-programmers need to import and
+  view projects from the UI — reusing existing scan/index logic, without weakening security.
+- **Decision:**
+  - **`GET /api/projects/detail?id=`** → `project_detail` builder reusing `repo.list_projects`
+    (already computes `file_count`), `repo.category_breakdown`, and `repo.chunk_stats`
+    (indexed chunks/files). Unknown id → 404; missing/invalid id → 400.
+  - **`POST /api/projects/scan`** `{path, name?}` → `scan_project_action`: validates `path` is a
+    non-empty string (≤ 4096 chars), runs **`ingest.scan_project`** (which resolves + `is_dir()`-
+    validates the path and applies the existing ignore/size/binary rules) then
+    **`index_mod.index_project`**, returning the `ScanResult` summary + indexed chunk count.
+    Non-directory/missing path → friendly **400**. Registered in `_POST_ACTIONS`, so it inherits the
+    D-0018 CSRF-token + Origin + JSON-only + 64 KB guards (**no `server.py` change**).
+  - **Import = scan + index** (one action) so an imported project is immediately usable in Search &
+    Ask — the right default for a non-programmer's "Import Project."
+  - **UI:** new **Projects** tab (Home · Tasks · Notes · Search & Ask · Projects) with list / detail /
+    import sub-views. Import is a **two-step, confirm-before-write** flow (explain → enter path →
+    confirm panel echoing the exact path → "Scan now"); detail shows name, folder, file count, last
+    scanned, indexed status, and a category breakdown, with a **Re-scan** action.
+- **Rationale:** No new scanner — pure reuse of `ingest`/`index`/`repo`. Path is untrusted and
+  validated server-side; the browser-triggerable scan is already gated by the D-0018 controls
+  (loopback + token + origin + no-CORS), so a cross-origin page can't trigger it. Reads only local
+  files the user explicitly names — functionally identical to CLI `devos scan` (same §2 secret
+  caveat). Offline, mock provider unchanged.
+- **Status:** Accepted (dashboard slice 2). Debug/Learning/Career/Meeting UIs and project deletion
+  remain on-request.
+
+## D-0018 — Action-oriented dashboard: guarded write API (token + CSRF) over loopback
+- **Date:** 2026-06-02
+- **Context:** The Phase 7 dashboard was read-only (GET); everyday work still required the CLI. To make
+  the dashboard the primary, non-programmer-friendly entry point we needed the API to perform common
+  actions. SECURITY.md §8 had pre-committed the controls for this exact moment.
+- **Decision:**
+  - **Extend `app.route(ws, path, query, *, method="GET", body=None)`** (keyword-only `method`/`body`
+    keeps every existing GET call site unchanged). New **POST** actions reuse existing repo writes:
+    `/api/tasks/create`, `/api/tasks/update`, `/api/notes/create`, `/api/notes/update`; new read-only
+    **GET** endpoints surface existing modules: `/api/search` (`index.search`, OR-mode),
+    `/api/ask` (`qa.answer`), `/api/explain` (`qa.explain`) — provider via `ws.ai` (mock default).
+  - **Added `repo.update_memory`** (the only missing reusable fn), mirroring `update_task`'s
+    `_MEMORY_UPDATABLE` whitelist + parameterized SQL.
+  - **Security at the HTTP boundary (`server.py`, stdlib only):** per-server CSRF token
+    (`secrets.token_urlsafe`) delivered same-origin via `GET /api/session` and required in the
+    `X-DevOS-Token` header (constant-time compare); **Origin allowlist** (loopback only); JSON
+    content-type required; **64 KB** request cap. **No CORS headers** are ever emitted, so a
+    cross-origin page can neither read responses nor obtain the token. Loopback binding unchanged.
+  - **Input validation at the API layer** (friendly 400s): required/length-capped titles, enum checks
+    for status/kind/priority, unknown-project rejection, positive-int ids.
+  - **Frontend:** the vendored React+htm SPA gains lightweight **tabbed navigation** (Home · Tasks ·
+    Notes · Search & Ask) — state-driven, no router, no new deps — with accessible labels and a shared
+    token-aware `post()` helper.
+- **Rationale:** Builds the reusable secure-write foundation once; rides it for the two simplest fully
+  offline actions (tasks/notes) and exposes existing read-only search/Q&A. DB record writes are
+  equivalent to the existing CLI `task`/`remember` mutations, so they do **not** invoke the Safe Action
+  Agent (§4), which stays reserved for filesystem/git/shell. Stays stdlib-only, local-first, offline.
+- **Status:** Accepted (dashboard slice 1). Scan/debug/learning/career/meeting UIs remain on-request.
+
 ## D-0017 — Phase 9 slice 6 = Meeting/Transcript foundation (+ console-safe output)
 - **Date:** 2026-06-01
 - **Context:** Final enumerated Phase 9 direction: summarize a local transcript/notes file. Completes learning+career+plugin+meeting.

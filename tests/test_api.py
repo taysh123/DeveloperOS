@@ -6,6 +6,7 @@ import os
 import tempfile
 import threading
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -134,6 +135,168 @@ class TestRouting(ApiTestCase):
             self.assertTrue(resp.body)
 
 
+class TestWriteEndpoints(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def test_create_task(self) -> None:
+        resp = self._post("/api/tasks/create",
+                          {"title": "From UI", "priority": "high", "project": "demo"})
+        self.assertEqual(resp.status, 201)
+        tid = json.loads(resp.body)["id"]
+        conn = self.ws.connect()
+        try:
+            self.assertEqual(repo.get_task(conn, tid)["title"], "From UI")
+        finally:
+            conn.close()
+
+    def test_create_task_missing_title_400(self) -> None:
+        self.assertEqual(self._post("/api/tasks/create", {"title": "  "}).status, 400)
+
+    def test_create_task_invalid_status_400(self) -> None:
+        resp = self._post("/api/tasks/create", {"title": "x", "status": "nope"})
+        self.assertEqual(resp.status, 400)
+
+    def test_create_task_unknown_project_400(self) -> None:
+        resp = self._post("/api/tasks/create", {"title": "x", "project": "ghost"})
+        self.assertEqual(resp.status, 400)
+
+    def test_update_task_status(self) -> None:
+        conn = self.ws.connect()
+        try:
+            tid = repo.create_task(conn, None, "T", kind="task", status="todo", priority="low")
+        finally:
+            conn.close()
+        resp = self._post("/api/tasks/update", {"id": tid, "status": "done"})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["updated"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertEqual(repo.get_task(conn, tid)["status"], "done")
+        finally:
+            conn.close()
+
+    def test_update_task_unknown_id_404(self) -> None:
+        self.assertEqual(self._post("/api/tasks/update", {"id": 99999, "status": "done"}).status, 404)
+
+    def test_update_task_bad_id_400(self) -> None:
+        self.assertEqual(self._post("/api/tasks/update", {"status": "done"}).status, 400)
+
+    def test_create_and_update_note(self) -> None:
+        resp = self._post("/api/notes/create", {"title": "Idea", "body": "remember this"})
+        self.assertEqual(resp.status, 201)
+        mid = json.loads(resp.body)["id"]
+        resp = self._post("/api/notes/update", {"id": mid, "body": "updated body"})
+        self.assertEqual(resp.status, 200)
+        conn = self.ws.connect()
+        try:
+            row = repo.get_memory(conn, mid)
+            self.assertEqual(row["body"], "updated body")
+            self.assertEqual(row["title"], "Idea")
+        finally:
+            conn.close()
+
+    def test_create_note_missing_body_400(self) -> None:
+        self.assertEqual(self._post("/api/notes/create", {"title": "x"}).status, 400)
+
+    def test_unknown_post_route_404(self) -> None:
+        self.assertEqual(self._post("/api/nope", {}).status, 404)
+
+    def test_get_does_not_hit_post_actions(self) -> None:
+        # a write path under GET is just an unknown read route
+        self.assertEqual(api_app.route(self.ws, "/api/tasks/create", {}).status, 404)
+
+
+class TestReadAssistEndpoints(ApiTestCase):
+    def test_search_returns_results(self) -> None:
+        resp = api_app.route(self.ws, "/api/search", {"q": "main"})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertIn("results", body)
+        self.assertTrue(any("app.py" in r["rel_path"] for r in body["results"]))
+
+    def test_ask_grounded_answer_with_sources(self) -> None:
+        resp = api_app.route(self.ws, "/api/ask", {"q": "what does main do"})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertTrue(body["grounded"])
+        self.assertTrue(body["sources"])
+
+    def test_ask_empty_question_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/ask", {"q": "  "}).status, 400)
+
+    def test_ask_declines_when_nothing_matches(self) -> None:
+        resp = api_app.route(self.ws, "/api/ask", {"q": "zzzqqqnomatch"})
+        self.assertEqual(resp.status, 200)
+        self.assertFalse(json.loads(resp.body)["grounded"])
+
+    def test_explain_file(self) -> None:
+        resp = api_app.route(self.ws, "/api/explain",
+                             {"path": str(self.root / "src" / "app.py")})
+        self.assertEqual(resp.status, 200)
+        self.assertTrue(json.loads(resp.body)["grounded"])
+
+
+class TestProjectsEndpoints(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def test_detail_returns_overview(self) -> None:
+        resp = api_app.route(self.ws, "/api/projects/detail", {"id": str(self.pid)})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertEqual(body["project"]["name"], "demo")
+        self.assertGreaterEqual(body["project"]["file_count"], 1)
+        self.assertIn("by_category", body)
+        self.assertGreaterEqual(body["index"]["chunks"], 1)
+
+    def test_detail_unknown_id_404(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/projects/detail", {"id": "99999"}).status, 404)
+
+    def test_detail_missing_id_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/projects/detail", {}).status, 400)
+        self.assertEqual(api_app.route(self.ws, "/api/projects/detail", {"id": "x"}).status, 400)
+
+    def test_scan_creates_and_indexes(self) -> None:
+        newdir = tempfile.TemporaryDirectory()
+        self.addCleanup(newdir.cleanup)
+        _write(Path(newdir.name), "lib/util.py", "def add(a, b):\n    return a + b\n")
+        resp = self._post("/api/projects/scan", {"path": newdir.name, "name": "fresh"})
+        self.assertEqual(resp.status, 201)
+        body = json.loads(resp.body)
+        self.assertEqual(body["project_name"], "fresh")
+        self.assertGreaterEqual(body["total"], 1)
+        self.assertGreaterEqual(body["indexed_chunks"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNotNone(repo.project_id_by_name(conn, "fresh"))
+        finally:
+            conn.close()
+
+    def test_scan_is_idempotent(self) -> None:
+        newdir = tempfile.TemporaryDirectory()
+        self.addCleanup(newdir.cleanup)
+        _write(Path(newdir.name), "a.py", "x = 1\n")
+        first = json.loads(self._post("/api/projects/scan", {"path": newdir.name}).body)
+        second = json.loads(self._post("/api/projects/scan", {"path": newdir.name}).body)
+        self.assertEqual(first["project_id"], second["project_id"])
+        conn = self.ws.connect()
+        try:
+            names = [p["root_path"] for p in repo.list_projects(conn)]
+            self.assertEqual(names.count(second["root"]), 1)
+        finally:
+            conn.close()
+
+    def test_scan_bad_path_400(self) -> None:
+        resp = self._post("/api/projects/scan", {"path": "/no/such/folder/xyz123"})
+        self.assertEqual(resp.status, 400)
+
+    def test_scan_missing_path_400(self) -> None:
+        self.assertEqual(self._post("/api/projects/scan", {}).status, 400)
+        self.assertEqual(self._post("/api/projects/scan", {"path": "   "}).status, 400)
+        self.assertEqual(self._post("/api/projects/scan", {"path": 123}).status, 400)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -161,21 +324,98 @@ class TestServeCommand(unittest.TestCase):
             tmp.cleanup()
 
 
-class TestLiveServer(ApiTestCase):
-    def test_live_overview_and_index(self) -> None:
+class _LiveServerMixin(ApiTestCase):
+    """Spin up a real loopback server for the duration of a test."""
+
+    def _start(self):
         from devos.api import server as api_server
         srv = api_server.create_server("127.0.0.1", 0)
-        self.assertEqual(srv.server_address[0], "127.0.0.1")  # loopback only
         port = srv.server_address[1]
         th = threading.Thread(target=srv.serve_forever, daemon=True)
         th.start()
+        self.addCleanup(th.join, 5)
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        return srv, port
+
+    def _post(self, port, path, body, *, token=None, origin=None,
+              content_type="application/json"):
+        data = json.dumps(body).encode("utf-8")
+        req = urllib.request.Request(f"http://127.0.0.1:{port}{path}", data=data, method="POST")
+        if content_type is not None:
+            req.add_header("Content-Type", content_type)
+        if token is not None:
+            req.add_header("X-DevOS-Token", token)
+        if origin is not None:
+            req.add_header("Origin", origin)
         try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/overview", timeout=5) as r:
-                self.assertEqual(r.status, 200)
-                self.assertIn("task_counts", json.loads(r.read()))
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as r:
-                self.assertEqual(r.status, 200)
-        finally:
-            srv.shutdown()
-            srv.server_close()
-            th.join(timeout=5)
+            with urllib.request.urlopen(req, timeout=5) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, None
+
+
+class TestLiveServer(_LiveServerMixin):
+    def test_live_overview_and_index(self) -> None:
+        srv, port = self._start()
+        self.assertEqual(srv.server_address[0], "127.0.0.1")  # loopback only
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/overview", timeout=5) as r:
+            self.assertEqual(r.status, 200)
+            self.assertIn("task_counts", json.loads(r.read()))
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as r:
+            self.assertEqual(r.status, 200)
+
+
+class TestLiveSecurity(_LiveServerMixin):
+    def _token(self, port) -> str:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/session", timeout=5) as r:
+            return json.loads(r.read())["token"]
+
+    def test_session_returns_token(self) -> None:
+        _, port = self._start()
+        self.assertTrue(self._token(port))
+
+    def test_post_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/tasks/create", {"title": "x"})
+        self.assertEqual(status, 403)
+
+    def test_post_wrong_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/tasks/create", {"title": "x"}, token="nope")
+        self.assertEqual(status, 403)
+
+    def test_post_with_token_creates(self) -> None:
+        _, port = self._start()
+        status, body = self._post(port, "/api/tasks/create",
+                                  {"title": "Live task"}, token=self._token(port))
+        self.assertEqual(status, 201)
+        self.assertIn("id", body)
+
+    def test_post_bad_origin_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/tasks/create", {"title": "x"},
+                               token=self._token(port), origin="http://evil.example")
+        self.assertEqual(status, 403)
+
+    def test_post_non_json_415(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/tasks/create", {"title": "x"},
+                               token=self._token(port), content_type="text/plain")
+        self.assertEqual(status, 415)
+
+    def test_post_oversized_413(self) -> None:
+        _, port = self._start()
+        big = {"title": "x", "notes": "y" * (65 * 1024)}
+        status, _ = self._post(port, "/api/tasks/create", big, token=self._token(port))
+        self.assertEqual(status, 413)
+
+    def test_get_still_works(self) -> None:
+        _, port = self._start()
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/overview", timeout=5) as r:
+            self.assertEqual(r.status, 200)
+
+    def test_scan_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/projects/scan", {"path": "."})
+        self.assertEqual(status, 403)
