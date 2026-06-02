@@ -430,6 +430,75 @@ class TestSystemAndSettings(ApiTestCase):
         self.assertNotIn("api_key", raw)
 
 
+class TestLearningEndpoints(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def test_learn_file_mode_grounded(self) -> None:
+        resp = api_app.route(self.ws, "/api/learn",
+                             {"target": str(self.root / "src" / "app.py")})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["level"], "intermediate")
+        self.assertTrue(b["grounded"])
+        self.assertTrue(b["sources"])
+        self.assertTrue(b["text"])
+
+    def test_learn_respects_level(self) -> None:
+        resp = api_app.route(self.ws, "/api/learn", {"target": "main", "level": "eli5"})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["level"], "eli5")
+
+    def test_learn_invalid_level_400(self) -> None:
+        self.assertEqual(
+            api_app.route(self.ws, "/api/learn", {"target": "main", "level": "nope"}).status, 400)
+
+    def test_learn_missing_target_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/learn", {}).status, 400)
+        self.assertEqual(api_app.route(self.ws, "/api/learn", {"target": "  "}).status, 400)
+
+    def test_learn_topic_declines_when_no_match(self) -> None:
+        resp = api_app.route(self.ws, "/api/learn", {"target": "zzzqqqnomatch"})
+        self.assertEqual(resp.status, 200)
+        self.assertFalse(json.loads(resp.body)["grounded"])
+
+    def test_quiz_grounded_and_clamps_n(self) -> None:
+        resp = api_app.route(self.ws, "/api/quiz", {"target": "main", "n": "999"})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["n"], 20)
+        self.assertTrue(b["grounded"])
+        self.assertTrue(b["sources"])
+
+    def test_quiz_missing_target_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/quiz", {}).status, 400)
+
+    def test_exercise_grounded_default_n(self) -> None:
+        resp = api_app.route(self.ws, "/api/exercise", {"target": "main"})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["n"], 3)
+        self.assertTrue(b["grounded"])
+
+    def test_grade_grounded_with_sources(self) -> None:
+        resp = self._post("/api/grade", {"target": "main", "answer": "main returns the string hello"})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertTrue(b["grounded"])
+        self.assertTrue(b["sources"])
+        self.assertTrue(b["text"])
+
+    def test_grade_missing_answer_400(self) -> None:
+        self.assertEqual(self._post("/api/grade", {"target": "main"}).status, 400)
+        self.assertEqual(self._post("/api/grade", {"target": "main", "answer": "  "}).status, 400)
+
+    def test_grade_missing_target_400(self) -> None:
+        self.assertEqual(self._post("/api/grade", {"answer": "x"}).status, 400)
+
+    def test_grade_non_string_answer_400(self) -> None:
+        self.assertEqual(self._post("/api/grade", {"target": "main", "answer": 123}).status, 400)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -567,4 +636,9 @@ class TestLiveSecurity(_LiveServerMixin):
     def test_settings_post_without_token_403(self) -> None:
         _, port = self._start()
         status, _ = self._post(port, "/api/settings", {"ai_provider": "mock"})
+        self.assertEqual(status, 403)
+
+    def test_grade_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/grade", {"target": "main", "answer": "x"})
         self.assertEqual(status, 403)

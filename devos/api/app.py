@@ -218,6 +218,46 @@ def explain_payload(conn: sqlite3.Connection, ws, path: str | None, *,
     return {"path": path or None, **_answer_dict(ans)}
 
 
+def _chunk_sources(sources) -> list[dict]:
+    """Serialize RetrievedChunk sources (shared by the learning endpoints)."""
+    return [{"location": s.location, "project": s.project, "rel_path": s.rel_path,
+             "start_line": s.start_line, "end_line": s.end_line} for s in sources]
+
+
+def learn_payload(conn: sqlite3.Connection, ws, target: str, *,
+                  level: str = "intermediate", project: str | None = None) -> dict:
+    """Grounded, leveled explanation of a file (file mode) or topic (topic mode)."""
+    lesson = learning.learn(conn, target, provider=ws.ai, level=level, project=project)
+    return {"topic": lesson.topic, "level": lesson.level, "text": lesson.text,
+            "grounded": lesson.grounded, "provider": lesson.provider,
+            "sources": _chunk_sources(lesson.sources)}
+
+
+def quiz_payload(conn: sqlite3.Connection, ws, target: str, *,
+                 n: int = 5, project: str | None = None) -> dict:
+    """``n`` grounded review questions about a file/topic."""
+    qz = learning.quiz(conn, target, provider=ws.ai, n=n, project=project)
+    return {"topic": qz.topic, "n": qz.n, "text": qz.text, "grounded": qz.grounded,
+            "provider": qz.provider, "sources": _chunk_sources(qz.sources)}
+
+
+def exercise_payload(conn: sqlite3.Connection, ws, target: str, *,
+                     n: int = 3, project: str | None = None) -> dict:
+    """``n`` grounded practice exercises for a file/topic."""
+    ex = learning.exercise(conn, target, provider=ws.ai, n=n, project=project)
+    return {"topic": ex.topic, "n": ex.n, "text": ex.text, "grounded": ex.grounded,
+            "provider": ex.provider, "sources": _chunk_sources(ex.sources)}
+
+
+def grade_payload(conn: sqlite3.Connection, ws, target: str, *, answer: str,
+                  question: str | None = None, project: str | None = None) -> dict:
+    """Evaluate a learner's answer about a file/topic against grounded code context."""
+    g = learning.grade(conn, target, answer=answer, provider=ws.ai,
+                       question=question, project=project)
+    return {"topic": g.topic, "text": g.text, "grounded": g.grounded,
+            "provider": g.provider, "sources": _chunk_sources(g.sources)}
+
+
 def debug_payload(conn: sqlite3.Connection, ws, trace_text: str, *,
                   project: str | None = None) -> dict:
     """Diagnose a pasted error/trace/log (read-only). Reuses modules/debug.diagnose."""
@@ -499,6 +539,18 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                     # read-vs-DB note: writes a non-secret JSON file (not SQLite), so it
                     # needs `ws` (data_dir), not `conn` — handled inline like /api/debug.
                     return update_settings_action(ws, body or {})
+                if path == "/api/grade":
+                    # read-only AI (reuses ws.ai); POST because the learner's answer is
+                    # multi-line free text. Inline like /api/debug.
+                    b = body or {}
+                    target = str(b.get("target") or "").strip()
+                    if not target:
+                        return _bad("a file path or topic is required")
+                    answer = b.get("answer")
+                    if not isinstance(answer, str) or not answer.strip():
+                        return _bad("write an answer to grade")
+                    return _json(grade_payload(conn, ws, target, answer=answer,
+                                               question=b.get("question"), project=b.get("project")))
                 action = _POST_ACTIONS.get(path)
                 if action is None:
                     return _json({"error": "not found", "path": path}, 404)
@@ -549,6 +601,27 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
             if path == "/api/explain":
                 return _json(explain_payload(conn, ws, query.get("path"),
                                              project=query.get("project")))
+            if path == "/api/learn":
+                target = query.get("target", "").strip()
+                if not target:
+                    return _bad("a file path or topic is required")
+                level = query.get("level") or "intermediate"
+                if level not in learning.LEVELS:
+                    return _bad(f"level must be one of {', '.join(learning.LEVELS)}")
+                return _json(learn_payload(conn, ws, target, level=level,
+                                           project=query.get("project")))
+            if path == "/api/quiz":
+                target = query.get("target", "").strip()
+                if not target:
+                    return _bad("a file path or topic is required")
+                n = _int(query.get("n"), default=5, lo=1, hi=20)
+                return _json(quiz_payload(conn, ws, target, n=n, project=query.get("project")))
+            if path == "/api/exercise":
+                target = query.get("target", "").strip()
+                if not target:
+                    return _bad("a file path or topic is required")
+                n = _int(query.get("n"), default=3, lo=1, hi=10)
+                return _json(exercise_payload(conn, ws, target, n=n, project=query.get("project")))
         finally:
             conn.close()
     return _json({"error": "not found", "path": path}, 404)
