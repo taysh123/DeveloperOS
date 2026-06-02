@@ -112,3 +112,18 @@ input[readonly] { opacity: .8; cursor: not-allowed; }
 
 /* debug */
 textarea.mono { font-family: ui-monospace, "Cascadia Code", "Consolas", monospace; font-size: 13px; }
+
+/* settings / system status */
+.statusrow { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.statusrow .statusval { text-align: right; }
+.statusrow .muted:first-child { flex: 0 0 auto; }
+.provlist { display: flex; flex-direction: column; gap: 8px; }
+.provrow { display: flex; gap: 10px; align-items: flex-start; padding: 12px;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.provrow:hover { border-color: var(--accent); }
+.provrow.checked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.provrow input[type="radio"] { margin-top: 3px; accent-color: var(--accent); }
+.provbody { display: flex; flex-direction: column; gap: 4px; }
+.provhead { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.keyline code { font-size: 12px; }
+.ok-text { color: var(--done); }

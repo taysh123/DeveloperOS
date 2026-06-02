@@ -23,7 +23,13 @@ class Workspace:
 
     @property
     def ai(self) -> AIProvider:
-        return get_provider(self.config.ai_provider)
+        # Resolve the *effective* provider: a disabled toggle or a selected-but-not-yet-
+        # available provider falls back safely to the offline mock (no external calls,
+        # no key required). See devos/settings.py.
+        from devos import settings
+
+        name = settings.effective_provider_name(self.config.ai_provider, self.config.ai_enabled)
+        return get_provider(name)
 
     def is_initialized(self) -> bool:
         return self.config.is_initialized()

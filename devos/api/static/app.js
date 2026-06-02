@@ -672,6 +672,155 @@
     </div>`;
   }
 
+  // --- SETTINGS & AI MANAGEMENT --------------------------------------------
+  function StatusRow(props) {
+    return html`<div class="item statusrow">
+      <span class="muted">${props.label}</span>
+      <span class="statusval">${props.children}</span></div>`;
+  }
+
+  function SystemStatus(props) {
+    var s = props.sys;
+    if (!s || s.error) return html`<${Empty}>Couldn't load system status.<//>`;
+    var prov = {};
+    (s.providers || []).forEach(function (p) { prov[p.id] = p; });
+    var effLabel = (prov[s.provider_effective] && prov[s.provider_effective].label) || s.provider_effective;
+    var selLabel = (prov[s.provider_selected] && prov[s.provider_selected].label) || s.provider_selected;
+    var differs = s.provider_selected !== s.provider_effective;
+    return html`<div class="panel">
+      <h2>System status</h2>
+      <${StatusRow} label="Local-first">${s.local_first ? "Yes — your data stays on this machine" : "No"}<//>
+      <${StatusRow} label="Works offline">${s.offline ? html`<${Badge} k="done">Offline<//> No internet needed` : "No"}<//>
+      <${StatusRow} label="AI">${s.ai_enabled
+        ? html`<${Badge} k="done">Enabled<//>` : html`<${Badge} k="blocked">Disabled<//>`}<//>
+      <${StatusRow} label="Active provider">${effLabel}
+        ${differs ? html`<span class="muted"> — you selected ${selLabel}, but it isn't available yet, so DeveloperOS is using the offline mock.</span>` : null}<//>
+      <${StatusRow} label="Version">${s.version}<//>
+      <${StatusRow} label="Roadmap phase">${s.roadmap_phase}<//>
+      <${StatusRow} label="Projects indexed">${s.indexed_project_count}<//>
+      <${StatusRow} label="Dashboard">${s.dashboard_maturity}<//>
+    </div>`;
+  }
+
+  function ProviderChoice(props) {
+    var p = props.p;
+    return html`<label class=${"provrow" + (props.checked ? " checked" : "")}>
+      <input type="radio" name="ai-provider" checked=${props.checked}
+             onChange=${function () { props.onPick(p.id); }} />
+      <div class="provbody">
+        <div class="provhead">
+          <strong>${p.label}</strong>
+          <${Badge} k=${p.kind === "local" ? "done" : "in_progress"}>${p.kind === "local" ? "Local" : "Cloud"}<//>
+          <${Badge} k=${p.free ? "done" : "high"}>${p.free ? "Free" : "May cost money"}<//>
+          ${p.available ? null : html`<${Badge}>Coming soon<//>`}
+        </div>
+        <div class="muted">${p.blurb}</div>
+        ${p.requires_key ? html`<div class="muted keyline">API key: ${p.key_present
+          ? html`<span class="ok-text">detected in your environment</span>`
+          : html`<span>not set — define <code>${p.key_env}</code> in your environment</span>`}</div>` : null}
+      </div>
+    </label>`;
+  }
+
+  function ProviderDetails(props) {
+    var p = props.p;
+    if (!p) return null;
+    return html`<div class="panel">
+      <h2>Provider configuration</h2>
+      <p class="muted">DeveloperOS <strong>never stores API keys</strong>. Cloud providers read their
+        key from an environment variable; local providers need no key. These fields are prepared for a
+        future release and are disabled for now.</p>
+      ${p.requires_key ? html`<div class="field">
+        <label>API key</label>
+        <input type="password" disabled placeholder=${"Set " + p.key_env + " in your environment"} />
+        <div class="muted">${p.key_present ? "A key is currently detected in your environment." : "No key detected."}</div>
+      </div>` : null}
+      <div class="field">
+        <label>Endpoint</label>
+        <input disabled placeholder=${p.endpoint_hint || "Default endpoint (managed automatically)"} />
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <select disabled><option>Coming soon</option></select>
+      </div>
+    </div>`;
+  }
+
+  function SettingsView() {
+    var tk = useState(0), tick = tk[0], setTick = tk[1];
+    var sys = useApi("/api/system", tick);
+    var cfg = useApi("/api/settings", tick);
+    var dp = useState(null), draftProv = dp[0], setDraftProv = dp[1];
+    var de = useState(null), draftEn = de[0], setDraftEn = de[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
+    var mg = useState(null), msg = mg[0], setMsg = mg[1];
+
+    useEffect(function () {
+      if (cfg && !cfg.error) { setDraftProv(cfg.ai_provider); setDraftEn(cfg.ai_enabled); }
+    }, [cfg]);
+
+    if (!sys || !cfg) return html`<${Empty}>Loading…<//>`;
+    if (cfg.error) return html`<${Empty}>Couldn't load your settings.<//>`;
+
+    var providers = cfg.providers || [];
+    var selected = providers.filter(function (p) { return p.id === draftProv; })[0];
+    var dirty = draftProv !== cfg.ai_provider || draftEn !== cfg.ai_enabled;
+    var cloudSelected = selected && selected.kind === "cloud";
+
+    function save() {
+      setBusy(true); setMsg(null);
+      post("/api/settings", { ai_provider: draftProv, ai_enabled: draftEn })
+        .then(function () {
+          setBusy(false);
+          setMsg({ kind: "ok", text: "Saved. Your AI settings are updated." });
+          setTick(function (n) { return n + 1; });
+        })
+        .catch(function (x) { setBusy(false); setMsg({ kind: "error", text: x.message }); });
+    }
+
+    return html`<div>
+      <${SystemStatus} sys=${sys} />
+
+      <div class="panel form">
+        <h2>AI settings</h2>
+        <div class="field inline">
+          <label for="ai-enabled">Use AI features</label>
+          <select id="ai-enabled" value=${draftEn ? "on" : "off"}
+                  onChange=${function (ev) { setDraftEn(ev.target.value === "on"); }}>
+            <option value="on">On</option>
+            <option value="off">Off — turn all AI features off</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>AI provider</label>
+          <div class="provlist" role="radiogroup" aria-label="AI provider">
+            ${providers.map(function (p) {
+              return html`<${ProviderChoice} key=${p.id} p=${p} checked=${draftProv === p.id}
+                onPick=${setDraftProv} />`; })}
+          </div>
+        </div>
+
+        ${!draftEn ? html`<${Msg} kind="ok"
+          text="AI is turned off. DeveloperOS still works for browsing, tasks and notes — it just won't run any AI features." />` : null}
+        ${draftEn && cloudSelected && (!selected.available) ? html`<${Msg} kind="ok"
+          text="Heads up: this is a cloud provider that isn't wired in yet, so DeveloperOS keeps running the offline mock — nothing leaves your machine until real providers ship." />` : null}
+        ${draftEn && cloudSelected ? html`<${Msg} kind="error"
+          text="Privacy & cost: cloud providers send your prompts over the internet and may cost money. Local options (Offline, Ollama) keep everything on your machine for free." />` : null}
+
+        <div class="row">
+          <button class="btn" type="button" onClick=${save} disabled=${busy || !dirty}>
+            ${busy ? "Saving…" : "Save settings"}</button>
+          ${dirty ? html`<button class="btn ghost" type="button" disabled=${busy}
+            onClick=${function () { setDraftProv(cfg.ai_provider); setDraftEn(cfg.ai_enabled); setMsg(null); }}>Cancel</button>` : null}
+        </div>
+        ${msg ? html`<${Msg} kind=${msg.kind} text=${msg.text} />` : null}
+      </div>
+
+      <${ProviderDetails} p=${selected} />
+    </div>`;
+  }
+
   // --- shell + tabs --------------------------------------------------------
   var TABS = [
     { id: "home", label: "Home" },
@@ -679,7 +828,8 @@
     { id: "notes", label: "Notes" },
     { id: "assist", label: "Search & Ask" },
     { id: "debug", label: "Debug" },
-    { id: "projects", label: "Projects" }
+    { id: "projects", label: "Projects" },
+    { id: "settings", label: "Settings" }
   ];
 
   function App() {
@@ -709,6 +859,7 @@
         ${tab === "assist" && html`<${SearchView} />`}
         ${tab === "debug" && html`<${DebugView} />`}
         ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
+        ${tab === "settings" && html`<${SettingsView} />`}
       </main>
       <div class="footer">DeveloperOS · local-first · runs only on your machine</div>
     </div>`;
