@@ -4,6 +4,15 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-02 — Session 18: Dashboard slice 4 — Project Deep Dive / Study (+ long-term roadmap)
+- Merged slice-3 PR (#2) into `main`; synced; branched `feat/dashboard-deep-dive`.
+- `/plan`: recorded the **long-term dashboard vision/roadmap** (IA: Work·Understand·Grow·System; prioritized future slices led by Settings + AI-provider toggle reusing the `get_provider(config.ai_provider)`/`ws.ai` seam, keys from env/keychain, mock default) — planning only. Then implemented ONE narrow slice.
+- **TDD.** `app.py`: `study_payload` (pure aggregator — `qa.explain` overview + `learning.quiz` grounded questions + `repo.top_files`/`category_breakdown` + deterministic offline `interview_prep`) and read-only **`GET /api/projects/study?id=&n=`** (digit-validated id → 400, unknown → 404, `n` clamped 1–20). No new engine, no `server.py` change. D-0021.
+- **Frontend:** **Study this project** button on project detail → `ProjectStudy` Deep Dive view (Start here · Key files · How this works · Questions to explore · Interview prep) + `ProjectAsk` reusing `GET /api/ask?project=`. Reused existing components/CSS; no new CSS.
+- **verification-before-completion:** full suite **227/227** (+5). Scripted **live smoke**: study bundle grounded w/ key files + 5 prep items, `n` clamped to 20, bad id → 400, project-scoped ask grounded — all PASS.
+- Synced DECISIONS (D-0021 + roadmap), SECURITY §8 bullet + posture row, CHANGELOG, ARCHITECTURE, README, AGENT_STATE, TODO.
+- **Git:** committed (via `_commitmsg.txt` + `git commit -F`), pushed branch, PR link provided. Proposed tag `v0.4.0-dashboard` **after merge**. **Slice complete; scope held.**
+
 ## 2026-06-02 — Session 17: Dashboard slice 3 — Debug Assistant tab
 - Merged slice-1+2 PR (#1) into `main`; synced local `main`; branched `feat/dashboard-debug-tab`.
 - `/plan`: user picked Debug tab (of 4 options). Read `modules/debug.py` + `trace.py` directly (token-efficient, no agents) — pure reuse of `debug.diagnose`, no new engine.

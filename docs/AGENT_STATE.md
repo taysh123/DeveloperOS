@@ -6,25 +6,34 @@
 _Last updated: 2026-06-02_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–3 shipped:**
-the local dashboard is action-oriented and covers Home · Tasks · Notes · Search & Ask · **Debug** ·
-Projects over a CSRF-token-guarded loopback API. Slices 1+2 are merged to `main` (PR #1).
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–4 shipped:**
+Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) over a
+CSRF-token-guarded loopback API. Slices 1–3 merged to `main` (PRs #1, #2). A **long-term dashboard
+roadmap** is recorded (D-0021 / plan): IA = Work · Understand · Grow · System; next priorities led by
+**Settings + AI-provider toggle** (reuse `get_provider(config.ai_provider)`/`ws.ai`; keys from env/
+keychain; mock default), then Learning, CRUD polish, Career, Meeting, Plugins UI, design/a11y.
 
 ## Current milestone
-**Dashboard slice 3 complete (D-0020).** Debug tab: paste an error/trace/log → grounded root-cause +
-fix + sources, reusing `modules/debug.diagnose` via read-only `POST /api/debug`. Committed on branch
-`feat/dashboard-debug-tab` (PR pending review; not yet on `main`).
+**Dashboard slice 4 complete (D-0021).** Project Deep Dive / Study: read-only `GET /api/projects/study`
+aggregator (reuses `qa.explain` + `learning.quiz` + `repo` structure + deterministic interview checklist)
+surfaced as a **Study this project** view. Committed on branch `feat/dashboard-deep-dive` (PR pending;
+not yet on `main`).
 
 ## Next immediate step
-Nothing pending. Optional follow-ups (each on a fresh `/plan`): Learning/Career/Meeting UIs; deletes
-(task/note/project) with confirmation; project picker in task/note forms; real AI provider behind
-`providers.ai`. Also: merge the open `feat/dashboard-debug-tab` PR; consider tag `v0.3.0-dashboard` post-merge.
+Nothing pending. Per the recorded roadmap, the highest-leverage next slice is **Settings + AI-provider
+toggle** (own `/plan`). Other follow-ups: Learning/Career/Meeting UIs; deletes + project pickers. Also:
+merge the open `feat/dashboard-deep-dive` PR; consider tag `v0.4.0-dashboard` post-merge.
 
 ## Tasks
 ### In progress
-- _None. Dashboard slice 3 complete; further dashboard surfaces are on-request only._
+- _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 4 (2026-06-02): Project Deep Dive / Study. `app.py` `study_payload` + read-only
+      `GET /api/projects/study` (reuses `qa.explain`+`learning.quiz`+`repo.top_files`/`category_breakdown`
+      + deterministic `interview_prep`; id-validated, `n` clamped; no new engine). React+htm `ProjectStudy`
+      (Start here/Key files/How this works/Questions/Interview prep + project-scoped Ask) from project
+      detail. TDD; **227/227** (+5); live smoke verified. D-0021 (+ long-term roadmap); SECURITY §8.
 - [x] Dashboard slice 3 (2026-06-02): Debug tab. `app.py` `debug_payload` + read-only `POST /api/debug`
       (inline in `route()`, reuses `debug.diagnose`, inherits slice-1 CSRF; trace=data, index-only, not
       persisted). React+htm Debug tab (paste → Analyze → result cards). TDD; **222/222** (+6); live smoke

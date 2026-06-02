@@ -499,7 +499,9 @@
     return html`<div>
       <button class="btn ghost small" type="button" onClick=${props.onBack}>← Back to projects</button>
       <div class="panel detail">
-        <h2>${p.name}</h2>
+        <div class="panelhead"><h2>${p.name}</h2>
+          ${idx.chunks ? html`<button class="btn" type="button"
+            onClick=${props.onStudy}>Study this project</button>` : null}</div>
         <div class="item"><span class="muted">Folder:</span> <code>${p.root_path}</code></div>
         <div class="grid cards">
           <${Stat} k="todo" n=${p.file_count} label="Files" />
@@ -523,6 +525,97 @@
     </div>`;
   }
 
+  function ProjectAsk(props) {
+    var qs = useState(""), q = qs[0], setQ = qs[1];
+    var rs = useState(null), res = rs[0], setRes = rs[1];
+    function go(e) {
+      e.preventDefault();
+      if (!q.trim()) return;
+      setRes("loading");
+      fetch("/api/ask?q=" + encodeURIComponent(q) + "&project=" + encodeURIComponent(props.project))
+        .then(function (r) { return r.json(); }).then(setRes)
+        .catch(function () { setRes({ error: true }); });
+    }
+    return html`<div class="panel form">
+      <h2>Ask about this project</h2>
+      <form class="row" onSubmit=${go}>
+        <div class="field grow">
+          <label for="study-ask">Ask anything in plain English</label>
+          <input id="study-ask" value=${q} placeholder="e.g. Where does it start? How does X work?"
+                 onInput=${function (e) { setQ(e.target.value); }} />
+        </div>
+        <button class="btn" type="submit">Ask</button>
+      </form>
+      ${res === "loading" && html`<${Empty}>Thinking…<//>`}
+      ${res && res !== "loading" && (res.error
+        ? html`<${Msg} text="Couldn't answer that." />`
+        : html`<div class="answer"><p>${res.text}</p>
+            ${res.sources && res.sources.length ? html`<div class="sources">
+              <div class="muted">Based on:</div>
+              ${res.sources.map(function (s, i) {
+                return html`<div class="item" key=${i}><code>${s.location}</code></div>`; })}
+            </div>` : null}</div>`)}
+    </div>`;
+  }
+
+  function ProjectStudy(props) {
+    var data = useApi("/api/projects/study?id=" + props.id, 0);
+    if (!data) return html`<${Empty}>Loading…<//>`;
+    if (data.error) return html`<${Empty}>Couldn't load this project.<//>`;
+    var p = data.project, keys = data.key_files || [], ov = data.overview || {},
+        qz = data.questions || {}, prep = data.interview_prep || [];
+    var starters = keys.slice(0, 3);
+    return html`<div>
+      <button class="btn ghost small" type="button" onClick=${props.onBack}>← Back to project</button>
+      <header class="top"><h1>Project Deep Dive</h1>
+        <span class="sub">study “${p.name}” · ${p.file_count} files</span></header>
+
+      <div class="panel">
+        <h2>Start here</h2>
+        ${starters.length ? html`<div>
+          <div class="muted">Open these first — they're the busiest parts of the project.</div>
+          ${starters.map(function (f, i) {
+            return html`<div class="item" key=${i}><code>${f.rel_path}</code>
+              <span class="muted"> · ${f.category}${f.lang ? " · " + f.lang : ""}</span></div>`; })}
+        </div>` : html`<${Empty}>Import or re-scan this project first, then come back to study it.<//>`}
+      </div>
+
+      ${keys.length ? html`<div class="panel"><h2>Key files</h2>
+        ${keys.map(function (f, i) {
+          return html`<div class="item" key=${i}><code>${f.rel_path}</code>
+            <${Badge}>${f.category}<//>${f.lang ? html`<span class="muted"> ${f.lang}</span>` : null}</div>`; })}
+      </div>` : null}
+
+      <div class="panel">
+        <h2>How this works</h2>
+        ${!ov.grounded && html`<${Msg} kind="error"
+          text="Not enough indexed content yet. Import or re-scan this project in the Projects tab, then study it." />`}
+        <div class="answer"><p>${ov.text}</p>
+          ${ov.sources && ov.sources.length ? html`<div class="sources">
+            <div class="muted">Based on:</div>
+            ${ov.sources.map(function (s, i) {
+              return html`<div class="item" key=${i}><code>${s.location}</code></div>`; })}
+          </div>` : null}</div>
+      </div>
+
+      <div class="panel">
+        <h2>Questions to explore</h2>
+        ${qz.grounded
+          ? html`<div class="answer"><p>${qz.text}</p></div>`
+          : html`<${Empty}>${qz.text || "Index this project to generate study questions."}<//>`}
+      </div>
+
+      ${prep.length ? html`<div class="panel">
+        <h2>Interview prep</h2>
+        <div class="muted">Practice saying each of these out loud.</div>
+        ${prep.map(function (line, i) {
+          return html`<div class="item" key=${i}>${line}</div>`; })}
+      </div>` : null}
+
+      <${ProjectAsk} project=${p.name} />
+    </div>`;
+  }
+
   function ProjectsView(props) {
     var md = useState("list"), mode = md[0], setMode = md[1];
     var sel = useState(null), selectedId = sel[0], setSelectedId = sel[1];
@@ -533,9 +626,14 @@
     function open(id) { setSelectedId(id); setMode("detail"); }
     function onImported(r) { setResult(r); setMode("list"); props.reload(); }
 
+    if (mode === "study" && selectedId != null) {
+      return html`<${ProjectStudy} id=${selectedId}
+        onBack=${function () { setMode("detail"); }} />`;
+    }
     if (mode === "detail" && selectedId != null) {
       return html`<${ProjectDetail} id=${selectedId} tick=${props.tick} reload=${props.reload}
-        onBack=${function () { setMode("list"); }} />`;
+        onBack=${function () { setMode("list"); }}
+        onStudy=${function () { setMode("study"); }} />`;
     }
     if (mode === "import") {
       return html`<div>

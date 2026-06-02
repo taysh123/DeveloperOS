@@ -4,6 +4,33 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0021 — Dashboard Project Deep Dive / Study (`GET /api/projects/study`) + long-term roadmap
+- **Date:** 2026-06-02
+- **Context:** The dashboard could import/view projects but not help a beginner *understand one deeply*
+  (for learning / interview prep). Add a Study experience by **aggregating existing grounded modules** —
+  no new analysis engine.
+- **Decision:**
+  - **`study_payload(conn, ws, project_id, n=6)`** bundles, by pure reuse: project facts (from
+    `repo.list_projects`), `categories` (`repo.category_breakdown`), `key_files` (`repo.top_files`),
+    an `overview` (**`qa.explain`** project overview), grounded `questions` (**`learning.quiz`** on the
+    top key file, else the project name), and a **deterministic, offline `interview_prep`** checklist
+    derived from name + key files + top categories (no provider call).
+  - **`GET /api/projects/study?id=&n=`** (read-only, beside `/api/projects/detail`): `id` validated as a
+    digit → 400, unknown → 404, `n` clamped 1–20. Downstream project name/paths come from the DB
+    (resolved from the integer id), not raw client text. No `server.py` change.
+  - **UI:** a **Study this project** button on the project detail opens a **Project Deep Dive** view
+    (sections: Start here · Key files · How this works · Questions to explore · Interview prep) plus an
+    **Ask about this project** box reusing `GET /api/ask?project=`. Kept as a project sub-section this
+    slice (may graduate to a top-level tab later).
+  - **Long-term dashboard roadmap recorded** (see the plan / AGENT_STATE): IA grouping (Work · Understand
+    · Grow · System) and prioritized future slices — Settings + AI-provider toggle (reuse the existing
+    `get_provider(config.ai_provider)` / `ws.ai` seam; keys from env/keychain only, mock default), then
+    Learning, CRUD polish, Career, Meeting, Plugins UI, design/a11y polish.
+- **Rationale:** Maximises reuse (`qa.explain` + `learning.quiz` + `repo` structure helpers), stays
+  read-only/index-only/offline, and degrades gracefully for unindexed projects. Deterministic interview
+  checklist avoids a second provider call and works offline.
+- **Status:** Accepted (dashboard slice 4). Future slices remain on-request (Part 1 of the plan).
+
 ## D-0020 — Dashboard Debug Assistant tab (`POST /api/debug`)
 - **Date:** 2026-06-02
 - **Context:** The Debug Assistant (`modules/debug.diagnose`) — paste an error/trace/log → grounded
