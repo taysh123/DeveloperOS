@@ -58,6 +58,12 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 5 — Settings & AI Management ✅
+- [x] **Settings** tab (Home · Tasks · Notes · Search & Ask · Debug · Projects · Settings): **System status** (local-first, offline, AI on/off, active provider, version, roadmap phase, projects indexed, dashboard maturity), **AI settings** (enable toggle + provider radio list with privacy/cost badges + key-detection hints), and a prepared (disabled) **provider-config** panel.
+- [x] `devos/settings.py`: non-secret settings store (`settings.json`) + provider catalog (mock/ollama/claude/openai); `effective_provider_name` falls back to offline mock when disabled/unavailable; `key_present` returns a boolean only. Config/Workspace resolve provider via env → settings → mock (backward compatible).
+- [x] `GET /api/system`, `GET /api/settings`, `POST /api/settings` (inline, ws-scoped; whitelists `ai_enabled`/`ai_provider` so secrets can't be stored); inherits the D-0018 CSRF/Origin/JSON/size guards. **No API keys in SQLite/JSON/frontend** — keys come from env vars; only a presence boolean is shown. D-0022; SECURITY §2/§8. Version 0.1.0→0.5.0. 247 tests (+20), live socket smoke verified (no key leak).
+- [x] Authored **`docs/FUTURE_ROADMAP.md`** (product planning only): v1.0/v2.0 vision + dashboard/AI/productivity/learning/career/enterprise roadmaps + stretch goals + ideas backlog, each tagged Core/High Value/Nice-to-Have/Future Research.
+
 ## Post-roadmap: Dashboard slice 4 — Project Deep Dive / Study ✅
 - [x] **Study this project** Deep Dive from project detail: Start here · Key files · How this works · Questions to explore · Interview prep + project-scoped Ask.
 - [x] Read-only `GET /api/projects/study` aggregator reusing `qa.explain` + `learning.quiz` + `repo.top_files`/`category_breakdown` + deterministic offline interview checklist; id-validated, `n` clamped; no new engine. D-0021; SECURITY §8. 227 tests (+5), live smoke verified.
@@ -78,7 +84,7 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021): **Settings + AI-provider toggle** (lead), then Learning tab, CRUD polish (deletes + project pickers), Career tab, Meeting Summary tab, Plugins/Extensions UI, design/a11y polish.
+- [ ] Dashboard (roadmap order, D-0021/D-0022): ~~Settings + AI-provider toggle~~ ✅ (slice 5), then **Learning tab** (lead), CRUD polish (deletes + project pickers), Career tab, Meeting Summary tab, Plugins/Extensions UI, design/a11y polish.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

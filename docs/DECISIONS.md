@@ -4,6 +4,42 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0022 — Dashboard Settings & AI Management (`/api/system`, `/api/settings`) + settings store
+- **Date:** 2026-06-02
+- **Context:** The dashboard had no way to see or control AI behavior; provider selection lived only in
+  the `DEVOS_AI_PROVIDER` env var and `ws.ai`. Slice 5 (the recorded next priority, D-0021) surfaces and
+  controls this for non-technical users — **without** introducing a parallel provider system or storing
+  any secret.
+- **Decision:**
+  - **New `devos/settings.py`** holds **non-secret preferences only** (`ai_enabled`, `ai_provider`) in
+    `<data_dir>/settings.json` (no schema migration; data dir already git-ignored). A `PROVIDERS` catalog
+    (`mock`, `ollama`, `claude`, `openai`) carries privacy (`local`/`cloud`) + cost (`free`/paid) +
+    `key_env` metadata that drives the UI. `save()` is **keyword-only on the two fields** so a secret can
+    never be written; unknown providers raise. `effective_provider_name(preferred, enabled)` resolves the
+    provider **actually used**, falling back to the offline `mock` when AI is disabled or the choice isn't
+    registered in `providers.ai.available_providers()` yet — so selecting Claude/OpenAI/Ollama is a stored
+    *preference* with **no external call and no key required** until a real provider ships.
+    `key_present(id)` returns a **boolean** read from the environment — never the value.
+  - **Reuse, not fork:** `config.load_config()` resolves `DEVOS_AI_PROVIDER` env → `settings.json` → `mock`
+    and adds `ai_enabled`; `Workspace.ai` goes through `effective_provider_name`. Backward compatible —
+    defaults keep `ws.ai == mock`, so the whole existing suite stays green.
+  - **API:** read-only `GET /api/system` (local-first/offline/ai_enabled/provider selected+effective/
+    `version`/roadmap phase/indexed project count/dashboard maturity + catalog) and `GET /api/settings`
+    (catalog + per-provider `available`/`key_present`). `POST /api/settings` is handled **inline in
+    `route()`** (it writes the JSON file and needs `ws`, not `conn` — same pattern as `/api/debug`); it
+    **reads only `ai_enabled`/`ai_provider`** from the body (any `api_key`/`endpoint` is ignored) and
+    inherits the D-0018 CSRF token + Origin allowlist + JSON-only + 64 KB guards. No `server.py` change.
+  - **UI:** a **Settings** tab — System status rows, an AI enable toggle + provider radio list (Local/Cloud
+    + Free/Paid badges, Coming-soon + key-detected hints, plain-language privacy/cost notes), and a
+    **prepared but disabled** provider-config panel (API key / endpoint / model) with helper text that
+    keys come from environment variables and are never stored.
+  - **Version 0.1.0 → 0.5.0** (five shipped dashboard slices), surfaced in System status + `devos --version`.
+- **Rationale:** Maximum reuse of the single provider registry; secrets stay out of SQLite/JSON/frontend
+  (SECURITY §2 — env vars / OS keychain only, presence-boolean exposure); safe graceful fallback to
+  offline mock keeps the default private/free/no-key; no new outbound surface.
+- **Status:** Accepted (dashboard slice 5). Real provider integrations / key input / endpoint persistence
+  remain **on-request** and out of scope here.
+
 ## D-0021 — Dashboard Project Deep Dive / Study (`GET /api/projects/study`) + long-term roadmap
 - **Date:** 2026-06-02
 - **Context:** The dashboard could import/view projects but not help a beginner *understand one deeply*

@@ -36,6 +36,7 @@ class Config:
 
     data_dir: Path
     ai_provider: str
+    ai_enabled: bool = True
 
     @property
     def db_path(self) -> Path:
@@ -51,8 +52,15 @@ class Config:
 
 
 def load_config() -> Config:
-    """Build a Config from the environment with sensible defaults."""
-    return Config(
-        data_dir=default_data_dir(),
-        ai_provider=os.environ.get("DEVOS_AI_PROVIDER", "mock"),
-    )
+    """Build a Config from the environment + persisted settings, with sensible defaults.
+
+    AI-provider resolution order: ``DEVOS_AI_PROVIDER`` env var (explicit override) →
+    the persisted ``settings.json`` choice → ``"mock"``. The persisted store also carries
+    the AI-enabled toggle. Settings are non-secret; keys never live here (see settings.py).
+    """
+    from devos import settings  # local import avoids an import cycle at module load
+
+    data_dir = default_data_dir()
+    stored = settings.load(data_dir)
+    provider = os.environ.get("DEVOS_AI_PROVIDER") or stored.ai_provider
+    return Config(data_dir=data_dir, ai_provider=provider, ai_enabled=stored.ai_enabled)

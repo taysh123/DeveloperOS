@@ -10,13 +10,20 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
+from devos import __version__, settings as settings_mod
 from devos.modules import debug as debug_mod
 from devos.modules import index as index_mod
 from devos.modules import ingest
 from devos.modules import learning
 from devos.modules import qa
 from devos.modules import recall as recall_mod
+from devos.providers.ai import available_providers
 from devos.storage import repo
+
+ROADMAP_PHASE = "Post-roadmap extensions · Dashboard slice 5 (Settings & AI Management)"
+DASHBOARD_MATURITY = (
+    "Beta — slices 1–5 shipped (Home, Tasks, Notes, Search & Ask, Debug, Projects, Settings)"
+)
 
 TASK_STATUSES = ("todo", "in_progress", "blocked", "done")
 TASK_KINDS = ("task", "bug", "feature")
@@ -231,6 +238,66 @@ def debug_payload(conn: sqlite3.Connection, ws, trace_text: str, *,
     }
 
 
+# --- system status & settings (slice 5) -----------------------------------
+
+def _provider_catalog(*, with_key_status: bool) -> list[dict]:
+    """The provider catalog with runtime flags. `available` = registered/usable today;
+    `key_present` (opt-in) is a boolean only — the key value is never read or returned."""
+    registered = set(available_providers())
+    out = []
+    for p in settings_mod.PROVIDERS:
+        item = dict(p)
+        item["available"] = p["id"] in registered
+        if with_key_status:
+            item["key_present"] = settings_mod.key_present(p["id"])
+        out.append(item)
+    return out
+
+
+def system_payload(conn: sqlite3.Connection, ws) -> dict:
+    """A plain-language snapshot of how DeveloperOS is running (slice 5 System status)."""
+    stored = settings_mod.load(ws.config.data_dir)
+    effective = settings_mod.effective_provider_name(stored.ai_provider, stored.ai_enabled)
+    return {
+        "local_first": True,
+        "offline": True,  # default + only-registered provider is the offline mock
+        "ai_enabled": stored.ai_enabled,
+        "provider_selected": stored.ai_provider,
+        "provider_effective": effective,
+        "version": __version__,
+        "roadmap_phase": ROADMAP_PHASE,
+        "indexed_project_count": len(repo.list_projects(conn)),
+        "dashboard_maturity": DASHBOARD_MATURITY,
+        "providers": _provider_catalog(with_key_status=False),
+    }
+
+
+def settings_payload(ws) -> dict:
+    """Current AI settings + the provider catalog (with key-detection booleans)."""
+    stored = settings_mod.load(ws.config.data_dir)
+    return {
+        "ai_enabled": stored.ai_enabled,
+        "ai_provider": stored.ai_provider,
+        "providers": _provider_catalog(with_key_status=True),
+    }
+
+
+def update_settings_action(ws, body: dict) -> Response:
+    """Persist the two non-secret preferences. Any `api_key`/`endpoint` in the body is
+    ignored — only `ai_enabled`/`ai_provider` are read, so a secret can never be stored."""
+    ai_enabled = body.get("ai_enabled")
+    if ai_enabled is not None and not isinstance(ai_enabled, bool):
+        return _bad("ai_enabled must be true or false")
+    provider = body.get("ai_provider")
+    if provider is not None and provider not in settings_mod.PROVIDER_IDS:
+        return _bad(f"provider must be one of {', '.join(settings_mod.PROVIDER_IDS)}")
+    try:
+        settings_mod.save(ws.config.data_dir, ai_enabled=ai_enabled, ai_provider=provider)
+    except ValueError as exc:
+        return _bad(str(exc))
+    return _json(settings_payload(ws))
+
+
 # --- write actions (POST, JSON body) --------------------------------------
 
 def _bad(msg: str) -> Response:
@@ -428,12 +495,20 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                         return _bad("paste an error, stack trace, or log to analyze")
                     return _json(debug_payload(conn, ws, text,
                                                project=(body or {}).get("project")))
+                if path == "/api/settings":
+                    # read-vs-DB note: writes a non-secret JSON file (not SQLite), so it
+                    # needs `ws` (data_dir), not `conn` — handled inline like /api/debug.
+                    return update_settings_action(ws, body or {})
                 action = _POST_ACTIONS.get(path)
                 if action is None:
                     return _json({"error": "not found", "path": path}, 404)
                 return action(conn, body or {})
             if path == "/api/health":
                 return _json({"ok": True})
+            if path == "/api/system":
+                return _json(system_payload(conn, ws))
+            if path == "/api/settings":
+                return _json(settings_payload(ws))
             if path == "/api/overview":
                 return _json(overview(conn))
             if path == "/api/projects":

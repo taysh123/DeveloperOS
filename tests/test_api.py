@@ -379,6 +379,57 @@ class TestStudyEndpoint(ApiTestCase):
         self.assertTrue(b["interview_prep"])  # still offers generic guidance
 
 
+class TestSystemAndSettings(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def test_system_payload_shape(self) -> None:
+        resp = api_app.route(self.ws, "/api/system", {})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertTrue(b["local_first"])
+        self.assertTrue(b["offline"])
+        self.assertIn("version", b)
+        self.assertIn("roadmap_phase", b)
+        self.assertIn("dashboard_maturity", b)
+        self.assertTrue(b["ai_enabled"])
+        self.assertEqual(b["provider_effective"], "mock")
+        self.assertGreaterEqual(b["indexed_project_count"], 1)
+        prov = {p["id"]: p for p in b["providers"]}
+        self.assertTrue(prov["mock"]["available"])     # registered today
+        self.assertFalse(prov["claude"]["available"])  # not yet implemented
+
+    def test_settings_get_lists_providers_and_key_booleans(self) -> None:
+        resp = api_app.route(self.ws, "/api/settings", {})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["ai_provider"], "mock")
+        self.assertTrue(b["ai_enabled"])
+        for p in b["providers"]:
+            self.assertIsInstance(p["key_present"], bool)  # boolean only, never a value
+            self.assertNotIn("api_key", p)
+
+    def test_settings_post_updates_and_persists(self) -> None:
+        resp = self._post("/api/settings", {"ai_provider": "ollama", "ai_enabled": False})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["ai_provider"], "ollama")
+        self.assertFalse(b["ai_enabled"])
+        b2 = json.loads(api_app.route(self.ws, "/api/settings", {}).body)
+        self.assertEqual(b2["ai_provider"], "ollama")  # persisted across a fresh read
+
+    def test_settings_post_invalid_provider_400(self) -> None:
+        self.assertEqual(self._post("/api/settings", {"ai_provider": "ghost"}).status, 400)
+
+    def test_settings_post_ignores_api_key(self) -> None:
+        from devos import settings as settings_mod
+        self._post("/api/settings", {"ai_provider": "claude", "api_key": "sk-superSecret"})
+        raw = (Path(self.ws.config.data_dir) / settings_mod.SETTINGS_FILENAME).read_text(
+            encoding="utf-8")
+        self.assertNotIn("sk-superSecret", raw)
+        self.assertNotIn("api_key", raw)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -511,4 +562,9 @@ class TestLiveSecurity(_LiveServerMixin):
     def test_debug_without_token_403(self) -> None:
         _, port = self._start()
         status, _ = self._post(port, "/api/debug", {"trace": "ValueError: x"})
+        self.assertEqual(status, 403)
+
+    def test_settings_post_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/settings", {"ai_provider": "mock"})
         self.assertEqual(status, 403)

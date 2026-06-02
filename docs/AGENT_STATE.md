@@ -6,29 +6,44 @@
 _Last updated: 2026-06-02_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–4 shipped:**
-Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) over a
-CSRF-token-guarded loopback API. Slices 1–3 merged to `main` (PRs #1, #2). A **long-term dashboard
-roadmap** is recorded (D-0021 / plan): IA = Work · Understand · Grow · System; next priorities led by
-**Settings + AI-provider toggle** (reuse `get_provider(config.ai_provider)`/`ws.ai`; keys from env/
-keychain; mock default), then Learning, CRUD polish, Career, Meeting, Plugins UI, design/a11y.
+**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–5 shipped:**
+Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) · **Settings
+& AI Management**, over a CSRF-token-guarded loopback API. Slices 1–4 merged to `main` (PRs #1–#3); slice
+5 on branch `feat/dashboard-settings-ai` (PR pending). A **long-term dashboard roadmap** is recorded
+(D-0021/D-0022 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System. **Project is at
+v0.5.0.**
 
 ## Current milestone
-**Dashboard slice 4 complete (D-0021).** Project Deep Dive / Study: read-only `GET /api/projects/study`
-aggregator (reuses `qa.explain` + `learning.quiz` + `repo` structure + deterministic interview checklist)
-surfaced as a **Study this project** view. Committed on branch `feat/dashboard-deep-dive` (PR pending;
-not yet on `main`).
+**Dashboard slice 5 complete (D-0022).** Settings & AI Management: new **Settings** tab with **System
+status** (local-first/offline/AI on-off/active provider/version/roadmap phase/indexed count/maturity) +
+**AI settings** (enable toggle + provider selector: mock/ollama/claude/openai with privacy+cost badges)
++ prepared (disabled) provider-config panel. New `devos/settings.py` (non-secret `settings.json` store +
+provider catalog; `effective_provider_name` falls back to offline mock; `key_present` boolean only).
+`GET /api/system`, `GET /api/settings`, `POST /api/settings` (whitelists `ai_enabled`/`ai_provider` — no
+secrets). **No API keys in SQLite/JSON/frontend** (env-var/keychain only). Version 0.1.0→**0.5.0**. TDD
+**247/247** (+20); live socket smoke verified (no key leak). Also authored `docs/FUTURE_ROADMAP.md`
+(planning only).
 
 ## Next immediate step
-Nothing pending. Per the recorded roadmap, the highest-leverage next slice is **Settings + AI-provider
-toggle** (own `/plan`). Other follow-ups: Learning/Career/Meeting UIs; deletes + project pickers. Also:
-merge the open `feat/dashboard-deep-dive` PR; consider tag `v0.4.0-dashboard` post-merge.
+Open a PR for `feat/dashboard-settings-ai` and merge to `main`. Per the recorded roadmap, the next
+highest-leverage slice is the **Learning tab** (own `/plan`; surface `modules/learning` learn/quiz/
+exercise/grade in the dashboard). Other follow-ups: CRUD polish (deletes + project pickers), Career tab,
+Meeting Summary tab, Plugins/Extensions UI, design/a11y polish. Consider tag `v0.5.0` once merged.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 5 (2026-06-02): Settings & AI Management. New `devos/settings.py` (non-secret
+      `settings.json` store + provider catalog mock/ollama/claude/openai with privacy/cost metadata;
+      `effective_provider_name` → offline mock when disabled/unavailable; `key_present` boolean only).
+      Config/Workspace resolve provider env→settings→mock + `ai_enabled` (backward compatible). `app.py`
+      `system_payload`/`settings_payload`/`update_settings_action` + `GET /api/system`, `GET /api/settings`,
+      inline `POST /api/settings` (whitelists `ai_enabled`/`ai_provider`; inherits D-0018 CSRF/Origin/JSON/
+      size guards). React+htm **Settings** tab (System status + AI settings + prepared provider-config).
+      Version 0.1.0→0.5.0. **No keys in SQLite/JSON/frontend** (env-var/keychain; presence boolean). TDD;
+      **247/247** (+20); live socket smoke verified (no key leak). D-0022; SECURITY §2/§8; FUTURE_ROADMAP.
 - [x] Dashboard slice 4 (2026-06-02): Project Deep Dive / Study. `app.py` `study_payload` + read-only
       `GET /api/projects/study` (reuses `qa.explain`+`learning.quiz`+`repo.top_files`/`category_breakdown`
       + deterministic `interview_prep`; id-validated, `n` clamped; no new engine). React+htm `ProjectStudy`
@@ -126,7 +141,9 @@ merge the open `feat/dashboard-deep-dive` PR; consider tag `v0.4.0-dashboard` po
 ## Known assumptions
 - Single power user; multi-user is a future extension.
 - Foundation runtime is stdlib-only (no external pip deps required to run).
-- AI is mocked until a real Claude provider is wired in (no API key needed yet).
+- AI is mocked until a real provider is wired in (no API key needed). The dashboard Settings tab lets
+  users toggle AI and *select* a provider (mock/ollama/claude/openai), but selection only stores a
+  preference — the **effective** provider stays the offline mock until real integrations ship (slice 5).
 - Windows is the primary dev OS (paths handled cross-platform via `pathlib`).
 
 ## Open decisions

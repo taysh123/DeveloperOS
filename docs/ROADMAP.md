@@ -97,6 +97,21 @@ risks · dependencies**. Status legend: ✅ done · 🚧 in progress · ⬜ not 
 
 ---
 
+## Post-roadmap — Dashboard slices (on-request extensions of Phase 7)
+The web dashboard (`devos serve`) is being matured in narrow, individually-shipped slices on top of the
+loopback API. Each reuses existing modules (no parallel engines) behind the D-0018 security controls.
+- ✅ **Slice 1 — Action-oriented dashboard** (Home · Tasks · Notes · Search & Ask; guarded writes). D-0018.
+- ✅ **Slice 2 — Projects tab** (list/detail + safe import/scan). D-0019.
+- ✅ **Slice 3 — Debug Assistant tab** (`POST /api/debug`). D-0020.
+- ✅ **Slice 4 — Project Deep Dive / Study** (`GET /api/projects/study`). D-0021.
+- ✅ **Slice 5 — Settings & AI Management** (`GET /api/system`, `GET/POST /api/settings`; non-secret
+  settings store + provider catalog; env-var/keychain keys only, mock default). D-0022. **(v0.5.0)**
+- ⬜ **Next priority — Learning tab**, then CRUD polish (deletes + project pickers), Career tab, Meeting
+  Summary tab, Plugins/Extensions UI, design/a11y polish. See `docs/FUTURE_ROADMAP.md` for the full
+  product-level roadmap and prioritization.
+
+---
+
 ### Cross-cutting concerns (every phase)
 Safe Action Agent (no destructive ops without explicit confirmation), Git Intelligence,
 Terminal automation (minimum necessary commands), tests, and synchronized docs/state.
