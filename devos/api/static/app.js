@@ -1048,6 +1048,255 @@
     </div>`;
   }
 
+  // --- CAREER --------------------------------------------------------------
+  var JOB_STATUS_OPTS = [
+    ["saved", "Saved"], ["applied", "Applied"], ["interview", "Interviewing"],
+    ["offer", "Offer"], ["rejected", "Rejected"], ["closed", "Closed"]
+  ];
+  function statusKind(s) {
+    return s === "offer" ? "done" : s === "interview" ? "in_progress"
+      : (s === "rejected" || s === "closed") ? "blocked" : "";
+  }
+  function statusLabel(s) {
+    var m = JOB_STATUS_OPTS.filter(function (o) { return o[0] === s; })[0];
+    return m ? m[1] : s;
+  }
+
+  function AddJob(props) {
+    var c = useState(""), company = c[0], setCompany = c[1];
+    var r = useState(""), role = r[0], setRole = r[1];
+    var u = useState(""), url = u[0], setUrl = u[1];
+    var st = useState("saved"), status = st[0], setStatus = st[1];
+    var n = useState(""), notes = n[0], setNotes = n[1];
+    var e = useState(""), err = e[0], setErr = e[1];
+    function submit(ev) {
+      ev.preventDefault();
+      if (!company.trim()) { setErr("Please enter the company name."); return; }
+      post("/api/jobs/create", { company: company.trim(), role: role.trim() || undefined,
+        url: url.trim() || undefined, status: status, notes: notes.trim() || undefined })
+        .then(function () { setCompany(""); setRole(""); setUrl(""); setStatus("saved");
+          setNotes(""); setErr(""); props.onDone(); })
+        .catch(function (x) { setErr(x.message); });
+    }
+    return html`<form class="panel form" onSubmit=${submit}>
+      <h2>Track a job application</h2>
+      <div class="row">
+        <div class="field grow">
+          <label for="job-company">Company</label>
+          <input id="job-company" value=${company} placeholder="e.g. Acme Corp"
+                 onInput=${function (ev) { setCompany(ev.target.value); }} />
+        </div>
+        <div class="field grow">
+          <label for="job-role">Role</label>
+          <input id="job-role" value=${role} placeholder="e.g. Backend Engineer"
+                 onInput=${function (ev) { setRole(ev.target.value); }} />
+        </div>
+        <div class="field">
+          <label for="job-status">Status</label>
+          <select id="job-status" value=${status} onChange=${function (ev) { setStatus(ev.target.value); }}>
+            ${JOB_STATUS_OPTS.map(function (o) {
+              return html`<option key=${o[0]} value=${o[0]}>${o[1]}</option>`; })}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="job-url">Job link (optional)</label>
+        <input id="job-url" value=${url} placeholder="https://…"
+               onInput=${function (ev) { setUrl(ev.target.value); }} />
+      </div>
+      <div class="field">
+        <label for="job-notes">Notes — paste the job description or what matters (used for interview prep & CV check)</label>
+        <textarea id="job-notes" rows="3" value=${notes} placeholder="Responsibilities, required skills, your thoughts…"
+                  onInput=${function (ev) { setNotes(ev.target.value); }}></textarea>
+      </div>
+      <button class="btn" type="submit">Save application</button>
+      <${Msg} text=${err} />
+    </form>`;
+  }
+
+  function JobRow(props) {
+    var j = props.j;
+    var ed = useState(false), editing = ed[0], setEditing = ed[1];
+    var c = useState(j.company), company = c[0], setCompany = c[1];
+    var r = useState(j.role || ""), role = r[0], setRole = r[1];
+    var u = useState(j.url || ""), url = u[0], setUrl = u[1];
+    var n = useState(j.notes || ""), notes = n[0], setNotes = n[1];
+    var e = useState(""), err = e[0], setErr = e[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
+    function changeStatus(s) {
+      post("/api/jobs/update", { id: j.id, status: s }).then(props.onDone)
+        .catch(function (x) { setErr(x.message); });
+    }
+    function save() {
+      if (!company.trim()) { setErr("Company can't be empty."); return; }
+      post("/api/jobs/update", { id: j.id, company: company.trim(), role: role.trim(),
+        url: url.trim(), notes: notes.trim() })
+        .then(function () { setEditing(false); setErr(""); props.onDone(); })
+        .catch(function (x) { setErr(x.message); });
+    }
+    function remove() {
+      setBusy(true);
+      post("/api/jobs/delete", { id: j.id }).then(props.onDone)
+        .catch(function (x) { setBusy(false); setErr(x.message); });
+    }
+    if (editing) {
+      return html`<div class="item">
+        <div class="row">
+          <div class="field grow"><label class="sr-only" for=${"jc" + j.id}>Company</label>
+            <input id=${"jc" + j.id} value=${company} onInput=${function (ev) { setCompany(ev.target.value); }} /></div>
+          <div class="field grow"><label class="sr-only" for=${"jr" + j.id}>Role</label>
+            <input id=${"jr" + j.id} value=${role} placeholder="Role"
+                   onInput=${function (ev) { setRole(ev.target.value); }} /></div>
+        </div>
+        <div class="field"><label class="sr-only" for=${"ju" + j.id}>Link</label>
+          <input id=${"ju" + j.id} value=${url} placeholder="Job link"
+                 onInput=${function (ev) { setUrl(ev.target.value); }} /></div>
+        <div class="field"><label class="sr-only" for=${"jn" + j.id}>Notes</label>
+          <textarea id=${"jn" + j.id} rows="3" value=${notes}
+                    onInput=${function (ev) { setNotes(ev.target.value); }}></textarea></div>
+        <div class="row">
+          <button class="btn small" type="button" onClick=${save}>Save</button>
+          <button class="btn small ghost" type="button"
+            onClick=${function () { setEditing(false); setCompany(j.company); setRole(j.role || "");
+              setUrl(j.url || ""); setNotes(j.notes || ""); setErr(""); }}>Cancel</button>
+        </div>
+        <${Msg} text=${err} />
+      </div>`;
+    }
+    return html`<div class="item">
+      <div class="row spread">
+        <div><${Badge} k=${statusKind(j.status)}>${statusLabel(j.status)}<//>
+          <strong>${j.company}</strong>${j.role ? html`<span class="muted"> — ${j.role}</span>` : null}</div>
+        <div class="row">
+          <label class="sr-only" for=${"js" + j.id}>Change status for ${j.company}</label>
+          <select id=${"js" + j.id} value=${j.status} onChange=${function (ev) { changeStatus(ev.target.value); }}>
+            ${JOB_STATUS_OPTS.map(function (o) {
+              return html`<option key=${o[0]} value=${o[0]}>${o[1]}</option>`; })}
+          </select>
+          <button class="btn small ghost" type="button" onClick=${function () { setEditing(true); }}>Edit</button>
+          <${ConfirmDelete} busy=${busy} prompt="Remove this application?" onConfirm=${remove} />
+        </div>
+      </div>
+      ${j.url ? html`<div class="item"><a href=${j.url} target="_blank" rel="noopener noreferrer">${j.url}</a></div>` : null}
+      ${j.notes ? html`<div class="muted notebody">${j.notes}</div>` : null}
+      <${Msg} text=${err} />
+    </div>`;
+  }
+
+  function InterviewPrep(props) {
+    var jobs = props.jobs || [];
+    var sj = useState(""), jobId = sj[0], setJobId = sj[1];
+    var rs = useState(null), res = rs[0], setRes = rs[1];
+    function go() {
+      var id = jobId || (jobs[0] && jobs[0].id);
+      if (!id) return;
+      setRes("loading");
+      fetch("/api/jobs/interview?id=" + encodeURIComponent(id))
+        .then(function (r) { return r.json(); }).then(setRes)
+        .catch(function () { setRes({ error: true }); });
+    }
+    return html`<div class="panel form">
+      <h2>Interview prep</h2>
+      ${!jobs.length ? html`<${Empty}>Add a job application above (with notes) to generate interview questions.<//>`
+        : html`<div>
+          <div class="row">
+            <div class="field grow">
+              <label for="prep-job">Prepare for</label>
+              <select id="prep-job" value=${jobId} onChange=${function (ev) { setJobId(ev.target.value); }}>
+                ${jobs.map(function (j) {
+                  return html`<option key=${j.id} value=${j.id}>${j.company}${j.role ? " — " + j.role : ""}</option>`; })}
+              </select>
+            </div>
+            <button class="btn" type="button" onClick=${go}>Prepare questions</button>
+          </div>
+          ${res === "loading" && html`<${Empty}>Thinking…<//>`}
+          ${res && res !== "loading" && (res.error
+            ? html`<${Msg} text="Couldn't generate prep." />`
+            : !res.grounded
+              ? html`<${Msg} kind="error" text=${res.text || "Add notes to this job to generate prep."} />`
+              : html`<div class="answer"><p>${res.text}</p>
+                  ${res.sources && res.sources.length ? html`<div class="sources muted">
+                    For: ${res.sources.map(function (s) { return s.company + (s.role ? " — " + s.role : ""); }).join(", ")}
+                  </div>` : null}</div>`)}
+        </div>`}
+    </div>`;
+  }
+
+  function CvCheck(props) {
+    var jobs = props.jobs || [];
+    var cv = useState(""), cvText = cv[0], setCvText = cv[1];
+    var tg = useState(""), against = tg[0], setAgainst = tg[1]; // "" = paste a description
+    var td = useState(""), targetText = td[0], setTargetText = td[1];
+    var rs = useState(null), res = rs[0], setRes = rs[1];
+    var er = useState(""), err = er[0], setErr = er[1];
+    function go(ev) {
+      ev.preventDefault();
+      if (!cvText.trim()) { setErr("Paste your CV text first."); return; }
+      var body = { cv_text: cvText.trim() };
+      if (against) { body.job_id = parseInt(against, 10); }
+      else if (targetText.trim()) { body.target_text = targetText.trim(); }
+      else { setErr("Pick a job to compare against, or paste a job description."); return; }
+      setErr(""); setRes("loading");
+      post("/api/cv", body).then(setRes).catch(function (x) { setRes(null); setErr(x.message); });
+    }
+    var pct = res && res !== "loading" && !res.error ? Math.round((res.coverage || 0) * 100) : 0;
+    return html`<form class="panel form" onSubmit=${go}>
+      <h2>CV match check</h2>
+      <p class="muted">Paste your CV and compare it against a job's notes (or a pasted description) to see
+        which keywords you cover — and which you're missing. Runs on your machine; your CV isn't stored.</p>
+      <div class="field">
+        <label for="cv-text">Your CV text</label>
+        <textarea id="cv-text" rows="5" value=${cvText} placeholder="Paste your CV / resume text…"
+                  onInput=${function (ev) { setCvText(ev.target.value); }}></textarea>
+      </div>
+      <div class="field">
+        <label for="cv-against">Compare against</label>
+        <select id="cv-against" value=${against} onChange=${function (ev) { setAgainst(ev.target.value); }}>
+          <option value="">Paste a job description…</option>
+          ${jobs.map(function (j) {
+            return html`<option key=${j.id} value=${j.id}>${j.company}${j.role ? " — " + j.role : ""}</option>`; })}
+        </select>
+      </div>
+      ${!against ? html`<div class="field">
+        <label for="cv-target">Job description</label>
+        <textarea id="cv-target" rows="3" value=${targetText} placeholder="Paste the job description / required skills…"
+                  onInput=${function (ev) { setTargetText(ev.target.value); }}></textarea>
+      </div>` : null}
+      <button class="btn" type="submit">Check match</button>
+      <${Msg} text=${err} />
+      ${res === "loading" && html`<${Empty}>Checking…<//>`}
+      ${res && res !== "loading" && !res.error && html`<div>
+        <div class="item"><strong>${pct}% keyword match</strong>
+          <span class="muted"> (${res.matched_count} of ${res.target_count} keywords${res.target_label ? " · " + res.target_label : ""})</span></div>
+        ${res.matched.length ? html`<div class="item"><span class="muted">You cover:</span>
+          <div class="catrow">${res.matched.map(function (k) {
+            return html`<${Badge} k="done" key=${k}>${k}<//>`; })}</div></div>` : null}
+        ${res.missing.length ? html`<div class="item"><span class="muted">Consider adding:</span>
+          <div class="catrow">${res.missing.map(function (k) {
+            return html`<${Badge} k="blocked" key=${k}>${k}<//>`; })}</div></div>`
+          : html`<div class="item muted">Nice — you cover every keyword in the target.</div>`}
+      </div>`}
+    </form>`;
+  }
+
+  function CareerView() {
+    var tk = useState(0), tick = tk[0], setTick = tk[1];
+    function reload() { setTick(function (n) { return n + 1; }); }
+    var data = useApi("/api/jobs", tick);
+    var jobs = (data && !data.error && data.jobs) || [];
+    return html`<div>
+      <${AddJob} onDone=${reload} />
+      <div class="panel"><h2>Your job applications</h2>
+        ${!data ? html`<${Empty}>Loading…<//>`
+          : jobs.length ? jobs.map(function (j) {
+              return html`<${JobRow} j=${j} key=${j.id} onDone=${reload} />`; })
+          : html`<${Empty}>No applications yet — add your first one above.<//>`}
+      </div>
+      <${InterviewPrep} jobs=${jobs} />
+      <${CvCheck} jobs=${jobs} />
+    </div>`;
+  }
+
   // --- shell + tabs --------------------------------------------------------
   var TABS = [
     { id: "home", label: "Home" },
@@ -1057,6 +1306,7 @@
     { id: "debug", label: "Debug" },
     { id: "projects", label: "Projects" },
     { id: "learning", label: "Learn" },
+    { id: "career", label: "Career" },
     { id: "settings", label: "Settings" }
   ];
 
@@ -1088,6 +1338,7 @@
         ${tab === "debug" && html`<${DebugView} />`}
         ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
         ${tab === "learning" && html`<${LearningView} />`}
+        ${tab === "career" && html`<${CareerView} />`}
         ${tab === "settings" && html`<${SettingsView} />`}
       </main>
       <div class="footer">DeveloperOS · local-first · runs only on your machine</div>
