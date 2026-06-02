@@ -58,6 +58,11 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 4 — Project Deep Dive / Study ✅
+- [x] **Study this project** Deep Dive from project detail: Start here · Key files · How this works · Questions to explore · Interview prep + project-scoped Ask.
+- [x] Read-only `GET /api/projects/study` aggregator reusing `qa.explain` + `learning.quiz` + `repo.top_files`/`category_breakdown` + deterministic offline interview checklist; id-validated, `n` clamped; no new engine. D-0021; SECURITY §8. 227 tests (+5), live smoke verified.
+- [x] Recorded the long-term dashboard vision/roadmap (IA + prioritized future slices) in the plan + DECISIONS/AGENT_STATE.
+
 ## Post-roadmap: Dashboard slice 3 — Debug Assistant tab ✅
 - [x] Debug tab: paste an error/stack trace/log → Analyze → result cards (summary + confidence, plain-language cause/fix, related files, sources).
 - [x] `POST /api/debug` (read-only) reuses `modules/debug.diagnose`; inline in `route()`; trace = untrusted data, file location index-only, not persisted; inherits slice-1 CSRF/Origin/size guards. D-0020; SECURITY §5/§8. 222 tests (+6), live smoke verified.
@@ -73,7 +78,7 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard: learning/career/meeting tabs, task/note/project delete (with confirm) + project pickers in forms.
+- [ ] Dashboard (roadmap order, D-0021): **Settings + AI-provider toggle** (lead), then Learning tab, CRUD polish (deletes + project pickers), Career tab, Meeting Summary tab, Plugins/Extensions UI, design/a11y polish.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

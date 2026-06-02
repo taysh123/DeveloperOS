@@ -159,6 +159,12 @@ into the AI context, a model could be manipulated.
   controls (**CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only**), so a
   cross-origin page cannot trigger a scan; the UI also requires an **explicit confirmation step** before
   the write. No new outbound surface; offline; mock provider unchanged.
+- **[NOW] Project Deep Dive / Study (slice 4, D-0021).** `GET /api/projects/study` is **read-only** and
+  a pure aggregator over **index-only** modules (`qa.explain`, `learning.quiz`, `repo` structure helpers —
+  none read the filesystem; grounding is retrieval-derived). The project name/paths fed downstream are
+  **resolved from a validated integer `id`** (not raw client text); `id`/`n` are validated/clamped.
+  Rendered code/file content is **data** (React-escaped; grounding contract treats context as data, not
+  instructions). No new write surface, no new outbound calls, offline/mock default.
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -182,6 +188,7 @@ into the AI context, a model could be manipulated.
 | Dashboard writes (action slice, D-0018) | POST tasks/notes guarded by **CSRF token + Origin allowlist + JSON-only + 64 KB cap**; no CORS headers; input validated; DB writes ≈ CLI `task`/`remember` (no Safe Action Agent); search/ask/explain read-only + grounded (offline mock) |
 | Dashboard project import (Projects tab, D-0019) | `POST /api/projects/scan` reads only the user-named folder ≈ CLI `devos scan` (same ignore/size/binary rules, §2 caveat); path validated server-side; same D-0018 CSRF/Origin/no-CORS gating + UI confirm step; no new outbound surface |
 | Dashboard debug (Debug tab, D-0020) | `POST /api/debug` (read-only) reuses `debug.diagnose`: trace = untrusted **data**, file location **index-only**, diagnosis **not persisted**; same D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
+| Dashboard study (Deep Dive, D-0021) | `GET /api/projects/study` read-only aggregator over index-only `qa.explain`/`learning.quiz`/`repo`; project resolved from a validated integer id; outputs are data (React-escaped); no write surface; offline/mock |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

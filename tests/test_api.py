@@ -337,6 +337,48 @@ class TestDebugEndpoint(ApiTestCase):
         self.assertEqual(self._post({"trace": 123}).status, 400)
 
 
+class TestStudyEndpoint(ApiTestCase):
+    def test_study_bundle_for_indexed_project(self) -> None:
+        resp = api_app.route(self.ws, "/api/projects/study", {"id": str(self.pid)})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["project"]["name"], "demo")
+        self.assertTrue(b["key_files"])
+        self.assertTrue(any("app.py" in f["rel_path"] for f in b["key_files"]))
+        self.assertIn("categories", b)
+        self.assertTrue(b["overview"]["grounded"])
+        self.assertTrue(b["overview"]["sources"])
+        self.assertTrue(b["questions"]["grounded"])
+        self.assertTrue(b["interview_prep"])
+        self.assertTrue(any("demo" in line for line in b["interview_prep"]))
+
+    def test_study_clamps_n(self) -> None:
+        resp = api_app.route(self.ws, "/api/projects/study", {"id": str(self.pid), "n": "999"})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["questions"]["n"], 20)
+
+    def test_study_missing_id_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/projects/study", {}).status, 400)
+        self.assertEqual(api_app.route(self.ws, "/api/projects/study", {"id": "x"}).status, 400)
+
+    def test_study_unknown_id_404(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/projects/study", {"id": "99999"}).status, 404)
+
+    def test_study_degrades_for_unindexed_project(self) -> None:
+        conn = self.ws.connect()
+        try:
+            bare = repo.upsert_project(conn, "/tmp/bare-proj-xyz", "bareproj")
+            conn.commit()
+        finally:
+            conn.close()
+        resp = api_app.route(self.ws, "/api/projects/study", {"id": str(bare)})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertEqual(b["key_files"], [])
+        self.assertFalse(b["overview"]["grounded"])
+        self.assertTrue(b["interview_prep"])  # still offers generic guidance
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS

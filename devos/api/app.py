@@ -13,6 +13,7 @@ from pathlib import Path
 from devos.modules import debug as debug_mod
 from devos.modules import index as index_mod
 from devos.modules import ingest
+from devos.modules import learning
 from devos.modules import qa
 from devos.modules import recall as recall_mod
 from devos.storage import repo
@@ -112,6 +113,49 @@ def project_detail(conn: sqlite3.Connection, project_id: int) -> dict | None:
         "project": _d(row),
         "by_category": repo.category_breakdown(conn, project_id),
         "index": {"chunks": chunks, "indexed_files": indexed_files},
+    }
+
+
+def _interview_prep(name: str, key_files: list[dict], categories: dict) -> list[str]:
+    """A friendly, deterministic study/interview checklist (no provider call, offline)."""
+    prep = [f"Explain in about a minute what “{name}” does and who it's for."]
+    if key_files:
+        prep.append(f"Walk through {key_files[0]['rel_path']} and what it's responsible for.")
+    top_cats = [c for c, _ in sorted(categories.items(), key=lambda kv: -kv[1])][:3]
+    if top_cats:
+        prep.append("Describe how the main parts fit together: " + ", ".join(top_cats) + ".")
+    prep.append("Pick one feature and trace it from start to finish.")
+    prep.append("What would you improve or add next, and why?")
+    return prep
+
+
+def study_payload(conn: sqlite3.Connection, ws, project_id: int, *, n: int = 6) -> dict | None:
+    """Project Deep Dive bundle: facts + key files + grounded overview/questions + prep.
+
+    Pure aggregation over existing modules (no new analysis engine): qa.explain for the
+    plain-language overview, learning.quiz for grounded study questions, repo for structure."""
+    row = next((p for p in repo.list_projects(conn) if p["id"] == project_id), None)
+    if row is None:
+        return None
+    name = row["name"]
+    categories = repo.category_breakdown(conn, project_id)
+    key_files = [_d(f) for f in repo.top_files(conn, project_id, 8)]
+
+    overview = qa.explain(conn, None, provider=ws.ai, project=name)
+    target = key_files[0]["rel_path"] if key_files else name
+    quiz = learning.quiz(conn, target, provider=ws.ai, project=name, n=n)
+
+    return {
+        "project": _d(row),
+        "categories": categories,
+        "key_files": key_files,
+        "overview": _answer_dict(overview),
+        "questions": {"n": quiz.n, "text": quiz.text, "grounded": quiz.grounded,
+                      "provider": quiz.provider,
+                      "sources": [{"location": s.location, "project": s.project,
+                                   "rel_path": s.rel_path, "start_line": s.start_line,
+                                   "end_line": s.end_line} for s in quiz.sources]},
+        "interview_prep": _interview_prep(name, key_files, categories),
     }
 
 
@@ -402,6 +446,15 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                 if detail is None:
                     return _json({"error": f"no project #{pid}"}, 404)
                 return _json(detail)
+            if path == "/api/projects/study":
+                pid = query.get("id")
+                if pid is None or not str(pid).isdigit():
+                    return _bad("a valid project id is required")
+                n = _int(query.get("n"), default=6, lo=1, hi=20)
+                study = study_payload(conn, ws, int(pid), n=n)
+                if study is None:
+                    return _json({"error": f"no project #{pid}"}, 404)
+                return _json(study)
             if path == "/api/tasks":
                 return _json(tasks_payload(conn, status=query.get("status"),
                                            kind=query.get("kind"), project=query.get("project")))
