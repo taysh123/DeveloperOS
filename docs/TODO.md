@@ -58,6 +58,10 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 3 — Debug Assistant tab ✅
+- [x] Debug tab: paste an error/stack trace/log → Analyze → result cards (summary + confidence, plain-language cause/fix, related files, sources).
+- [x] `POST /api/debug` (read-only) reuses `modules/debug.diagnose`; inline in `route()`; trace = untrusted data, file location index-only, not persisted; inherits slice-1 CSRF/Origin/size guards. D-0020; SECURITY §5/§8. 222 tests (+6), live smoke verified.
+
 ## Post-roadmap: Dashboard slice 2 — Projects tab ✅
 - [x] Projects tab (Home · Tasks · Notes · Search & Ask · Projects): list, detail, and a safe import/scan flow (confirm-before-write).
 - [x] GET `/api/projects/detail` (overview: file count, last scanned, indexed status, category breakdown) + POST `/api/projects/scan` (validate path → `ingest.scan_project` → `index_mod.index_project`).
@@ -69,7 +73,7 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard: debug/learning/career/meeting tabs, task/note/project delete (with confirm) + project pickers in forms.
+- [ ] Dashboard: learning/career/meeting tabs, task/note/project delete (with confirm) + project pickers in forms.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

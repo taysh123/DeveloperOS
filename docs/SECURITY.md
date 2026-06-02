@@ -110,6 +110,11 @@ into the AI context, a model could be manipulated.
   project are skipped — so a trace naming `/etc/passwd` or `C:\secrets.txt` causes no file read and
   no exfiltration. The trace text enters the provider context as **data, not instructions** (same
   grounding contract as Q&A). Verified by `tests/test_debug.py::TestDiagnose::test_does_not_read_filesystem_paths_from_trace`.
+  - **[NOW] Dashboard exposure (slice 3, D-0020):** the Debug Assistant is now reachable from the UI via
+    **`POST /api/debug`** (read-only; the pasted trace is multi-line text so POST carries the body). All
+    the above safety properties are unchanged — index-only file location, trace-as-data, **diagnosis not
+    persisted** — and the POST is gated by the D-0018 controls (CSRF token + Origin allowlist + JSON-only
+    + 64 KB cap, no CORS, loopback). Offline/mock by default.
 
 ## 6. Audit logging requirements  **[PLANNED — when actions/providers are added]**
 - Log security-relevant events **locally** (append-only, in the data dir): action-agent
@@ -176,6 +181,7 @@ into the AI context, a model could be manipulated.
 | Dashboard API (Phase 7) | **Loopback-only**; static serving traversal-safe; frontend libs vendored (offline); no secrets exposed |
 | Dashboard writes (action slice, D-0018) | POST tasks/notes guarded by **CSRF token + Origin allowlist + JSON-only + 64 KB cap**; no CORS headers; input validated; DB writes ≈ CLI `task`/`remember` (no Safe Action Agent); search/ask/explain read-only + grounded (offline mock) |
 | Dashboard project import (Projects tab, D-0019) | `POST /api/projects/scan` reads only the user-named folder ≈ CLI `devos scan` (same ignore/size/binary rules, §2 caveat); path validated server-side; same D-0018 CSRF/Origin/no-CORS gating + UI confirm step; no new outbound surface |
+| Dashboard debug (Debug tab, D-0020) | `POST /api/debug` (read-only) reuses `debug.diagnose`: trace = untrusted **data**, file location **index-only**, diagnosis **not persisted**; same D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

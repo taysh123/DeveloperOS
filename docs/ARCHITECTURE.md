@@ -150,13 +150,17 @@ when ungrounded. `devos docgen` prints to stdout by default and writes to `--out
 `/api/notes/create|update`, `/api/projects/scan`) perform guarded writes via the same `repo`/`ingest`/
 `index` functions the CLI uses (project import = `ingest.scan_project` + `index_mod.index_project`;
 `/api/projects/detail` adds a per-project overview). Untrusted scan paths are validated server-side.
+`POST /api/debug` is read-only but POSTs the multi-line trace body (reuses `debug.diagnose`; inline in
+`route()` so it gets `ws.ai`); the trace is data-not-instructions, file location is index-only, and the
+diagnosis is not persisted.
 `devos/api/server.py` wraps `route()` in a stdlib `ThreadingHTTPServer` **bound to 127.0.0.1 only**,
 opening a per-request connection; it enforces the write-side controls at the HTTP boundary — a
 per-server **CSRF token** (`X-DevOS-Token`, served via `GET /api/session`), an **Origin allowlist**,
 JSON-only content type, and a 64 KB cap, with **no CORS headers**. The frontend (`static/index.html`
 + `app.js`) is a **React + htm** SPA (no build step, vendored offline) with lightweight **tabbed
-navigation** (Home · Tasks · Notes · Search & Ask · Projects) and a token-aware `post()` helper. The
-Projects tab adds a confirm-before-write import/scan flow + project detail view. `devos serve`
+navigation** (Home · Tasks · Notes · Search & Ask · Debug · Projects) and a token-aware `post()` helper.
+The Projects tab adds a confirm-before-write import/scan flow + project detail view; the Debug tab adds a
+paste → Analyze → result-cards flow. `devos serve`
 runs it. DB record writes are equivalent to CLI `task`/`remember` mutations (not the Safe Action
 Agent). See DECISIONS.md D-0010 + D-0018 and SECURITY.md §8.
 

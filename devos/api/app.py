@@ -10,6 +10,7 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
+from devos.modules import debug as debug_mod
 from devos.modules import index as index_mod
 from devos.modules import ingest
 from devos.modules import qa
@@ -164,6 +165,26 @@ def explain_payload(conn: sqlite3.Connection, ws, path: str | None, *,
                     project: str | None = None) -> dict:
     ans = qa.explain(conn, path or None, provider=ws.ai, project=project)
     return {"path": path or None, **_answer_dict(ans)}
+
+
+def debug_payload(conn: sqlite3.Connection, ws, trace_text: str, *,
+                  project: str | None = None) -> dict:
+    """Diagnose a pasted error/trace/log (read-only). Reuses modules/debug.diagnose."""
+    diag = debug_mod.diagnose(conn, trace_text, provider=ws.ai, project=project)
+    return {
+        "error_type": diag.error_type,
+        "error_message": diag.error_message,
+        "frames": [{"file": f.file, "line": f.line, "func": f.func} for f in diag.frames],
+        "located": [{"project": lf.project, "rel_path": lf.rel_path,
+                     "line": lf.frame.line, "func": lf.frame.func,
+                     "has_code": lf.chunk is not None} for lf in diag.located_frames],
+        "analysis": diag.analysis,
+        "confidence": diag.confidence,
+        "grounded": diag.grounded,
+        "provider": diag.provider,
+        "sources": [{"location": s.location, "project": s.project, "rel_path": s.rel_path,
+                     "start_line": s.start_line, "end_line": s.end_line} for s in diag.sources],
+    }
 
 
 # --- write actions (POST, JSON body) --------------------------------------
@@ -357,6 +378,12 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
         conn = ws.connect()
         try:
             if method == "POST":
+                if path == "/api/debug":
+                    text = (body or {}).get("trace")
+                    if not isinstance(text, str) or not text.strip():
+                        return _bad("paste an error, stack trace, or log to analyze")
+                    return _json(debug_payload(conn, ws, text,
+                                               project=(body or {}).get("project")))
                 action = _POST_ACTIONS.get(path)
                 if action is None:
                     return _json({"error": "not found", "path": path}, 404)

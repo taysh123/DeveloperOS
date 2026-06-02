@@ -42,6 +42,17 @@ class _Handler(BaseHTTPRequestHandler):
         self._send(status, "application/json; charset=utf-8",
                    json.dumps(obj).encode("utf-8"))
 
+    def _reject(self, obj, status: int) -> None:
+        """Send an error response and close the connection (body not drained)."""
+        self.close_connection = True
+        body = json.dumps(obj).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.wfile.write(body)
+
     def _allowed_origins(self) -> set[str]:
         port = self.server.server_address[1]
         return {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
@@ -57,32 +68,37 @@ class _Handler(BaseHTTPRequestHandler):
         self._send_resp(app.route(ws, parsed.path, query, method="GET"))
 
     def do_POST(self) -> None:  # noqa: N802 (stdlib naming)
-        # 1) Origin allowlist (defense-in-depth against cross-site requests).
+        # 1) Request-size cap (checked before reading; close on reject so we never
+        #    have to drain an oversized/garbled body).
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            self._reject({"error": "invalid Content-Length"}, 400)
+            return
+        if length < 0 or length > MAX_BODY_BYTES:
+            self._reject({"error": "request too large"}, 413)
+            return
+        # 2) Read the (bounded) body up front. Doing this BEFORE the auth checks keeps
+        #    the HTTP/1.1 connection consistent on early rejection — otherwise responding
+        #    without consuming the body can desync keep-alive and surface as a client-side
+        #    connection reset instead of the intended status code.
+        raw = self.rfile.read(length) if length else b""
+        # 3) Origin allowlist (defense-in-depth against cross-site requests).
         origin = self.headers.get("Origin")
         if origin is not None and origin not in self._allowed_origins():
             self._send_json({"error": "forbidden origin"}, 403)
             return
-        # 2) CSRF token (constant-time compare).
+        # 4) CSRF token (constant-time compare).
         token = self.headers.get("X-DevOS-Token", "")
         if not hmac.compare_digest(token, self.server.csrf_token):
             self._send_json({"error": "missing or invalid token"}, 403)
             return
-        # 3) JSON content-type required (forces a preflight for cross-origin writes).
+        # 5) JSON content-type required (forces a preflight for cross-origin writes).
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         if ctype != "application/json":
             self._send_json({"error": "content-type must be application/json"}, 415)
             return
-        # 4) Request-size cap.
-        try:
-            length = int(self.headers.get("Content-Length") or 0)
-        except ValueError:
-            self._send_json({"error": "invalid Content-Length"}, 400)
-            return
-        if length > MAX_BODY_BYTES:
-            self._send_json({"error": "request too large"}, 413)
-            return
-        # 5) Parse JSON body.
-        raw = self.rfile.read(length) if length else b""
+        # 6) Parse JSON body.
         try:
             body = json.loads(raw.decode("utf-8")) if raw else {}
         except (ValueError, UnicodeDecodeError):

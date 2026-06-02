@@ -346,6 +346,79 @@
     </div>`;
   }
 
+  // --- DEBUG ---------------------------------------------------------------
+  function DebugView() {
+    var tx = useState(""), text = tx[0], setText = tx[1];
+    var rs = useState(null), res = rs[0], setRes = rs[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
+    var er = useState(""), err = er[0], setErr = er[1];
+
+    function analyze(ev) {
+      ev.preventDefault();
+      if (!text.trim()) { setErr("Paste an error, stack trace, or log first."); return; }
+      setErr(""); setBusy(true); setRes(null);
+      post("/api/debug", { trace: text })
+        .then(function (d) { setRes(d); setBusy(false); })
+        .catch(function (x) { setErr(x.message); setBusy(false); });
+    }
+    function clear() { setText(""); setRes(null); setErr(""); }
+
+    var conf = res && res.confidence;
+    return html`<div>
+      <form class="panel form" onSubmit=${analyze}>
+        <h2>Debug an error</h2>
+        <p class="muted">Paste an error message, a stack trace, or a chunk of logs and we'll point you
+          to the likely cause and a fix — using your own code. Everything stays on your machine.</p>
+        <div class="field">
+          <label for="dbg-trace">Your error, stack trace, or log</label>
+          <textarea id="dbg-trace" rows="8" value=${text} class="mono"
+            placeholder=${"Paste here, e.g.\nTraceback (most recent call last):\n  File \"app.py\", line 12, in main\nValueError: ..."}
+            onInput=${function (ev) { setText(ev.target.value); }}></textarea>
+        </div>
+        <div class="row">
+          <button class="btn" type="submit" disabled=${busy}>${busy ? "Analyzing…" : "Analyze"}</button>
+          <button class="btn ghost" type="button" onClick=${clear} disabled=${busy}>Clear</button>
+        </div>
+        <${Msg} text=${err} />
+      </form>
+
+      ${busy && html`<${Empty}>Analyzing…<//>`}
+      ${res && html`<div>
+        <div class="panel">
+          <div class="panelhead"><h2>Summary</h2>
+            <${Badge} k=${conf === "high" ? "done" : conf === "medium" ? "in_progress" : "blocked"}>
+              ${conf} confidence<//></div>
+          <div class="item">${res.error_type
+            ? html`<strong>${res.error_type}</strong>: ${res.error_message || ""}`
+            : html`<span class="muted">No clear error line found — we used the text and your code.</span>`}</div>
+        </div>
+
+        <div class="panel">
+          <h2>What we think is going on</h2>
+          ${!res.grounded && html`<${Msg} kind="error"
+            text="Not enough of your indexed code matched this error. Import or re-scan the relevant project in the Projects tab, then try again." />`}
+          <div class="answer"><p>${res.analysis}</p></div>
+        </div>
+
+        ${res.located && res.located.length ? html`<div class="panel">
+          <h2>Where it points</h2>
+          ${res.located.map(function (l, i) {
+            return html`<div class="item" key=${i}><code>${l.rel_path}${l.line ? ":" + l.line : ""}</code>
+              ${l.func ? html`<span class="muted"> in ${l.func}</span>` : null}
+              ${l.has_code ? null : html`<span class="muted"> (not indexed)</span>`}</div>`; })}
+        </div>` : null}
+
+        ${res.sources && res.sources.length ? html`<div class="panel">
+          <h2>Sources</h2>
+          ${res.sources.map(function (s, i) {
+            return html`<div class="item" key=${i}><span class="badge">code</span>
+              <code>${s.location}</code> <span class="muted">[${s.project}]</span></div>`; })}
+        </div>` : null}
+      </div>`}
+      ${!res && !busy && html`<${Empty}>Paste an error above and click Analyze.<//>`}
+    </div>`;
+  }
+
   // --- PROJECTS ------------------------------------------------------------
   function fmtWhen(s) {
     if (!s) return "never";
@@ -507,6 +580,7 @@
     { id: "tasks", label: "Tasks" },
     { id: "notes", label: "Notes" },
     { id: "assist", label: "Search & Ask" },
+    { id: "debug", label: "Debug" },
     { id: "projects", label: "Projects" }
   ];
 
@@ -535,6 +609,7 @@
         ${tab === "tasks" && html`<${TasksView} tick=${tick} reload=${reload} />`}
         ${tab === "notes" && html`<${NotesView} tick=${tick} reload=${reload} />`}
         ${tab === "assist" && html`<${SearchView} />`}
+        ${tab === "debug" && html`<${DebugView} />`}
         ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
       </main>
       <div class="footer">DeveloperOS · local-first · runs only on your machine</div>
