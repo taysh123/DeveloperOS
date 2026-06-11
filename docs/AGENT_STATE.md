@@ -103,11 +103,11 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-Merge `feat/desktop-shell` (slice 16 PR), update the README's desktop story to the window-mode
-state, then **recommend `v0.9.0` ("DeveloperOS in its own window")** with rebuilt release assets.
-Afterwards, per FUTURE_ROADMAP: **Plugins/Extensions UI**; embeddings (D-0006 seam); real
-screenshots for the README placeholder; optional Claude provider **only when the no-cost policy
-changes**.
+**v0.9.0 released** ("DeveloperOS in its own window" — slice 16; tag + GitHub release with
+window-mode Setup/exe assets). Final completion phase in progress: real screenshot gallery
+(Playwright dev-time tool) → README/docs final polish → **v1.0.0** (justified per the
+FUTURE_ROADMAP §1 Core checklist — to be recorded as D-0034). After v1.0.0, all further work
+(Plugins UI, embeddings, cloud providers) is optional/on-request.
 
 ## Tasks
 ### In progress

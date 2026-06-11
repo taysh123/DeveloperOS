@@ -3,7 +3,15 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
+_Nothing yet._
+
+## [0.9.0] — 2026-06-12 ("DeveloperOS in its own window")
+> Why this release exists: slice 16 changed how launching DeveloperOS *feels* — a standalone
+> desktop window instead of a browser tab — and the downloadable assets must match what the
+> code does. The Setup/exe attached to this release open the window experience.
+
 ### Added
+- **Project version bumped to 0.9.0**; shown in `devos --version` and the dashboard's System status.
 - **DeveloperOS now opens in its own window (slice 16).** Launching DeveloperOS (`devos app` or `DeveloperOS.exe`) no longer drops you into a browser tab with an address bar — it opens a **standalone desktop window** with its own taskbar entry, like a normal app. Under the hood this uses the app mode of Edge (which every Windows 10/11 machine already has; Chrome as fallback), so it adds **zero** new runtime, dependencies, or network surface — the window is simply your browser showing the same local, loopback-only dashboard without any chrome. If no app-capable browser is found it falls back to your default browser and says so; `devos app --browser` gives you a regular tab on purpose. The window remembers its size between launches.
 
 ### Documentation
