@@ -4,6 +4,12 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-11 — Session 27: v0.7.0 release + desktop ladder steps B & C
+- **Part A — v0.7.0 "Installable DeveloperOS foundation"** (release PR; bump 0.6.1→0.7.0; CHANGELOG `[0.7.0]` consolidating slices 11+12 with the why-this-release note; annotated tag + GitHub release after merge + CI green). Rationale: onboarding + installable PWA = the foundation the D-0029 desktop ladder builds on.
+- **Part B — `devos app` launcher (ladder step B, D-0030):** probe → reuse-or-start → ready-wait → open → blocking serve lifecycle; single-instance via read-only `/api/session` probe; auto-`init` for first-run users; `--port`/`--no-browser`; friendly plain-language stdout. TDD in `tests/test_app_cmd.py`.
+- **Part C — PyInstaller packaging foundation (ladder step C, D-0031):** multi-size `packaging/devos.ico` (ICO-with-embedded-PNGs writer added to `tools/make_icons.py`, stdlib-only); `packaging/devos.spec` (onefile, console, static datas, icon) + `launch_devos.py` entry (runs `devos app`) + `build.ps1` + developer `README.md`; PyInstaller is **dev-time only** (runtime stays stdlib-only). Real build attempted and smoke-tested where feasible.
+- Verification per part: full suite, live smokes (launcher single-instance; packaged exe), CI green per PR. SECURITY unchanged (loopback-only launcher; read-only probe).
+
 ## 2026-06-11 — Session 26: Slice 12 — desktop strategy + PWA foundation
 - `/plan` (approved): product-architect analysis of desktop delivery options before any code. Evaluated status-quo localhost / **PWA** / Electron / Tauri / native packaging / hybrid across complexity, maintenance, runtime size, security, offline, cross-platform, and local-first fit. **Chosen: hybrid PWA-front + packaged-Python-backend ladder (D-0029)** — A) PWA foundation (this slice) → B) `devos app` launcher → C) PyInstaller `devos.exe` → D) Inno Setup installer + optional manual update check → E) Tauri only-if-justified. **Electron rejected** (Chromium duplicate + Node toolchain vs stdlib-only/no-build ethos). Branched `feat/desktop-pwa-foundation`.
 - **Key facts verified first:** 127.0.0.1 is a secure context (PWA install works without HTTPS); modern Edge/Chrome need only manifest + 192/512 icons (no service worker — deliberately omitted: the backend is local, a SW only adds cache-invalidation risk); `GET /` already serves index.html so `start_url: "/"` works; `_serve_static` needed two `_CONTENT_TYPES` entries (`.png`, `.webmanifest`) — the only backend change.

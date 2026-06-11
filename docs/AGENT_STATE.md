@@ -59,11 +59,11 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-Merge `feat/desktop-pwa-foundation` (slice 12 PR) to `main` once CI is green. **Recommend tagging
-`v0.7.0`** after the merge (bundles slices 11+12: onboarding + installable PWA — a meaningful
-user-facing milestone). Then, per FUTURE_ROADMAP §8: desktop ladder **step B (`devos app`
-launcher) and step C (PyInstaller `devos.exe`)**; or Plugins/Extensions UI; embeddings behind the
-D-0006 seam; optional Claude provider **only when the no-cost policy changes**.
+**v0.7.0 released** ("Installable DeveloperOS foundation" — slices 11+12; annotated tag + GitHub
+release). Next, per FUTURE_ROADMAP §8: desktop ladder **step B (`devos app` launcher) then step C
+(PyInstaller `DeveloperOS.exe` foundation)** — in progress this session; afterwards: ladder D
+(installer) or Plugins/Extensions UI; embeddings behind the D-0006 seam; optional Claude provider
+**only when the no-cost policy changes**.
 
 ## Tasks
 ### In progress
