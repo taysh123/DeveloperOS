@@ -18,6 +18,17 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Dashboard slice 10 complete (D-0027): design system + accessibility pass.** `styles.css` is the
+single design source of truth — token scales (spacing/radius/type/motion + semantic colors,
+`--focus-ring`), 15px body / 12px floor, button/input/tab min-heights (44px on coarse pointers),
+`:active` + 150ms transitions, `prefers-reduced-motion` collapse; dark-only by choice, offline
+system fonts. `app.js`: WAI-ARIA tabs (roving tabindex + Arrow/Home/End, `aria-controls` +
+`role="tabpanel"`), skip link → focusable `<main>`, `Msg` errors → `role="alert"`, shared `Loading`
+primitive, `ConfirmDelete` focus management + Escape, `aria-invalid`/`aria-describedby` wiring.
+**No new endpoints/surface; SECURITY unchanged.** Contract pinned by `tests/test_ui_static.py`.
+TDD **328/328** (+10); live socket smoke verified (static contract + guarded write 201 + 403).
+
+## Previous milestone
 **v0.6.0 cut.** Slice 9 (Meeting tab): `modules/meeting.extract_action_items` (deterministic, never
 calls a provider) + `app.py` `meeting_payload` + inline `POST /api/meeting` (transcript NOT
 persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsBridge` reusing
@@ -28,16 +39,24 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-**v0.6.0 is released** (slice-8 + v0.6.0 PRs merged to `main`; annotated tag `v0.6.0` + GitHub
-release; CI live). Next, per FUTURE_ROADMAP: design-system/a11y pass; onboarding first-run flow;
-Plugins/Extensions UI; optional Claude provider **only when the no-cost policy changes** (env key +
-consent + audit log are already specified); embeddings behind the D-0006 seam.
+Merge `feat/dashboard-design-system` (slice 10 PR) to `main` once CI is green. **Recommend tagging
+`v0.6.1`** (version bump + annotated tag) once the slice has merged and settled — do not tag early.
+Then, per FUTURE_ROADMAP: onboarding first-run flow; Plugins/Extensions UI; optional Claude provider
+**only when the no-cost policy changes** (env key + consent + audit log are already specified);
+embeddings behind the D-0006 seam.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 10 (2026-06-11): design system + a11y pass. `styles.css` token scales
+      (spacing/radius/type/motion/semantic + `--focus-ring`; 15px body, 12px floor; min-heights +
+      `:active` + 150ms transitions; `prefers-reduced-motion`; dark-only, offline system fonts).
+      `app.js`: WAI-ARIA tabs (roving tabindex + arrows), skip link + focusable `<main>` + `<footer>`,
+      `Msg` alert/status split, `Loading` primitive, `ConfirmDelete` focus+Escape, `aria-hidden`
+      glyphs, `aria-invalid`/`aria-describedby`. No new endpoints; SECURITY unchanged. New
+      `tests/test_ui_static.py` pins the contract. TDD **328/328** (+10); live smoke verified. D-0027.
 - [x] v0.6.0 (2026-06-11): Meeting tab (slice 9) + Ollama provider + AND-first retrieval + secret-aware
       scan + CI. Built TDD in a TEMP working copy and merged into this repo (19 files; SHA-256
       tree-comparison verified strict superset — no loss). Deterministic `meeting.extract_action_items`

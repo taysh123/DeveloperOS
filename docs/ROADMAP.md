@@ -120,9 +120,14 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   **Ollama** provider behind the Settings seam (keyless, opt-in, mock stays default), **AND-first
   retrieval** (OR fallback), **secret-aware scanning**, and **GitHub Actions CI** (py3.11–3.13 ×
   Linux/Windows). Tagged **`v0.6.0`**.
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** design-system/a11y polish · onboarding first-run flow ·
-  Plugins/Extensions UI · optional cloud provider (Claude) **only if the no-cost policy changes** (env
-  key + consent + audit log already specified) · embeddings/semantic search behind the D-0006 seam.
+- ✅ **Slice 10 — Design system + accessibility pass** (D-0027): token scales in `styles.css`
+  (spacing/radius/type/motion/semantic colors; dark-only by choice; offline system fonts), WAI-ARIA
+  tabs with arrow-key navigation, skip link, `role="alert"` errors, shared `Loading` primitive,
+  focus-managed delete confirms with Escape, reduced-motion support; contract pinned by
+  `tests/test_ui_static.py`. No new endpoints/surface.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** onboarding first-run flow · Plugins/Extensions UI ·
+  optional cloud provider (Claude) **only if the no-cost policy changes** (env key + consent + audit
+  log already specified) · embeddings/semantic search behind the D-0006 seam.
 
 ---
 
