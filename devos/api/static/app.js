@@ -3,7 +3,7 @@
 (function () {
   "use strict";
   var html = htm.bind(React.createElement);
-  var useState = React.useState, useEffect = React.useEffect;
+  var useState = React.useState, useEffect = React.useEffect, useRef = React.useRef;
 
   // --- API helpers ---------------------------------------------------------
   var _token = null;
@@ -52,25 +52,44 @@
 
   function Msg(props) {
     if (!props.text) return null;
-    return html`<div class=${"msg " + (props.kind || "error")} role="status">${props.text}</div>`;
+    var kind = props.kind || "error";
+    // Errors interrupt the screen reader (alert); confirmations announce politely.
+    return html`<div id=${props.id} class=${"msg " + kind}
+      role=${kind === "ok" ? "status" : "alert"}>${props.text}</div>`;
   }
 
   function Empty(props) { return html`<div class="muted empty">${props.children}</div>`; }
+
+  // Shared loading indicator: announced politely; the spinner is decorative.
+  function Loading(props) {
+    return html`<div class="muted empty loading" role="status">
+      <span class="spinner" aria-hidden="true"></span>${props.label || "Loading…"}</div>`;
+  }
 
   // Lightweight two-step delete: ghost "Delete" -> inline "Yes, delete / Cancel".
   // Used for low-impact deletes (tasks, notes). Projects use a stricter type-to-confirm.
   function ConfirmDelete(props) {
     var c = useState(false), confirming = c[0], setConfirming = c[1];
+    var yesRef = useRef(null), openRef = useRef(null), wasOpen = useRef(false);
+    // Move focus into the confirm step, and back to the trigger on cancel,
+    // so keyboard users are never dropped at the top of the page.
+    useEffect(function () {
+      if (confirming && yesRef.current) yesRef.current.focus();
+      else if (!confirming && wasOpen.current && openRef.current) openRef.current.focus();
+      wasOpen.current = confirming;
+    }, [confirming]);
     if (confirming) {
-      return html`<span class="confirmdelete">
+      return html`<span class="confirmdelete"
+        onKeyDown=${function (ev) { if (ev.key === "Escape") setConfirming(false); }}>
         <span class="muted">${props.prompt || "Delete?"}</span>
-        <button class="btn small danger" type="button" disabled=${props.busy}
+        <button class="btn small danger" type="button" ref=${yesRef}
+          disabled=${props.busy} aria-busy=${props.busy ? "true" : "false"}
           onClick=${function () { props.onConfirm(); }}>Yes, delete</button>
         <button class="btn small ghost" type="button" disabled=${props.busy}
           onClick=${function () { setConfirming(false); }}>Cancel</button>
       </span>`;
     }
-    return html`<button class="btn small ghost danger-text" type="button"
+    return html`<button class="btn small ghost danger-text" type="button" ref=${openRef}
       onClick=${function () { setConfirming(true); }}>${props.label || "Delete"}</button>`;
   }
 
@@ -87,7 +106,7 @@
 
   function HomeView(props) {
     var ov = useApi("/api/overview", props.tick);
-    if (!ov) return html`<${Empty}>Loading…<//>`;
+    if (!ov) return html`<${Loading} />`;
     if (ov.error) return html`<${Empty}>Couldn't load your overview. Is the dashboard still running?<//>`;
     var c = ov.task_counts || {}, w = ov.where_i_left_off || {};
     return html`<div>
@@ -142,6 +161,8 @@
       <div class="field">
         <label for="task-title">What do you want to get done?</label>
         <input id="task-title" value=${title} placeholder="e.g. Write the welcome email"
+               aria-invalid=${err ? "true" : undefined}
+               aria-describedby=${err ? "task-title-err" : undefined}
                onInput=${function (ev) { setTitle(ev.target.value); }} />
       </div>
       <div class="row">
@@ -163,7 +184,7 @@
         </div>
         <button class="btn" type="submit">Add task</button>
       </div>
-      <${Msg} text=${err} />
+      <${Msg} text=${err} id="task-title-err" />
     </form>`;
   }
 
@@ -209,7 +230,7 @@
       </div>
       <div class="taskactions">
         ${t.status !== "done" && html`<button class="btn small" type="button"
-            onClick=${function () { change("done"); }}>Mark done ✓</button>`}
+            onClick=${function () { change("done"); }}>Mark done <span aria-hidden="true">✓</span></button>`}
         <label class="sr-only" for=${"st" + t.id}>Change status of task ${t.id}</label>
         <select id=${"st" + t.id} value=${t.status}
                 onChange=${function (ev) { change(ev.target.value); }}>
@@ -247,7 +268,7 @@
             </select>
           </div>
         </div>
-        ${!data ? html`<${Empty}>Loading…<//>`
+        ${!data ? html`<${Loading} />`
           : tasks.length ? tasks.map(function (t) {
               return html`<${TaskRow} t=${t} key=${t.id} onDone=${props.reload} />`; })
           : html`<${Empty}>No tasks here yet. Add one above.<//>`}
@@ -275,6 +296,8 @@
       <div class="field">
         <label for="note-title">Title</label>
         <input id="note-title" value=${title} placeholder="e.g. Decision: use loopback only"
+               aria-invalid=${err ? "true" : undefined}
+               aria-describedby=${err ? "note-title-err" : undefined}
                onInput=${function (ev) { setTitle(ev.target.value); }} />
       </div>
       <div class="field">
@@ -291,7 +314,7 @@
         </select>
       </div>
       <button class="btn" type="submit">Save note</button>
-      <${Msg} text=${err} />
+      <${Msg} text=${err} id="note-title-err" />
     </form>`;
   }
 
@@ -346,7 +369,7 @@
     return html`<div>
       <${AddNote} onDone=${props.reload} />
       <div class="panel"><h2>Your notes</h2>
-        ${!data ? html`<${Empty}>Loading…<//>`
+        ${!data ? html`<${Loading} />`
           : notes.length ? notes.map(function (m) {
               return html`<${NoteRow} m=${m} key=${m.id} onDone=${props.reload} />`; })
           : html`<${Empty}>No notes yet. Add your first one above.<//>`}
@@ -573,7 +596,7 @@
     var dn = useState(""), delName = dn[0], setDelName = dn[1];
     var db = useState(false), delBusy = db[0], setDelBusy = db[1];
     var de = useState(""), delErr = de[0], setDelErr = de[1];
-    if (!data) return html`<${Empty}>Loading…<//>`;
+    if (!data) return html`<${Loading} />`;
     if (data.error) return html`<${Empty}>Couldn't load this project.<//>`;
     var p = data.project, idx = data.index || {}, cats = data.by_category || {};
     var catKeys = Object.keys(cats).sort();
@@ -585,7 +608,7 @@
         .catch(function (x) { setDelBusy(false); setDelErr(x.message); });
     }
     return html`<div>
-      <button class="btn ghost small" type="button" onClick=${props.onBack}>← Back to projects</button>
+      <button class="btn ghost small" type="button" onClick=${props.onBack}><span aria-hidden="true">← </span>Back to projects</button>
       <div class="panel detail">
         <div class="panelhead"><h2>${p.name}</h2>
           ${idx.chunks ? html`<button class="btn" type="button"
@@ -663,13 +686,13 @@
 
   function ProjectStudy(props) {
     var data = useApi("/api/projects/study?id=" + props.id, 0);
-    if (!data) return html`<${Empty}>Loading…<//>`;
+    if (!data) return html`<${Loading} />`;
     if (data.error) return html`<${Empty}>Couldn't load this project.<//>`;
     var p = data.project, keys = data.key_files || [], ov = data.overview || {},
         qz = data.questions || {}, prep = data.interview_prep || [];
     var starters = keys.slice(0, 3);
     return html`<div>
-      <button class="btn ghost small" type="button" onClick=${props.onBack}>← Back to project</button>
+      <button class="btn ghost small" type="button" onClick=${props.onBack}><span aria-hidden="true">← </span>Back to project</button>
       <header class="top"><h1>Project Deep Dive</h1>
         <span class="sub">study “${p.name}” · ${p.file_count} files</span></header>
 
@@ -741,7 +764,7 @@
     if (mode === "import") {
       return html`<div>
         <button class="btn ghost small" type="button"
-          onClick=${function () { setMode("list"); }}>← Back to projects</button>
+          onClick=${function () { setMode("list"); }}><span aria-hidden="true">← </span>Back to projects</button>
         <div class="panel form">
           <h2>Import a project</h2>
           <p class="muted">Point DeveloperOS at a project folder on your computer. It reads the text
@@ -757,7 +780,7 @@
         <button class="btn" type="button" onClick=${function () { setMode("import"); }}>Import a project</button>
       </div>
       ${result && html`<${ScanResult} r=${result} />`}
-      ${!data ? html`<${Empty}>Loading…<//>`
+      ${!data ? html`<${Loading} />`
         : projects.length ? html`<div class="grid panels">
             ${projects.map(function (p) {
               return html`<div class="panel projcard" key=${p.id}>
@@ -834,17 +857,17 @@
         key from an environment variable; local providers need no key. These fields are prepared for a
         future release and are disabled for now.</p>
       ${p.requires_key ? html`<div class="field">
-        <label>API key</label>
-        <input type="password" disabled placeholder=${"Set " + p.key_env + " in your environment"} />
+        <label for="prov-key">API key</label>
+        <input id="prov-key" type="password" disabled placeholder=${"Set " + p.key_env + " in your environment"} />
         <div class="muted">${p.key_present ? "A key is currently detected in your environment." : "No key detected."}</div>
       </div>` : null}
       <div class="field">
-        <label>Endpoint</label>
-        <input disabled placeholder=${p.endpoint_hint || "Default endpoint (managed automatically)"} />
+        <label for="prov-endpoint">Endpoint</label>
+        <input id="prov-endpoint" disabled placeholder=${p.endpoint_hint || "Default endpoint (managed automatically)"} />
       </div>
       <div class="field">
-        <label>Model</label>
-        <select disabled><option>Coming soon</option></select>
+        <label for="prov-model">Model</label>
+        <select id="prov-model" disabled><option>Coming soon</option></select>
       </div>
     </div>`;
   }
@@ -862,7 +885,7 @@
       if (cfg && !cfg.error) { setDraftProv(cfg.ai_provider); setDraftEn(cfg.ai_enabled); }
     }, [cfg]);
 
-    if (!sys || !cfg) return html`<${Empty}>Loading…<//>`;
+    if (!sys || !cfg) return html`<${Loading} />`;
     if (cfg.error) return html`<${Empty}>Couldn't load your settings.<//>`;
 
     var providers = cfg.providers || [];
@@ -1084,6 +1107,8 @@
         <div class="field grow">
           <label for="job-company">Company</label>
           <input id="job-company" value=${company} placeholder="e.g. Acme Corp"
+                 aria-invalid=${err ? "true" : undefined}
+                 aria-describedby=${err ? "job-company-err" : undefined}
                  onInput=${function (ev) { setCompany(ev.target.value); }} />
         </div>
         <div class="field grow">
@@ -1110,7 +1135,7 @@
                   onInput=${function (ev) { setNotes(ev.target.value); }}></textarea>
       </div>
       <button class="btn" type="submit">Save application</button>
-      <${Msg} text=${err} />
+      <${Msg} text=${err} id="job-company-err" />
     </form>`;
   }
 
@@ -1287,7 +1312,7 @@
     return html`<div>
       <${AddJob} onDone=${reload} />
       <div class="panel"><h2>Your job applications</h2>
-        ${!data ? html`<${Empty}>Loading…<//>`
+        ${!data ? html`<${Loading} />`
           : jobs.length ? jobs.map(function (j) {
               return html`<${JobRow} j=${j} key=${j.id} onDone=${reload} />`; })
           : html`<${Empty}>No applications yet — add your first one above.<//>`}
@@ -1332,7 +1357,7 @@
       <h2>Action items → tasks</h2>
       <p class="muted">Found in your notes. Untick anything you don't want, then create them as tasks.</p>
       ${items.map(function (it, i) {
-        return html`<label class="item" key=${i} style="display:flex;gap:.5em;align-items:flex-start;cursor:pointer">
+        return html`<label class="item checkitem" key=${i}>
           <input type="checkbox" checked=${checked[i]} onChange=${function () { toggle(i); }} />
           <span>${it}</span></label>`;
       })}
@@ -1422,33 +1447,55 @@
     function reload() { setTick(function (n) { return n + 1; }); }
     var ov = useApi("/api/overview", 0); // header counts only (loads once)
     var pcount = ov && !ov.error && ov.projects ? ov.projects.length : 0;
+    var tablistRef = useRef(null);
+
+    // WAI-ARIA tabs pattern: roving tabindex + arrow-key navigation.
+    function onTabKey(ev) {
+      var step = { ArrowRight: 1, ArrowLeft: -1, Home: 0, End: 0 };
+      if (!(ev.key in step)) return;
+      ev.preventDefault();
+      var idx = TABS.findIndex(function (t) { return t.id === tab; });
+      var next = ev.key === "Home" ? 0
+        : ev.key === "End" ? TABS.length - 1
+        : (idx + step[ev.key] + TABS.length) % TABS.length;
+      setTab(TABS[next].id);
+      var btn = tablistRef.current &&
+        tablistRef.current.querySelector("#tab-" + TABS[next].id);
+      if (btn) btn.focus();
+    }
 
     return html`<div class="wrap">
+      <a class="skip-link" href="#main">Skip to content</a>
       <header class="top">
         <h1>DeveloperOS</h1>
         <span class="sub">your local workspace · ${pcount} project(s)</span>
       </header>
-      <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+      <nav class="tabs" role="tablist" aria-label="Dashboard sections" ref=${tablistRef}>
         ${TABS.map(function (t) {
-          return html`<button key=${t.id} role="tab" type="button"
+          return html`<button key=${t.id} id=${"tab-" + t.id} role="tab" type="button"
             aria-selected=${tab === t.id ? "true" : "false"}
+            aria-controls=${"panel-" + t.id}
+            tabIndex=${tab === t.id ? 0 : -1}
             class=${"tab" + (tab === t.id ? " active" : "")}
+            onKeyDown=${onTabKey}
             onClick=${function () { setTab(t.id); }}>${t.label}</button>`;
         })}
       </nav>
-      <main>
-        ${tab === "home" && html`<${HomeView} tick=${tick} />`}
-        ${tab === "tasks" && html`<${TasksView} tick=${tick} reload=${reload} />`}
-        ${tab === "notes" && html`<${NotesView} tick=${tick} reload=${reload} />`}
-        ${tab === "assist" && html`<${SearchView} />`}
-        ${tab === "debug" && html`<${DebugView} />`}
-        ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
-        ${tab === "learning" && html`<${LearningView} />`}
-        ${tab === "career" && html`<${CareerView} />`}
-        ${tab === "meeting" && html`<${MeetingView} />`}
-        ${tab === "settings" && html`<${SettingsView} />`}
+      <main id="main" tabIndex=${-1}>
+        <div role="tabpanel" id=${"panel-" + tab} aria-labelledby=${"tab-" + tab}>
+          ${tab === "home" && html`<${HomeView} tick=${tick} />`}
+          ${tab === "tasks" && html`<${TasksView} tick=${tick} reload=${reload} />`}
+          ${tab === "notes" && html`<${NotesView} tick=${tick} reload=${reload} />`}
+          ${tab === "assist" && html`<${SearchView} />`}
+          ${tab === "debug" && html`<${DebugView} />`}
+          ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
+          ${tab === "learning" && html`<${LearningView} />`}
+          ${tab === "career" && html`<${CareerView} />`}
+          ${tab === "meeting" && html`<${MeetingView} />`}
+          ${tab === "settings" && html`<${SettingsView} />`}
+        </div>
       </main>
-      <div class="footer">DeveloperOS · local-first · runs only on your machine</div>
+      <footer class="footer">DeveloperOS · local-first · runs only on your machine</footer>
     </div>`;
   }
 
