@@ -113,11 +113,11 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-Merge `feat/final-polish`, then cut **v1.0.0** (release branch: bump, CHANGELOG `[1.0.0]`, PR,
-merge, rebuild assets, final silent install→launch→uninstall validation, tag, GitHub release
-with assets) and set the GitHub repo description/topics. **After v1.0.0 the project is
-complete** — all further work (FUTURE_ROADMAP v2.0 ideas: Safe Action Agent, semantic search,
-editor presence, Plugins UI, cloud providers) is optional and on-request only.
+**None — the project is complete.** v1.0.0 is released (annotated tag + GitHub release with
+Setup/exe assets; final install→launch→uninstall validation passed; repo description/topics
+set). Any future session should treat FUTURE_ROADMAP's v2.0 ideas (Safe Action Agent, semantic
+search behind D-0006, editor/terminal presence, Plugins UI, cloud providers under a changed
+no-cost policy) as **optional, on-request work only** — start with `/plan` as always.
 
 ## Tasks
 ### In progress
