@@ -53,6 +53,23 @@ _API_DIR_MARKERS = {"api", "routes", "endpoints", "controllers", "handlers", "re
 _DB_DIR_MARKERS = {"migrations", "migration", "schema", "seeds"}
 
 
+# Files that commonly hold credentials/keys. They are NEVER read, hashed, recorded,
+# or indexed — skipped before the first byte is read, so a secret can never reach
+# SQLite or the FTS index (docs/SECURITY.md sec. 2, "secret-aware indexing").
+SECRET_FILE_PATTERNS = (
+    ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "*.jks", "*.keystore",
+    "id_rsa", "id_rsa.*", "id_dsa", "id_ecdsa", "id_ed25519", "*.ppk",
+    ".netrc", ".npmrc", ".pypirc", "credentials", "credentials.json",
+    "service-account*.json", "secrets.*", "*.secret",
+)
+
+
+def is_secret_file(name: str) -> bool:
+    """True if a filename matches a known secret/credential pattern (case-insensitive)."""
+    low = name.lower()
+    return any(fnmatch.fnmatch(low, pat) for pat in SECRET_FILE_PATTERNS)
+
+
 def _looks_like_test(parts: list[str], name: str) -> bool:
     if any(part.lower() in _TEST_DIR_MARKERS for part in parts[:-1]):
         return True
@@ -133,6 +150,7 @@ class ScanResult:
     unchanged: int = 0
     removed: int = 0
     skipped: int = 0
+    skipped_secrets: int = 0  # subset of `skipped`: matched SECRET_FILE_PATTERNS
     by_category: dict[str, int] = field(default_factory=dict)
 
     @property
@@ -181,6 +199,11 @@ def scan_project(
 
             if _matches_gitignore(rel_posix, filename, gitignore):
                 result.skipped += 1
+                continue
+            if is_secret_file(filename):
+                # Skipped before stat/read: secret content never touches the DB/index.
+                result.skipped += 1
+                result.skipped_secrets += 1
                 continue
             try:
                 size = abs_path.stat().st_size

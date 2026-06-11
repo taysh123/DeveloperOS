@@ -873,3 +873,50 @@ class TestLiveSecurity(_LiveServerMixin):
         _, port = self._start()
         status, _ = self._post(port, "/api/cv", {"cv_text": "x", "target_text": "y"})
         self.assertEqual(status, 403)
+
+
+class TestMeetingEndpoint(ApiTestCase):
+    """Slice 9 — POST /api/meeting: summary + deterministic action items (not persisted)."""
+
+    def _post(self, body: dict):
+        return api_app.route(self.ws, "/api/meeting", {}, method="POST", body=body)
+
+    def test_summary_and_action_items(self) -> None:
+        text = ("Standup notes: we discussed the dashboard.\n"
+                "Decision: ship on Friday.\n"
+                "Action items\n- Alice fixes the login bug\n- Bob updates the docs\n")
+        resp = self._post({"text": text, "source_label": "standup.txt"})
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertTrue(body["grounded"])
+        self.assertEqual(body["source_label"], "standup.txt")
+        self.assertEqual(body["action_items"],
+                         ["Alice fixes the login bug", "Bob updates the docs"])
+        self.assertIn("login bug", body["text"])  # mock echoes the grounded transcript
+
+    def test_empty_text_400(self) -> None:
+        for bad in ({}, {"text": ""}, {"text": "   "}, {"text": 7}):
+            resp = self._post(bad)
+            self.assertEqual(resp.status, 400)
+
+    def test_too_long_400(self) -> None:
+        resp = self._post({"text": "x" * (api_app.MAX_BODY + 1)})
+        self.assertEqual(resp.status, 400)
+        self.assertIn("too long", json.loads(resp.body)["error"])
+
+    def test_transcript_is_not_persisted(self) -> None:
+        secret = "zz-secret-transcript-token-zz"
+        self._post({"text": f"Action: do a thing about {secret}"})
+        conn = self.ws.connect()
+        try:
+            for table in ("memory", "tasks", "chunks_fts"):
+                rows = conn.execute(
+                    f"SELECT COUNT(*) AS c FROM {table} WHERE "
+                    + ("content LIKE ?" if table == "chunks_fts" else
+                       "title LIKE ? OR " + ("body" if table == "memory" else "notes")
+                       + " LIKE ?"),
+                    (f"%{secret}%",) * (1 if table == "chunks_fts" else 2),
+                ).fetchone()
+                self.assertEqual(rows["c"], 0, table)
+        finally:
+            conn.close()

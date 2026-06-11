@@ -35,7 +35,7 @@ No API key or network is required for the foundation: AI features run against a 
 | `devos task <add\|list\|show\|set\|rm>` | Track tasks/bugs/features with status, priority, kind, milestone, and notes. |
 | `devos remember <title>` | Store a long-term memory (decision/summary/preference/note) with tags. |
 | `devos recall <query>` | Search across memory, tasks, and indexed code in one place (offline). |
-| `devos serve` | Launch the local **dashboard** (127.0.0.1) — the easy, click-driven way to work. Tabs for **Home** (overview), **Tasks** (add / mark done / change status), **Notes** (add / edit), **Search & Ask** (keyword search + plain-English Q&A), **Debug** (paste an error/trace/log → grounded root-cause + fix), and **Projects** (import/scan a folder + project overview, with **Study this project** → a Project Deep Dive for learning/interview prep). Writes are CSRF-token protected; offline. |
+| `devos serve` | Launch the local **dashboard** (127.0.0.1) — the easy, click-driven way to work. Tabs for **Home** (overview), **Tasks** (add / mark done / change status), **Notes** (add / edit), **Search & Ask** (keyword search + plain-English Q&A), **Debug** (paste an error/trace/log → grounded root-cause + fix), **Projects** (import/scan a folder + project overview, with **Study this project** → a Project Deep Dive for learning/interview prep), **Learn**, **Career**, **Meeting** (paste notes/transcript → summary + action items → **create tasks in one click**), and **Settings**. Writes are CSRF-token protected; offline. |
 | `devos docgen <type>` | Generate grounded docs (readme/architecture/api/setup/changelog/decisions/milestone); stdout or `--output` (no overwrite without `--force`). |
 | `devos learn <path\|topic>` | Learn your code at a chosen depth (`--level eli5\|intermediate\|advanced`), grounded with `file:line` sources. |
 | `devos quiz <path\|topic>` | Generate grounded review questions (`--n N`) about a file or topic, with `file:line` sources. |
@@ -50,6 +50,19 @@ No API key or network is required for the foundation: AI features run against a 
 AI answers use an offline **mock** provider by default (no API key); see [`docs/SECURITY.md`](docs/SECURITY.md).
 The dashboard is a React (htm) SPA vendored locally — no build/npm, fully offline — and is the
 recommended entry point for everyday use; the CLI stays for power users and automation.
+
+## Free local AI (optional, via Ollama)
+DeveloperOS never requires a paid API. For real AI answers — **free, private, and fully on your
+machine** — install [Ollama](https://ollama.com), pull a model, and select **Ollama** in the
+dashboard's Settings tab (or set `DEVOS_AI_PROVIDER=ollama`):
+```bash
+ollama pull llama3.2          # one-time model download
+devos serve                   # Settings → AI provider → Ollama (local models)
+```
+Optional environment overrides: `DEVOS_OLLAMA_URL` (default `http://127.0.0.1:11434`) and
+`DEVOS_OLLAMA_MODEL` (default `llama3.2`). If Ollama isn't running, DeveloperOS keeps working
+and tells you plainly — it never crashes and never falls back to a paid cloud service. The
+offline mock remains the default, and the AI on/off toggle in Settings always wins.
 
 ## How it's built
 - **Python core + CLI** now; a **TypeScript/React dashboard** comes in Phase 7.

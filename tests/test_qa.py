@@ -253,3 +253,50 @@ class TestExplainCli(QaTestCase):
         code, out = self._run("explain", "--project", "demo")
         self.assertEqual(code, 0)
         self.assertIn("Sources", out)
+
+
+class TestAndFirstRetrieval(unittest.TestCase):
+    """Precision upgrade: AND-matching chunks beat single-term incidental matches."""
+
+    def setUp(self) -> None:
+        self._prev = os.environ.get("DEVOS_HOME")
+        self._home = tempfile.TemporaryDirectory()
+        os.environ["DEVOS_HOME"] = self._home.name
+        ws = Workspace.load()
+        ws.initialize().close()
+        self._proj = tempfile.TemporaryDirectory()
+        root = Path(self._proj.name)
+        # One file matches BOTH terms; another matches only one (incidentally).
+        (root / "auth_flow.py").write_text(
+            "def login_session(user):\n    # token refresh handled here\n    return user\n",
+            encoding="utf-8")
+        (root / "unrelated.py").write_text(
+            "def helper():\n    return 'token'  # token mentioned once, incidentally\n",
+            encoding="utf-8")
+        self.conn = ws.connect()
+        pid = ingest.scan_project(self.conn, root, name="andtest").project_id
+        index_mod.index_project(self.conn, pid)
+
+    def tearDown(self) -> None:
+        self.conn.close()
+        if self._prev is None:
+            os.environ.pop("DEVOS_HOME", None)
+        else:
+            os.environ["DEVOS_HOME"] = self._prev
+        self._home.cleanup()
+        self._proj.cleanup()
+
+    def test_and_match_excludes_incidental_single_term_chunks(self) -> None:
+        chunks = qa.retrieve(self.conn, "token refresh")
+        self.assertTrue(chunks)
+        paths = {c.rel_path for c in chunks}
+        self.assertIn("auth_flow.py", paths)
+        self.assertNotIn("unrelated.py", paths)  # OR alone would have included it
+
+    def test_falls_back_to_or_when_and_finds_nothing(self) -> None:
+        # "token zebra": no chunk has both, but "token" exists → OR fallback grounds it.
+        chunks = qa.retrieve(self.conn, "token zebra")
+        self.assertTrue(chunks)
+
+    def test_still_declines_when_nothing_matches_at_all(self) -> None:
+        self.assertEqual(qa.retrieve(self.conn, "qqzz xxyy"), [])

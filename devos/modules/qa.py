@@ -74,11 +74,24 @@ def question_terms(question: str) -> list[str]:
 
 def retrieve(conn, question: str, *, project: str | None = None,
              limit: int = DEFAULT_RETRIEVAL) -> list[RetrievedChunk]:
-    """Retrieve the most relevant chunks for a natural-language question (OR, bm25)."""
+    """Retrieve the most relevant chunks for a natural-language question (bm25).
+
+    Precision-first: chunks containing **all** query terms (AND) are tried first;
+    only when nothing matches do we widen to **any** term (OR). This keeps the old
+    recall (a single incidental token still grounds an answer as a last resort)
+    while strongly preferring tightly-matching context when it exists — which is
+    what a real provider needs to answer well (see KNOWN_ISSUES "Retrieval is
+    keyword (OR)" and D-0006).
+    """
     terms = question_terms(question) or question.split()
     if not terms:
         return []
-    hits = index_mod.search(conn, " ".join(terms), project=project, limit=limit, op="OR")
+    query = " ".join(terms)
+    hits = []
+    if len(terms) > 1:  # AND with one term is identical to OR — skip the extra query
+        hits = index_mod.search(conn, query, project=project, limit=limit, op="AND")
+    if not hits:
+        hits = index_mod.search(conn, query, project=project, limit=limit, op="OR")
     chunks: list[RetrievedChunk] = []
     for h in hits:
         content = repo.get_chunk_content(conn, h.chunk_id) or ""
