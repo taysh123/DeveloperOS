@@ -39,11 +39,10 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-Merge `feat/dashboard-design-system` (slice 10 PR) to `main` once CI is green. **Recommend tagging
-`v0.6.1`** (version bump + annotated tag) once the slice has merged and settled — do not tag early.
-Then, per FUTURE_ROADMAP: onboarding first-run flow; Plugins/Extensions UI; optional Claude provider
-**only when the no-cost policy changes** (env key + consent + audit log are already specified);
-embeddings behind the D-0006 seam.
+**v0.6.1 released** (slice 10 merged via PR #9; version bumped; annotated tag `v0.6.1` + GitHub
+release). Next, per FUTURE_ROADMAP: onboarding first-run flow; Plugins/Extensions UI; optional
+Claude provider **only when the no-cost policy changes** (env key + consent + audit log are already
+specified); embeddings behind the D-0006 seam.
 
 ## Tasks
 ### In progress
