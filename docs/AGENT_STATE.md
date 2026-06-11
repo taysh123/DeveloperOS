@@ -92,11 +92,13 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-**v0.8.0 released** ("DeveloperOS as a desktop product" — slices 13+14+15; annotated tag + GitHub
-release **with `DeveloperOS-Setup-0.8.0.exe` and `DeveloperOS.exe` attached as downloadable
-assets**). Then the README overhaul (it still claims "Phase 1") — in progress this session.
-Afterwards: Plugins/Extensions UI; embeddings (D-0006 seam); ladder E (Tauri) only-if-justified;
-optional Claude provider **only when the no-cost policy changes**.
+**v0.8.0 released** ("DeveloperOS as a desktop product" — slices 13+14+15; tag + GitHub release
+**with `DeveloperOS-Setup-0.8.0.exe` and `DeveloperOS.exe` attached as downloadable assets**) and
+the **README overhauled** to match the real product state (value proposition, feature matrix,
+desktop story, architecture diagram, AI philosophy, honest status — replacing the stale "Phase 1"
+text). Next, per FUTURE_ROADMAP: **Plugins/Extensions UI**; embeddings (D-0006 seam); real
+screenshots for the README placeholder; ladder E (Tauri) only-if-justified; optional Claude
+provider **only when the no-cost policy changes**.
 
 ## Tasks
 ### In progress
