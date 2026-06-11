@@ -1,6 +1,6 @@
 # DeveloperOS — Architecture
 
-_Last updated: 2026-06-01_
+_Last updated: 2026-06-12_
 
 ## Guiding principles
 - **Local-first**: all data on-device in SQLite under a per-machine data dir.
@@ -8,8 +8,9 @@ _Last updated: 2026-06-01_
   modules and interfaces (dashboard, API, plugins) attach without rewrites.
 - **Stdlib-first runtime**: the foundation depends only on the Python standard
   library so it runs on a clean machine; heavier libraries are adopted deliberately.
-- **Provider abstraction**: AI is behind an interface; a mock is the default until a
-  real Claude provider is wired in.
+- **Provider abstraction**: AI is behind an interface; the offline mock is the default,
+  a real local provider (Ollama, keyless) is opt-in, and cloud providers stay deliberately
+  unwired under the no-cost policy.
 - **Safety**: no destructive or outward-facing action without explicit confirmation.
 
 ## High-level layers

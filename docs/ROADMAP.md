@@ -1,6 +1,6 @@
 # DeveloperOS — Roadmap
 
-_Last updated: 2026-06-11_
+_Last updated: 2026-06-12_
 
 A phased plan detailed enough that any future session can continue without rethinking
 the product. Each phase lists **goal · scope · deliverables · completion criteria ·

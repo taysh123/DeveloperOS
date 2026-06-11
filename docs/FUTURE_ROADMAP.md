@@ -1,8 +1,8 @@
 # DeveloperOS — Future Product Roadmap
 
-_Last updated: 2026-06-02 · Product-management view. **Planning only — nothing here is built yet.**_
+_Last updated: 2026-06-12 · Product-management view. **The v1.0 vision is shipped (D-0034); everything else here is optional v2.0-era planning.**_
 
-> This document looks **beyond** the delivered roadmap (`ROADMAP.md`, Phases 0–9 + dashboard slices 1–5).
+> This document looks **beyond** the delivered roadmap (`ROADMAP.md`, Phases 0–9 + dashboard slices 1–16).
 > It is written from a **Lead Architect + Product Manager** lens: it weighs user value, usability,
 > onboarding, learning curve, maintainability, and long-term strategy — not just engineering feasibility.
 > It **extends** `ROADMAP.md`; it does not replace or fork it. Every item is prioritized so a future
@@ -21,15 +21,15 @@ safe actions only with explicit consent.** Every idea below inherits those const
 
 ## 1. Product vision
 
-### Where we are today (v0.5.0)
-A local-first, offline, **CLI + loopback dashboard** for understanding and working a codebase: scan/index,
-keyword search, grounded Q&A, debug assistant, tasks & memory, docgen, learning/career/meeting modules,
-a plugin seam, and a maturing dashboard (Home · Tasks · Notes · Search & Ask · Debug · Projects · Study ·
-**Settings** · **Learn** · **Career**) with everyday **CRUD polish** (delete tasks/notes/projects with
-confirmation, project pickers, inline edit). AI is an offline mock by design — no key, nothing leaves the
-machine. **Remaining dashboard gap to v1.0 parity:** the Meeting tab.
+### Where we are today (v1.0.0 — released 2026-06-12)
+**The v1.0 vision below is fully shipped (D-0034).** DeveloperOS is a complete local-first
+product: full CLI/dashboard parity, opt-in local AI (Ollama; mock default), grounded answers
+everywhere, 60-second onboarding, design-system + a11y polish, and a complete Windows desktop
+story (app window · launcher · `DeveloperOS.exe` · per-user installer) with releases and real
+screenshots on GitHub. Everything remaining in this document is **optional v2.0-era work,
+on request only**.
 
-### Vision for v1.0 — "Your codebase, understood and under control, on your machine"
+### Vision for v1.0 — "Your codebase, understood and under control, on your machine" ✅ shipped (D-0034)
 The polished, trustworthy daily driver for a single developer.
 - **One real AI provider, opt-in and safe** [Core] — wire **one** provider (likely local **Ollama** first
   for the privacy story, then **Claude**) behind the existing `providers.ai` seam. Keys from env/keychain;

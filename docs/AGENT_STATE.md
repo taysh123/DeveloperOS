@@ -3,19 +3,19 @@
 > Read this FIRST every session. It is the authoritative record of where the project
 > stands and what to do next. Update it after every meaningful work session.
 
-_Last updated: 2026-06-11_
+_Last updated: 2026-06-12_
 
 ## Current phase
-**v0.6.0 — feature-complete dashboard + first real AI provider.** Phases 0–9 complete. **Dashboard
-slices 1–9 shipped:** Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep
-Dive / Study**) · **Learning Center** · **Career** · **Meeting** (summary + action-items→tasks
-bridge) · **Settings & AI Management**, plus **CRUD polish**, over a CSRF-token-guarded loopback
-API. **Dashboard is at full CLI parity.** The first **real AI provider** shipped: **Ollama**
-(local, free, stdlib-only `urllib`, graceful degradation) behind the existing `providers.ai`
-seam — default remains the offline mock and the Settings AI toggle is unchanged (no-cost policy).
-Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
-(`SECRET_FILE_PATTERNS`, `skipped_secrets`), and **GitHub Actions CI** (py3.11–3.13, Linux+Windows).
-IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
+**v1.0.0 — PROJECT COMPLETE** ("Your codebase, understood and under control, on your machine",
+D-0034). Phases 0–9 + dashboard slices 1–16 + the full desktop ladder (D-0029 A–E) are shipped:
+a CSRF-guarded loopback dashboard at **full CLI parity** (Home · Tasks · Notes · Search & Ask ·
+Debug · Projects/Deep Dive · Learn · Career · Meeting · Settings, with onboarding, design system
++ WAI-ARIA a11y), one real **opt-in AI provider (local Ollama; offline mock default; cloud
+unwired by no-cost policy)**, AND-first retrieval, secret-aware scanning, GitHub Actions CI
+(py3.11–3.13 × Linux/Windows, **363 tests**), and a complete Windows desktop story: standalone
+**app-mode window** → `devos app` launcher → PyInstaller `DeveloperOS.exe` → per-user Inno Setup
+installer with data-preserving uninstall. Releases v0.6.0…**v1.0.0** are tagged on GitHub with
+downloadable Setup/exe assets; the README is a product homepage with a real screenshot gallery.
 
 ## Current milestone
 **Final polish complete (D-0034): real screenshot gallery + v1.0 declared.** Nine genuine
@@ -309,9 +309,10 @@ no-cost policy) as **optional, on-request work only** — start with `/plan` as 
 - Windows is the primary dev OS (paths handled cross-platform via `pathlib`).
 
 ## Open decisions
-- CLI framework: stdlib `argparse` now; revisit Typer/Rich in Phase 7. _(Default chosen.)_
-- Semantic-search *architecture* decided (D-0006: `SearchHit` seam + per-chunk hash). The
-  embeddings *backend* (which local model/library) remains open and deferred to a later phase.
+- _None blocking — the project is complete._ Two long-deferred choices remain open only if
+  v2.0-era work is ever requested: the embeddings *backend* behind the D-0006 seam (which local
+  model/library), and whether a richer CLI layer (Typer/Rich) is worth adopting (stdlib
+  `argparse` served through v1.0).
 
 ## Working context
 - Repo: `C:\Projects\DeveloperOS` · git branch: `main` · platform: Windows 11 · Python 3.13.5.

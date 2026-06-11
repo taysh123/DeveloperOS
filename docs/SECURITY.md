@@ -1,6 +1,6 @@
 # DeveloperOS — Security Architecture (Security by Design)
 
-_Last updated: 2026-06-11 · Living document._
+_Last updated: 2026-06-12 · Living document._
 
 > This documents the **security-by-design architecture every phase must respect**. Most
 > controls here are **not yet implemented** — they are commitments that constrain future
@@ -251,7 +251,7 @@ into the AI context, a model could be manipulated.
 - Secrets and provider keys never exposed to the frontend; the browser calls the local API,
   which holds credentials server-side.
 
-## 9. Current posture summary (Phase 4)
+## 9. Current posture summary (v1.0.0)
 | Area | Status |
 |---|---|
 | Network calls / telemetry | **None by default** (offline, mock AI). Opt-in **local** Ollama (v0.6.0) talks only to a user-run daemon on 127.0.0.1 — nothing leaves the machine |
