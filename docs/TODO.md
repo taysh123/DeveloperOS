@@ -58,6 +58,10 @@ _Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Slice 14 — PyInstaller packaging foundation (desktop ladder step C) ✅
+- [x] `packaging/`: PyInstaller `devos.spec` (onefile; console=True as server log + Ctrl+C; upx=False vs AV false positives; datas = vendored dashboard + `storage/schema.sql`; `collect_submodules("devos")`), `launch_devos.py` entry (exe = `devos app`, args pass through), `build.ps1` (repeatable build), developer `README.md` (build, contents, choices, step-D path).
+- [x] `tools/make_icons.py` `write_ico` (stdlib ICO container with PNG entries) → committed `packaging/devos.ico` (16/32/48/256). **Real `DeveloperOS.exe` built (~9.6 MB) and smoke-verified** (fresh init from bundled schema; dashboard/manifest/API from bundled assets; second invocation reused the running instance). **PyInstaller is dev-time only** — runtime stays stdlib-only (D-0005); SECURITY unchanged. 351 tests (+4 in `tests/test_packaging.py`). D-0031.
+
 ## Post-roadmap: Slice 13 — `devos app` launcher (desktop ladder step B) ✅
 - [x] `devos app [--port N] [--no-browser]`: probe → reuse-or-start → ready-wait → open → serve → Ctrl+C (D-0030 lifecycle). Read-only `/api/session` probe = single instance per port; **exclusive-bind** occupancy check (plain socket, no SO_REUSEADDR — Windows lets reuse-addr binds to occupied ports succeed silently, and the firewall drops SYNs to closed loopback ports, so connect errors can't tell "free" from "hung"); auto-init on first run; friendly plain-language stdout. Reuses `server.create_server` + the whole dashboard/PWA stack; **no new API surface; SECURITY unchanged**. 347 tests (+7 in `tests/test_app_cmd.py`), live smoke verified.
 

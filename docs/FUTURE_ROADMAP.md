@@ -126,9 +126,10 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
   (Edge/Chrome → real window, Start-Menu/taskbar icon). No service worker by design.
 - ✅ **B. `devos app` launcher** [High, shipped slice 13] — probe → reuse-or-start → ready-wait →
   open → serve; single instance per port; auto-init on first run (D-0030).
-- ⬜ **C. PyInstaller single-file `devos.exe`** [High] — self-starting server + Start-Menu
-  shortcut; the step that removes the terminal entirely for non-technical users. Multi-size
-  `.ico` from the D-0029 mark.
+- ✅ **C. PyInstaller single-file `DeveloperOS.exe`** [High, shipped slice 14] — `packaging/`
+  spec + build script + multi-size `.ico`; exe wraps `devos app`; built and smoke-verified
+  (~9.6 MB). Dev-time dependency only (D-0031). Start-Menu shortcut arrives with the step-D
+  installer.
 - ⬜ **D. Installer (Inno Setup) + optional manual update check** [Nice] — GitHub Releases as the
   distribution channel; updates never required, offline keeps working.
 - ⬜ **E. Tauri shell** [Research, only-if-justified] — revisit only if C/D demand native

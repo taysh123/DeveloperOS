@@ -18,6 +18,17 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Slice 14 complete (D-0031): PyInstaller packaging foundation (desktop ladder step C).**
+`packaging/`: `devos.spec` (onefile, console=True, upx=False; datas = `devos/api/static/**` +
+`storage/schema.sql`; hiddenimports = collect_submodules), `launch_devos.py` (exe wraps
+`devos app`, args pass through), `build.ps1`, developer README; `tools/make_icons.py` gained a
+stdlib `write_ico` → committed multi-size `packaging/devos.ico` (16/32/48/256, PNG entries).
+**Real `DeveloperOS.exe` built (~9.6 MB) and smoke-verified** (isolated `DEVOS_HOME`: fresh init
+from bundled schema; dashboard + PWA manifest + API served from bundled assets; second exe
+invocation reused the instance). PyInstaller = **dev-time only**; runtime stays stdlib-only;
+no CI builds (step-D candidate). TDD **351/351** (+4, `tests/test_packaging.py`).
+
+## Previous milestone
 **Slice 13 complete (D-0030): `devos app` launcher (desktop ladder step B).** Lifecycle: probe →
 reuse-or-start → ready-wait → open → serve (blocking) → Ctrl+C. Read-only `/api/session` probe
 identifies a running DeveloperOS (single instance per port); occupied ports detected via an
@@ -69,17 +80,21 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-**v0.7.0 released** ("Installable DeveloperOS foundation" — slices 11+12; annotated tag + GitHub
-release). Next, per FUTURE_ROADMAP §8: desktop ladder **step B (`devos app` launcher) then step C
-(PyInstaller `DeveloperOS.exe` foundation)** — in progress this session; afterwards: ladder D
-(installer) or Plugins/Extensions UI; embeddings behind the D-0006 seam; optional Claude provider
-**only when the no-cost policy changes**.
+Merge `feat/desktop-packaging` (slice 14 PR) to `main` once CI is green. Then, per FUTURE_ROADMAP
+§8: desktop ladder **step D** (Inno Setup installer + optional manual update check via GitHub
+Releases — consider a `v0.8.0` bundling slices 13+14+D); or Plugins/Extensions UI; embeddings
+behind the D-0006 seam; optional Claude provider **only when the no-cost policy changes**.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Slice 14 (2026-06-11): PyInstaller packaging foundation (ladder step C, D-0031).
+      `packaging/devos.spec` + `launch_devos.py` (wraps `devos app`) + `build.ps1` + README +
+      `devos.ico` (stdlib `write_ico`, 16/32/48/256 PNG entries). Real exe built (~9.6 MB),
+      smoke-verified (bundled schema/static; single-instance reuse). Dev-time dep only; no CI
+      builds. TDD **351/351** (+4). SECURITY unchanged.
 - [x] Slice 13 (2026-06-11): `devos app` launcher (ladder step B, D-0030). `commands/app_cmd.py`:
       probe (read-only `/api/session` token check) → reuse-or-start → `_port_takeable` exclusive
       bind (Windows SO_REUSEADDR/firewall-drop findings) → auto-init → ready-wait thread →

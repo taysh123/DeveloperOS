@@ -186,8 +186,11 @@ The dashboard is an **installable PWA** (D-0029): `static/manifest.webmanifest` 
 is local). Desktop distribution follows the D-0029 ladder.
 **`devos app`** (D-0030) is the desktop launcher: probe (read-only `/api/session`) → reuse a
 running instance or exclusively-bind-check the port → auto-init on first run → start the server →
-ready-wait thread opens the browser → blocking serve until Ctrl+C. Single instance per port; the
-future `DeveloperOS.exe` (ladder step C) wraps this command.
+ready-wait thread opens the browser → blocking serve until Ctrl+C. Single instance per port.
+**`DeveloperOS.exe`** (D-0031, `packaging/`) wraps that command as a PyInstaller onefile build:
+`devos.spec` bundles the vendored dashboard + `storage/schema.sql`; `devos.ico` comes from the
+same stdlib icon generator; PyInstaller is a **dev-time** dependency only (runtime stays
+stdlib-only, D-0005). Build: `packaging/build.ps1` → `packaging/dist/DeveloperOS.exe`.
 The Projects tab adds a confirm-before-write import/scan flow + project detail view (with a **Study this
 project** → Project Deep Dive sub-view: Start here / Key files / How this works / Questions / Interview
 prep + project-scoped Ask); the Debug tab adds a paste → Analyze → result-cards flow. `devos serve`

@@ -4,6 +4,36 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0031 — PyInstaller packaging foundation (desktop ladder step C, slice 14)
+- **Date:** 2026-06-11
+- **Context:** D-0029 step C: remove the terminal entirely — a single `DeveloperOS.exe` a
+  non-technical user can double-click. Must not disturb the stdlib-only runtime, the CLI,
+  the dashboard, or the security posture.
+- **Decision:**
+  - **PyInstaller is a dev-time dependency only** — the D-0005 stdlib-only rule governs the
+    *runtime*; nothing changes in `pyproject.toml`. Build is on-demand by a developer
+    (`packaging/build.ps1`), **not in CI** (a release workflow is a step-D candidate).
+  - **`packaging/devos.spec`**: entry `launch_devos.py` → `devos.cli.main(["app", *argv])` (the
+    exe wraps the D-0030 launcher; extra args pass through). `datas` bundle the two runtime data
+    dependencies: `devos/api/static/**` and `devos/storage/schema.sql` (read via
+    `importlib.resources`). `hiddenimports=collect_submodules("devos")` belt-and-braces for the
+    side-effect command registration. **onefile** (single artifact; slower self-extract start is
+    fine for a local tool), **console=True** (the console is the server log + Ctrl+C handle;
+    windowless/tray is a later refinement), **upx=False** (packed exes trigger AV false positives).
+  - **Icon:** `packaging/devos.ico` — multi-size (16/32/48/256) ICO with **PNG-format entries**
+    (valid since Vista), emitted by the same stdlib-only generator (`tools/make_icons.py`
+    `write_ico`) as the PWA icons; one brand mark everywhere (D-0029).
+  - **Versioning:** the exe is the package — it reports `devos.__version__` (dashboard System
+    status); Windows VERSIONINFO resource deferred to step D.
+- **Verification:** real build produced `dist/DeveloperOS.exe` (~9.6 MB); smoke-tested with an
+  isolated `DEVOS_HOME`: fresh init from the bundled schema, dashboard + PWA manifest + API all
+  served from bundled assets, second exe invocation reused the running instance (D-0030 path).
+  Packaging contract pinned by `tests/test_packaging.py` (ICO structure incl. PNG entries +
+  declared sizes; spec bundles both data deps; entry routes into `devos app`).
+- **Security:** the exe is the same code packaged — loopback-only, offline, no new surface;
+  SECURITY.md unchanged.
+- **Status:** Accepted.
+
 ## D-0030 — `devos app` launcher (desktop ladder step B, slice 13)
 - **Date:** 2026-06-11
 - **Context:** D-0029 step B: a non-technical user should launch DeveloperOS without knowing
