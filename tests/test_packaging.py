@@ -56,5 +56,36 @@ class TestSpecAndEntry(unittest.TestCase):
         self.assertIn("devos.cli", entry)
 
 
+class TestInstaller(unittest.TestCase):
+    """Desktop ladder step D (D-0032): per-user Inno Setup installer contract."""
+
+    def setUp(self) -> None:
+        self.iss = (PACKAGING / "installer.iss").read_text(encoding="utf-8")
+
+    def test_installer_packages_exe_with_branding(self) -> None:
+        self.assertIn("DeveloperOS.exe", self.iss)
+        self.assertIn("devos.ico", self.iss)
+        self.assertIn("{#MyAppVersion}", self.iss, "version must come from the build define")
+
+    def test_installer_is_per_user_no_admin(self) -> None:
+        self.assertIn("PrivilegesRequired=lowest", self.iss,
+                      "per-user install; no admin/UAC for a single-user local tool")
+
+    def test_installer_creates_start_menu_shortcut(self) -> None:
+        self.assertIn("[Icons]", self.iss)
+        self.assertIn("{autoprograms}", self.iss, "Start Menu shortcut required")
+
+    def test_uninstall_preserves_user_data(self) -> None:
+        # The data dir (%APPDATA%\DeveloperOS) must never be deleted by the
+        # uninstaller; the .iss carries an explicit marker comment for this.
+        self.assertIn("KEEP-USER-DATA", self.iss)
+        self.assertNotIn("{userappdata}\\DeveloperOS", self.iss.replace("; ", ""))
+
+    def test_license_file_exists_and_is_mit(self) -> None:
+        license_path = PACKAGING.parent / "LICENSE"
+        self.assertTrue(license_path.is_file(), "LICENSE required (installer shows it)")
+        self.assertIn("MIT License", license_path.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

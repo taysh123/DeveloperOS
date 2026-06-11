@@ -4,6 +4,34 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0032 — Windows installer + manual update strategy (desktop ladder step D, slice 15)
+- **Date:** 2026-06-11
+- **Context:** D-0029 step D: turn the working `DeveloperOS.exe` (D-0031) into a normal Windows
+  install experience — download, install, Start Menu, launch, clean uninstall.
+- **Decision:**
+  - **Inno Setup** (`packaging/installer.iss` + `build_installer.ps1`), dev-time tool only
+    (`winget install JRSoftware.InnoSetup`). Output: `dist/DeveloperOS-Setup-<version>.exe`
+    (~11 MB); version flows from `devos/__init__.py` via `/DMyAppVersion=`.
+  - **Per-user install** (`PrivilegesRequired=lowest` → `%LOCALAPPDATA%\Programs\DeveloperOS`):
+    no admin/UAC — correct trust level for a single-user, loopback-only tool. Start-Menu shortcut
+    always; desktop shortcut as an opt-in task; uninstaller registered automatically.
+  - **KEEP-USER-DATA:** the uninstaller removes only what the installer placed; the workspace in
+    `%APPDATA%\DeveloperOS` deliberately survives uninstall/reinstall (no `[UninstallDelete]`).
+  - **Update strategy = manual, documented** (no auto-update code, no new network surface): users
+    check GitHub Releases; a newer Setup upgrades in place (stable AppId). GitHub release assets
+    (Setup + bare exe) become the download channel from v0.8.0 onward.
+  - **No code signing** for now (cost); SmartScreen "unknown publisher" warning documented honestly.
+- **Verification:** real installer built; full silent cycle verified — per-user install (exe +
+  Start-Menu `.lnk` + uninstaller), installed exe served the dashboard, silent uninstall removed
+  the app dir/shortcut while a sentinel file in `%APPDATA%\DeveloperOS` survived. **Finding:**
+  PyInstaller onefile = parent+child processes; force-killing only the parent orphans the server
+  and locks the exe (uninstall then can't delete it) — Ctrl+C stops both correctly; documented in
+  packaging/README + KNOWN_ISSUES. Contract pinned in `tests/test_packaging.py` (per-user flag,
+  Start-Menu entry, version define, KEEP-USER-DATA marker, MIT LICENSE present).
+- **Security:** no new surface — the installer bundles the same loopback-only exe; update checks
+  are human-initiated; SECURITY.md unchanged.
+- **Status:** Accepted.
+
 ## D-0031 — PyInstaller packaging foundation (desktop ladder step C, slice 14)
 - **Date:** 2026-06-11
 - **Context:** D-0029 step C: remove the terminal entirely — a single `DeveloperOS.exe` a

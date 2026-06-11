@@ -42,8 +42,30 @@ The exe reports the package version (`DeveloperOS.exe` serves the dashboard whos
 status shows `devos.__version__`); bump versions exactly as for pip releases. Embedding a
 Windows VERSIONINFO resource is a step-D refinement.
 
+## Windows installer (ladder step D — D-0032)
+
+```powershell
+cd packaging
+./build_installer.ps1     # builds the exe first if needed, then the installer
+# -> packaging/dist/DeveloperOS-Setup-<version>.exe
+```
+
+Requires **Inno Setup** (dev-time only): `winget install JRSoftware.InnoSetup`.
+
+Behavior (deliberate choices):
+- **Per-user install** (`PrivilegesRequired=lowest`) → `%LOCALAPPDATA%\Programs\DeveloperOS`;
+  no admin rights, no UAC prompt. Start-Menu shortcut always; desktop shortcut optional.
+- **Uninstall never touches your data.** The workspace in `%APPDATA%\DeveloperOS` (database,
+  settings) survives uninstall/reinstall by design (KEEP-USER-DATA in `installer.iss`).
+- **Updates are manual by design** (no auto-update code, no network surface): check
+  https://github.com/taysh123/DeveloperOS/releases — a newer `DeveloperOS-Setup-*.exe`
+  upgrades in place (same AppId). Offline installs keep working forever.
+- Unsigned binaries: Windows SmartScreen may warn on first run ("More info → Run anyway").
+  Code-signing certificates cost money and are deliberately out of scope for a free tool.
+- **Force-quitting:** prefer Ctrl+C in the DeveloperOS window (stops everything cleanly).
+  PyInstaller onefile runs a parent + child process — if you end only the parent in Task
+  Manager, the server child keeps running; end the whole process tree instead.
+
 ## Remaining ladder steps (FUTURE_ROADMAP §8)
 
-- **D:** Inno Setup installer (Start-Menu shortcut, uninstaller) + optional manual update
-  check against GitHub Releases — updates never required; offline keeps working.
 - **E:** Tauri shell **only if** native capabilities (tray, dialogs) become necessary.
