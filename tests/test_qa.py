@@ -84,6 +84,31 @@ class TestRepoRetrievalHelpers(QaTestCase):
         finally:
             conn.close()
 
+    def test_find_project_for_path_with_windows_short_path(self) -> None:
+        """GitHub's Windows runners hand tests an 8.3 short TEMP path
+        (C:\\Users\\RUNNERA~1\\...) while scan stores the root resolve()d to its
+        long form — the lookup must canonicalize both sides or it returns None."""
+        if os.name != "nt":
+            self.skipTest("Windows 8.3 short paths only")
+        import ctypes
+        long_root = self.root / "longprojectname_for_dos83_alias"
+        _write(long_root, "pkg/mod.py", "VALUE = 1\n")
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, long_root, name="dos83").project_id
+            buf = ctypes.create_unicode_buffer(512)
+            if not ctypes.windll.kernel32.GetShortPathNameW(str(long_root), buf, 512):
+                self.skipTest("cannot derive an 8.3 short path here")
+            short_root = buf.value
+            if os.path.normcase(short_root) == os.path.normcase(str(long_root)):
+                self.skipTest("8.3 aliases disabled on this volume")
+            row = repo.find_project_for_path(
+                conn, os.path.join(short_root, "pkg", "mod.py"))
+            self.assertIsNotNone(row)
+            self.assertEqual(row["id"], pid)
+        finally:
+            conn.close()
+
     def test_top_files_by_chunk_count(self) -> None:
         conn = self.ws.connect()
         try:

@@ -24,7 +24,7 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 `POST /api/tasks/create` per selected item (no new write surface). `providers/ollama.py`
 (`OllamaProvider`: `complete` + `ping`, env `DEVOS_OLLAMA_URL`/`DEVOS_OLLAMA_MODEL`, labeled
 "[OLLAMA UNAVAILABLE]" degradation) registered via `providers/__init__`. `qa.retrieve` AND→OR.
-`ingest.is_secret_file` + skip-before-read. TDD **317/317** (+23); live socket smoke verified
+`ingest.is_secret_file` + skip-before-read. TDD **318/318** (+24); live socket smoke verified
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
@@ -44,8 +44,10 @@ consent + audit log are already specified); embeddings behind the D-0006 seam.
       + inline `POST /api/meeting` (transcript not persisted) + action-items→tasks bridge (reuses
       `tasks/create`, no new write surface); `providers/ollama.py` (local/keyless/"[OLLAMA UNAVAILABLE]"
       degradation; mock stays default); `qa.retrieve` AND→OR; `ingest.SECRET_FILE_PATTERNS` +
-      `skipped_secrets` (skip-before-read); `.github/workflows/ci.yml`. Version → 0.6.0. TDD **317/317**
-      (+23); live socket smoke verified. D-0026; SECURITY §1/§2/§5/§8/§9; tagged `v0.6.0`.
+      `skipped_secrets` (skip-before-read); `.github/workflows/ci.yml`. Version → 0.6.0. CI exposed a
+      latent Windows-8.3-short-path bug in `repo.find_project_for_path` (abspath→realpath fix + repro
+      test). TDD **318/318** (+24); live socket smoke verified. D-0026; SECURITY §1/§2/§5/§8/§9;
+      tagged `v0.6.0`.
 - [x] Dashboard slice 8 (2026-06-03): Career tab. `app.py` `jobs_payload`/`interview_payload`/`cv_payload`
       (+ `create_job_action`/`update_job_action`/`delete_job_action`, `_clean_optional`); `GET /api/jobs`
       + `GET /api/jobs/interview` + `POST /api/jobs/{create,update,delete}` + inline `POST /api/cv`.
