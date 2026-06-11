@@ -1,6 +1,7 @@
 # DeveloperOS — TODO
 
-_Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AGENT_STATE.md.
+_Last updated: 2026-06-12_ · Authoritative backlog. Detailed status lives in AGENT_STATE.md.
+**Project complete at v1.0.0 (D-0034)** — everything below is shipped history; remaining items in the "optional future extensions" section are on-request only.
 
 ## Done (Phase 1 — Scaffolding) ✅
 - [x] `devos` package skeleton: `cli.py`, `config.py`, `storage/db.py`+`schema.sql`, `providers/ai.py`, `commands/`, `core/workspace.py`, `modules/` stubs.
