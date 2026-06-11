@@ -4,6 +4,31 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0030 — `devos app` launcher (desktop ladder step B, slice 13)
+- **Date:** 2026-06-11
+- **Context:** D-0029 step B: a non-technical user should launch DeveloperOS without knowing
+  terminals — one entry point that does the right thing whether or not a server is running.
+- **Decision — launcher lifecycle:** **probe → reuse-or-start → ready-wait → open → serve
+  (blocking) → Ctrl+C graceful stop**, implemented as `devos/commands/app_cmd.py` (`devos app`,
+  `--port`/`--no-browser`):
+  - **Probe** (`probe()`): read-only `GET /api/session` identifying DeveloperOS by a 200 JSON
+    `token` payload. If it answers, **reuse** — open the browser at the running instance and exit 0
+    (single instance per port, no second server).
+  - **Occupied-port detection is the bind, not the connect error:** two Windows findings, both
+    encoded in code comments and tests — (1) the firewall silently **drops** SYNs to closed
+    loopback ports, so "refused" vs "hung occupant" cannot be distinguished from the connect
+    exception; (2) stdlib `HTTPServer` sets `allow_reuse_address`, and on Windows `SO_REUSEADDR`
+    lets a second bind to an occupied port **succeed silently** — so `_port_takeable()` performs an
+    exclusive bind with a *plain* socket first; failure → friendly "try `--port N`" message, exit 1.
+  - **Auto-init:** a fresh home is initialized automatically (vs `devos serve`, which refuses) —
+    the launcher is the non-technical entry point.
+  - **Ready-wait + open:** a daemon thread polls `/api/session` (≤5 s) then `webbrowser.open(url)`;
+    the main thread runs `serve_forever()` with the established Ctrl+C pattern.
+- **Rationale:** Reuses `server.create_server` and the whole existing dashboard/PWA stack; no new
+  API surface (the probe is a read-only GET); loopback-only and offline as ever — SECURITY
+  unchanged. This is also the entry point the future `DeveloperOS.exe` (ladder step C) wraps.
+- **Status:** Accepted.
+
 ## D-0029 — Desktop strategy: PWA front + packaged Python backend (slice 12 = PWA foundation)
 - **Date:** 2026-06-11
 - **Context:** DeveloperOS should eventually feel like an installable desktop app for

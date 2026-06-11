@@ -137,8 +137,13 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   types. Dashboard is now **installable from Edge/Chrome** as a desktop app. No service worker; no
   new endpoints; SECURITY unchanged. Slices 11+12 shipped together as **`v0.7.0`
   ("Installable DeveloperOS foundation")**.
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step B/C (`devos app` launcher →
-  PyInstaller `devos.exe`) · Plugins/Extensions UI (surface `devos plugins`) · embeddings/semantic
+- ✅ **Slice 13 — `devos app` launcher (desktop ladder step B)** (D-0030): one command for
+  non-technical users — probes for a running DeveloperOS (read-only `/api/session`), reuses it or
+  starts one, auto-inits a fresh home, waits for readiness, opens the browser, serves until Ctrl+C.
+  Single instance per port; Windows port-occupancy handled via exclusive-bind check (SO_REUSEADDR +
+  firewall-drop findings encoded in tests). No new API surface; SECURITY unchanged.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step C (PyInstaller `DeveloperOS.exe`)
+  → step D (installer) · Plugins/Extensions UI (surface `devos plugins`) · embeddings/semantic
   search behind the D-0006 seam · optional cloud provider (Claude) **only if the no-cost policy
   changes** (env key + consent + audit log already specified).
 

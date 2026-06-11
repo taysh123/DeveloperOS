@@ -3,7 +3,8 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
-_Nothing yet._
+### Added
+- **`devos app` — launch DeveloperOS with one command (slice 13).** No more "start a server, then open a browser": `devos app` does the whole thing. It checks whether DeveloperOS is already running (and if so just opens it — you'll never end up with two copies), creates your data folder automatically on first run, starts the dashboard, waits until it's ready, and opens your browser at it. If the port is taken by another program it says so in plain language and suggests `--port`. Stop it any time with Ctrl+C. Loopback-only and offline as always; no new API surface. (Desktop ladder step B of D-0029 — and the entry point the future `DeveloperOS.exe` will wrap.)
 
 ## [0.7.0] — 2026-06-11 ("Installable DeveloperOS foundation")
 > Why this release exists: slices 11+12 together turn DeveloperOS from "a dashboard you can
