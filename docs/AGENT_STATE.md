@@ -3,39 +3,51 @@
 > Read this FIRST every session. It is the authoritative record of where the project
 > stands and what to do next. Update it after every meaningful work session.
 
-_Last updated: 2026-06-03_
+_Last updated: 2026-06-11_
 
 ## Current phase
-**Post-roadmap extensions (on-request).** Phases 0–9 complete. **Dashboard slices 1–8 shipped:**
-Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep Dive / Study**) · **Learning
-Center** · **Career** · **Settings & AI Management**, plus **CRUD polish** (deletes + project pickers +
-inline edit), over a CSRF-token-guarded loopback API. Slices 1–7 merged to `main` (PRs #1–#6); slice 8 on
-branch `feat/dashboard-career-tab` (PR pending). The **long-term dashboard roadmap** is recorded
-(D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`): IA = Work · Understand · Grow · System. **Project is at v0.5.0.**
-Dashboard is at **near-CLI-parity** — only the Meeting surface remains.
+**v0.6.0 — feature-complete dashboard + first real AI provider.** Phases 0–9 complete. **Dashboard
+slices 1–9 shipped:** Home · Tasks · Notes · Search & Ask · Debug · Projects (with **Project Deep
+Dive / Study**) · **Learning Center** · **Career** · **Meeting** (summary + action-items→tasks
+bridge) · **Settings & AI Management**, plus **CRUD polish**, over a CSRF-token-guarded loopback
+API. **Dashboard is at full CLI parity.** The first **real AI provider** shipped: **Ollama**
+(local, free, stdlib-only `urllib`, graceful degradation) behind the existing `providers.ai`
+seam — default remains the offline mock and the Settings AI toggle is unchanged (no-cost policy).
+Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
+(`SECRET_FILE_PATTERNS`, `skipped_secrets`), and **GitHub Actions CI** (py3.11–3.13, Linux+Windows).
+IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
-**Dashboard slice 8 complete (D-0025).** Career tab surfacing `modules/career` — three plain-language
-sections: **Track a job application** (job-lead CRUD: add, inline status select, edit, two-step delete),
-**Interview prep** (pick a lead → grounded questions from its notes; declines when noteless), and **CV
-match check** (paste CV + compare vs a lead's notes or a pasted description → coverage % + matched/missing
-keyword chips). `GET /api/jobs`, `GET /api/jobs/interview`, `POST /api/jobs/{create,update,delete}`,
-`POST /api/cv` (inline; **CV text not persisted**). Reuse `repo` job CRUD + `career.analyze_cv`/
-`interview_prep`; no schema/`server.py` change. TDD **294/294** (+22); live socket smoke verified.
+**v0.6.0 cut.** Slice 9 (Meeting tab): `modules/meeting.extract_action_items` (deterministic, never
+calls a provider) + `app.py` `meeting_payload` + inline `POST /api/meeting` (transcript NOT
+persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsBridge` reusing
+`POST /api/tasks/create` per selected item (no new write surface). `providers/ollama.py`
+(`OllamaProvider`: `complete` + `ping`, env `DEVOS_OLLAMA_URL`/`DEVOS_OLLAMA_MODEL`, labeled
+"[OLLAMA UNAVAILABLE]" degradation) registered via `providers/__init__`. `qa.retrieve` AND→OR.
+`ingest.is_secret_file` + skip-before-read. TDD **318/318** (+24); live socket smoke verified
+(meeting 200 + 403-without-token).
 
 ## Next immediate step
-Open a PR for `feat/dashboard-career-tab` and merge to `main`. Per the recorded roadmap, the next
-highest-leverage slice is the **Meeting Summary tab** (`modules/meeting.summarize` → summary/decisions/
-action-items, + an "action items → tasks" bridge) — the **last CLI-parity gap**. Then: design-system/a11y
-pass; first **real AI provider** (Ollama-first) behind the prepared Settings seam. **Recommend tagging
-`v0.5.0`** once slices 6–8 are merged to `main`; a **`v0.6.0`** ("feature-complete dashboard") is the
-natural milestone once Meeting lands. (Do not tag before the PRs merge.)
+**v0.6.0 is released** (slice-8 + v0.6.0 PRs merged to `main`; annotated tag `v0.6.0` + GitHub
+release; CI live). Next, per FUTURE_ROADMAP: design-system/a11y pass; onboarding first-run flow;
+Plugins/Extensions UI; optional Claude provider **only when the no-cost policy changes** (env key +
+consent + audit log are already specified); embeddings behind the D-0006 seam.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] v0.6.0 (2026-06-11): Meeting tab (slice 9) + Ollama provider + AND-first retrieval + secret-aware
+      scan + CI. Built TDD in a TEMP working copy and merged into this repo (19 files; SHA-256
+      tree-comparison verified strict superset — no loss). Deterministic `meeting.extract_action_items`
+      + inline `POST /api/meeting` (transcript not persisted) + action-items→tasks bridge (reuses
+      `tasks/create`, no new write surface); `providers/ollama.py` (local/keyless/"[OLLAMA UNAVAILABLE]"
+      degradation; mock stays default); `qa.retrieve` AND→OR; `ingest.SECRET_FILE_PATTERNS` +
+      `skipped_secrets` (skip-before-read); `.github/workflows/ci.yml`. Version → 0.6.0. CI exposed a
+      latent Windows-8.3-short-path bug in `repo.find_project_for_path` (abspath→realpath fix + repro
+      test). TDD **318/318** (+24); live socket smoke verified. D-0026; SECURITY §1/§2/§5/§8/§9;
+      tagged `v0.6.0`.
 - [x] Dashboard slice 8 (2026-06-03): Career tab. `app.py` `jobs_payload`/`interview_payload`/`cv_payload`
       (+ `create_job_action`/`update_job_action`/`delete_job_action`, `_clean_optional`); `GET /api/jobs`
       + `GET /api/jobs/interview` + `POST /api/jobs/{create,update,delete}` + inline `POST /api/cv`.
@@ -161,9 +173,10 @@ natural milestone once Meeting lands. (Do not tag before the PRs merge.)
 ## Known assumptions
 - Single power user; multi-user is a future extension.
 - Foundation runtime is stdlib-only (no external pip deps required to run).
-- AI is mocked until a real provider is wired in (no API key needed). The dashboard Settings tab lets
-  users toggle AI and *select* a provider (mock/ollama/claude/openai), but selection only stores a
-  preference — the **effective** provider stays the offline mock until real integrations ship (slice 5).
+- AI is mocked **by default** (no API key needed). As of v0.6.0 a real local **Ollama** provider is
+  available — opt-in via the Settings tab, keyless, free, nothing leaves the machine. Selecting a
+  still-unwired cloud provider (claude/openai) keeps the **effective** provider on the offline mock;
+  cloud providers stay unwired by deliberate no-cost policy.
 - Windows is the primary dev OS (paths handled cross-platform via `pathlib`).
 
 ## Open decisions
@@ -173,7 +186,7 @@ natural milestone once Meeting lands. (Do not tag before the PRs merge.)
 
 ## Working context
 - Repo: `C:\Projects\DeveloperOS` · git branch: `main` · platform: Windows 11 · Python 3.13.5.
-- No remote configured yet.
+- Remote: `origin` = https://github.com/taysh123/DeveloperOS (branch + PR workflow; CI on push/PR).
 - Run app: `pip install -e .` then `devos <command>`. Tests: `python -m unittest discover -s tests`.
 - Isolate the data dir in dev/tests via the `DEVOS_HOME` env var.
 

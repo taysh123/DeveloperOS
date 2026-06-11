@@ -95,3 +95,37 @@ class MeetingCliTestCase(unittest.TestCase):
         code, out = self._run("meeting", "summarize", str(f))
         self.assertEqual(code, 0)
         self.assertIn("empty", out.lower())
+
+
+class TestExtractActionItems(unittest.TestCase):
+    """Slice 9 — deterministic action-item extraction for the dashboard bridge."""
+
+    def test_keyword_prefixed_lines(self) -> None:
+        text = ("We talked about the release.\n"
+                "TODO: fix the login bug\n"
+                "Action: Bob updates the docs\n"
+                "Next step: tag v0.6.0\n")
+        items = meeting_mod.extract_action_items(text)
+        self.assertEqual(items, ["fix the login bug", "Bob updates the docs", "tag v0.6.0"])
+
+    def test_bullets_only_count_inside_action_sections(self) -> None:
+        text = ("Summary\n- this bullet is narrative, not an action\n\n"
+                "Action items\n- ship the meeting tab\n* write tests\n"
+                "- [ ] update the changelog\n")
+        items = meeting_mod.extract_action_items(text)
+        self.assertEqual(items, ["ship the meeting tab", "write tests", "update the changelog"])
+
+    def test_dedupes_caps_and_handles_empty(self) -> None:
+        self.assertEqual(meeting_mod.extract_action_items(""), [])
+        self.assertEqual(meeting_mod.extract_action_items("   \n  "), [])
+        text = "Next steps\n" + "\n".join(f"- item {i}" for i in range(30))
+        self.assertEqual(len(meeting_mod.extract_action_items(text)),
+                         meeting_mod.MAX_ACTION_ITEMS)
+        dup = "TODO: same thing\ntodo: Same Thing\n"
+        self.assertEqual(meeting_mod.extract_action_items(dup), ["same thing"])
+
+    def test_never_calls_a_provider(self) -> None:
+        # Pure function of the text — nothing to patch, but assert no provider arg exists.
+        import inspect
+        params = inspect.signature(meeting_mod.extract_action_items).parameters
+        self.assertNotIn("provider", params)

@@ -30,6 +30,76 @@ class MeetingSummary:
     provider: str = "mock"
 
 
+# --- deterministic action-item extraction (offline, no provider call) -----------------
+#
+# The dashboard's "turn action items into tasks" bridge must work even with the offline
+# mock provider, so candidates are extracted from the *transcript itself* with simple,
+# transparent heuristics — never from model output. The user reviews/edits before any
+# task is created (consent-first, same spirit as docs/SECURITY.md sec. 4).
+
+MAX_ACTION_ITEMS = 12
+_MAX_ITEM_CHARS = 200
+
+# Leading markers that flag a line as a candidate action item.
+_BULLETS = ("- ", "* ", "• ", "[ ] ", "- [ ] ", "* [ ] ")
+_KEYWORD_PREFIXES = ("todo:", "todo -", "action:", "action item:", "action items:",
+                     "next step:", "next steps:", "follow up:", "follow-up:", "ai:")
+
+
+def _clean_item(text: str) -> str:
+    item = text.strip().lstrip("-*•").strip()
+    if item.lower().startswith("[ ]"):
+        item = item[3:].strip()
+    return item[:_MAX_ITEM_CHARS].strip()
+
+
+def extract_action_items(text: str, *, limit: int = MAX_ACTION_ITEMS) -> list[str]:
+    """Extract candidate action items from transcript/notes text (deterministic).
+
+    Heuristics (intentionally simple and transparent):
+    - bulleted lines (``-``, ``*``, ``•``, ``[ ]`` checkboxes) found *after* a heading
+      that mentions action items / next steps / TODO, anywhere in the text;
+    - any line starting with an action keyword (``TODO:``, ``Action:``, ``Next step:``…).
+
+    Returns deduplicated, trimmed items capped at ``limit``. Never calls a provider.
+    """
+    if not text or not text.strip():
+        return []
+    items: list[str] = []
+    seen: set[str] = set()
+    in_action_section = False
+
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        low = line.lower().rstrip(":").strip("#").strip()
+        # Section headers toggle "action mode" for the bullets that follow.
+        if low in ("action items", "actions", "next steps", "todo", "todos", "follow ups",
+                   "follow-ups"):
+            in_action_section = True
+            continue
+        if line.startswith("#") or (low.endswith("summary") or low in ("decisions", "notes")):
+            in_action_section = False  # a new section ends action mode
+
+        candidate: str | None = None
+        lower_line = line.lower()
+        if any(lower_line.startswith(p) for p in _KEYWORD_PREFIXES):
+            candidate = line.split(":", 1)[1] if ":" in line else line
+        elif in_action_section and line.startswith(_BULLETS):
+            candidate = line
+
+        if candidate:
+            item = _clean_item(candidate)
+            key = item.lower()
+            if item and key not in seen:
+                seen.add(key)
+                items.append(item)
+                if len(items) >= limit:
+                    break
+    return items
+
+
 def summarize(text: str, *, provider: AIProvider, source_label: str = "") -> MeetingSummary:
     """Summarize transcript/notes text into summary/decisions/action items (grounded)."""
     pname = getattr(provider, "name", "mock")

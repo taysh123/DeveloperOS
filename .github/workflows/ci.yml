@@ -1,0 +1,29 @@
+name: CI
+
+# Free GitHub Actions: runs the stdlib-only unittest suite on every push and PR.
+# No dependencies to install — `pip install -e .` + `unittest discover` is the
+# whole pipeline, exactly like local development (README "Development").
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: tests · py${{ matrix.python }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install (editable, no deps)
+        run: pip install -e .
+      - name: Run test suite
+        run: python -m unittest discover -s tests -v

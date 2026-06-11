@@ -16,14 +16,16 @@ from devos.modules import debug as debug_mod
 from devos.modules import index as index_mod
 from devos.modules import ingest
 from devos.modules import learning
+from devos.modules import meeting as meeting_mod
 from devos.modules import qa
 from devos.modules import recall as recall_mod
 from devos.providers.ai import available_providers
 from devos.storage import repo
 
-ROADMAP_PHASE = "Post-roadmap extensions · Dashboard slice 5 (Settings & AI Management)"
+ROADMAP_PHASE = "v0.6.0 · Feature-complete dashboard + first real AI provider (Ollama, local)"
 DASHBOARD_MATURITY = (
-    "Beta — slices 1–5 shipped (Home, Tasks, Notes, Search & Ask, Debug, Projects, Settings)"
+    "Stable — full CLI parity (Home, Tasks, Notes, Search & Ask, Debug, Projects, Learn, "
+    "Career, Meeting, Settings)"
 )
 
 TASK_STATUSES = ("todo", "in_progress", "blocked", "done")
@@ -279,6 +281,26 @@ def cv_payload(conn: sqlite3.Connection, cv_text: str, *, target_text: str,
     return {"matched": sorted(a.matched), "missing": sorted(a.missing),
             "matched_count": len(a.matched), "target_count": len(a.target_keywords),
             "coverage": round(a.coverage, 3), "target_label": a.target_label}
+
+
+# --- meeting (slice 9) ------------------------------------------------------
+
+def meeting_payload(ws, text: str, *, source_label: str = "") -> dict:
+    """Summarize pasted meeting notes/transcript + extract action-item candidates.
+
+    Reuses ``modules/meeting``: the summary goes through the provider seam (mock by
+    default, offline); ``action_items`` are extracted deterministically from the
+    transcript itself (never from model output) so the "create tasks" bridge works
+    with AI off. The transcript is NOT persisted (same rule as the CV text, D-0025).
+    """
+    summary = meeting_mod.summarize(text, provider=ws.ai, source_label=source_label)
+    return {
+        "source_label": summary.source_label,
+        "text": summary.text,
+        "grounded": summary.grounded,
+        "provider": summary.provider,
+        "action_items": meeting_mod.extract_action_items(text),
+    }
 
 
 def debug_payload(conn: sqlite3.Connection, ws, trace_text: str, *,
@@ -721,6 +743,17 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                     else:
                         return _bad("choose a job to compare against, or paste a job description")
                     return _json(cv_payload(conn, cv_text, target_text=target, target_label=label))
+                if path == "/api/meeting":
+                    # read-only AI (reuses ws.ai); POST because the transcript is multi-line
+                    # free text. Inline like /api/debug. The transcript is NOT persisted.
+                    b = body or {}
+                    text = b.get("text")
+                    if not isinstance(text, str) or not text.strip():
+                        return _bad("paste meeting notes or a transcript to summarize")
+                    if len(text) > MAX_BODY:
+                        return _bad(f"transcript is too long (max {MAX_BODY} characters)")
+                    label = str(b.get("source_label") or "").strip()[:MAX_TITLE]
+                    return _json(meeting_payload(ws, text, source_label=label))
                 action = _POST_ACTIONS.get(path)
                 if action is None:
                     return _json({"error": "not found", "path": path}, 404)

@@ -3,8 +3,10 @@
 _Active issues, limitations, and tech debt. Resolved items move to PROGRESS_LOG/CHANGELOG._
 
 ## Limitations (by design, for now)
-- **AI is mocked.** Q&A/debug/docgen will return clearly-labeled stub output until a real
-  Claude provider is wired in (Phase 4+). No API key is required yet.
+- **AI is mocked by default.** Q&A/debug/docgen return clearly-labeled stub output unless a
+  real provider is selected. A free, local **Ollama** provider is available (v0.6.0) — opt-in via
+  Settings, no key, nothing leaves the machine. Cloud providers (Claude/OpenAI) remain unwired
+  by deliberate no-cost policy.
 - **Keyword search only.** Semantic/embedding search is deferred to a later phase; the
   architecture seam is in place (D-0004, D-0006), the embedding backend is not.
 - **Chunking is line-based, not AST-aware.** Fixed line windows (default 50) can split
@@ -12,12 +14,12 @@ _Active issues, limitations, and tech debt. Resolved items move to PROGRESS_LOG/
 - **Dashboard is action-capable (D-0018/D-0019).** `devos serve` can create/update tasks, add/edit
   notes, search, ask, and import/scan projects from the UI (loopback + CSRF-token guarded). Vendored
   React/htm live in `devos/api/static/vendor/` (committed) so the UI is fully offline; re-fetch from
-  unpkg if ever updating versions. Not yet exposed in the UI: deletes, debug/learning/career/meeting.
+  unpkg if ever updating versions. As of v0.6.0 the dashboard has full CLI parity (Meeting included).
 - **Q&A answer text is a stub.** With the default mock provider, `ask`/`explain` echo the
   assembled context/prompt (clearly labeled `[MOCK AI]`); real prose arrives when a live
   provider is configured. Retrieval, grounding, and `file:line` citations are real now.
-- **Retrieval is keyword (OR) + bm25, not semantic.** It declines only when *no* query term
-  matches anywhere; a single incidental token match yields context, leaving semantic
+- **Retrieval is keyword + bm25, not semantic.** As of v0.6.0 it is AND-first (all terms) with an
+  OR fallback, so incidental single-token grounding only happens when no tighter match exists, leaving semantic
   sufficiency to the model (instructed to decline if context is inadequate). Quality improves
   with semantic search (D-0006) and a real provider (D-0007). Line-window chunks can also
   split a function across chunks, affecting answer completeness.

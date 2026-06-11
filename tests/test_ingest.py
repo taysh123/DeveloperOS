@@ -176,3 +176,59 @@ class TestScanCli(IngestTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSecretAwareScan(unittest.TestCase):
+    """Secret-aware indexing: credential-looking files never reach the DB or index."""
+
+    def setUp(self) -> None:
+        self._prev = os.environ.get("DEVOS_HOME")
+        self._home = tempfile.TemporaryDirectory()
+        os.environ["DEVOS_HOME"] = self._home.name
+        ws = Workspace.load()
+        ws.initialize().close()
+        self.conn = ws.connect()
+        self._proj = tempfile.TemporaryDirectory()
+        self.root = Path(self._proj.name)
+
+    def tearDown(self) -> None:
+        self.conn.close()
+        if self._prev is None:
+            os.environ.pop("DEVOS_HOME", None)
+        else:
+            os.environ["DEVOS_HOME"] = self._prev
+        self._home.cleanup()
+        self._proj.cleanup()
+
+    def test_pattern_matcher(self) -> None:
+        for name in (".env", ".env.local", "server.pem", "deploy.key", "id_rsa",
+                     "id_rsa.pub", ".npmrc", "credentials.json", "API.SECRET",
+                     "service-account-prod.json", "secrets.yaml"):
+            self.assertTrue(ingest.is_secret_file(name), name)
+        for name in ("app.py", "environment.md", "keyboard.js", "monkey.txt",
+                     "requirements.txt", "envoy.yaml"):
+            self.assertFalse(ingest.is_secret_file(name), name)
+
+    def test_secret_files_are_skipped_and_counted(self) -> None:
+        (self.root / "app.py").write_text("print('ok')\n", encoding="utf-8")
+        (self.root / ".env").write_text("AWS_SECRET=hunter2\n", encoding="utf-8")
+        (self.root / "deploy.pem").write_text("-----BEGIN PRIVATE KEY-----\n", encoding="utf-8")
+        result = ingest.scan_project(self.conn, self.root, name="secrets-demo")
+        self.assertEqual(result.skipped_secrets, 2)
+        self.assertGreaterEqual(result.skipped, 2)
+        rows = self.conn.execute(
+            "SELECT rel_path FROM files WHERE project_id = ?", (result.project_id,)
+        ).fetchall()
+        paths = {r["rel_path"] for r in rows}
+        self.assertEqual(paths, {"app.py"})
+
+    def test_secret_content_never_reaches_the_index(self) -> None:
+        (self.root / "app.py").write_text("print('ok')\n", encoding="utf-8")
+        (self.root / ".env").write_text("TOP_SECRET_TOKEN=zzqqsecretzz\n", encoding="utf-8")
+        from devos.modules import index as index_mod
+        result = ingest.scan_project(self.conn, self.root, name="secrets-idx")
+        index_mod.index_project(self.conn, result.project_id)
+        hit = self.conn.execute(
+            "SELECT COUNT(*) AS c FROM chunks_fts WHERE content LIKE '%zzqqsecretzz%'"
+        ).fetchone()
+        self.assertEqual(hit["c"], 0)

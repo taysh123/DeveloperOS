@@ -1297,6 +1297,111 @@
     </div>`;
   }
 
+  // --- MEETING --------------------------------------------------------------
+  function ActionItemsBridge(props) {
+    // Turn extracted action items into tasks: review + select first, then one
+    // guarded POST per selected item (reuses /api/tasks/create — no new write path).
+    var items = props.items || [];
+    var sel = useState(items.map(function () { return true; })), checked = sel[0], setChecked = sel[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
+    var dn = useState(null), done = dn[0], setDone = dn[1];
+    var er = useState(""), err = er[0], setErr = er[1];
+
+    function toggle(i) {
+      setChecked(function (prev) {
+        var next = prev.slice(); next[i] = !next[i]; return next;
+      });
+    }
+    function createTasks() {
+      var todo = items.filter(function (_, i) { return checked[i]; });
+      if (!todo.length) { setErr("Select at least one action item."); return; }
+      setErr(""); setBusy(true); setDone(null);
+      var ok = 0;
+      // Sequential posts keep the API simple and surface the first real error.
+      var chain = todo.reduce(function (p, title) {
+        return p.then(function () {
+          return post("/api/tasks/create", { title: title }).then(function () { ok += 1; });
+        });
+      }, Promise.resolve());
+      chain.then(function () { setDone(ok); setBusy(false); })
+        .catch(function (x) { setErr(x.message + (ok ? " (" + ok + " created before the error)" : "")); setBusy(false); });
+    }
+
+    if (!items.length) return null;
+    return html`<div class="panel">
+      <h2>Action items → tasks</h2>
+      <p class="muted">Found in your notes. Untick anything you don't want, then create them as tasks.</p>
+      ${items.map(function (it, i) {
+        return html`<label class="item" key=${i} style="display:flex;gap:.5em;align-items:flex-start;cursor:pointer">
+          <input type="checkbox" checked=${checked[i]} onChange=${function () { toggle(i); }} />
+          <span>${it}</span></label>`;
+      })}
+      <div class="row">
+        <button class="btn" type="button" onClick=${createTasks} disabled=${busy || done !== null}>
+          ${busy ? "Creating…" : done !== null ? "Created ✓" : "Create selected as tasks"}</button>
+      </div>
+      ${done !== null && html`<div class="msg ok" role="status">${done} task(s) created — see the Tasks tab.</div>`}
+      <${Msg} text=${err} />
+    </div>`;
+  }
+
+  function MeetingView() {
+    var tx = useState(""), text = tx[0], setText = tx[1];
+    var lb = useState(""), label = lb[0], setLabel = lb[1];
+    var rs = useState(null), res = rs[0], setRes = rs[1];
+    var bs = useState(false), busy = bs[0], setBusy = bs[1];
+    var er = useState(""), err = er[0], setErr = er[1];
+
+    function summarize(ev) {
+      ev.preventDefault();
+      if (!text.trim()) { setErr("Paste your meeting notes or transcript first."); return; }
+      setErr(""); setBusy(true); setRes(null);
+      post("/api/meeting", { text: text, source_label: label })
+        .then(function (d) { setRes(d); setBusy(false); })
+        .catch(function (x) { setErr(x.message); setBusy(false); });
+    }
+    function clear() { setText(""); setLabel(""); setRes(null); setErr(""); }
+
+    return html`<div>
+      <form class="panel form" onSubmit=${summarize}>
+        <h2>Summarize a meeting</h2>
+        <p class="muted">Paste meeting notes or a transcript and get a summary, the decisions made,
+          and the action items — which you can turn into tasks with one click.
+          Nothing is uploaded or saved: the text stays on your machine and is not persisted.</p>
+        <div class="field">
+          <label for="mtg-label">Where is this from? (optional)</label>
+          <input id="mtg-label" value=${label} placeholder="e.g. Sprint planning — June 11"
+            onInput=${function (ev) { setLabel(ev.target.value); }} />
+        </div>
+        <div class="field">
+          <label for="mtg-text">Meeting notes or transcript</label>
+          <textarea id="mtg-text" rows="10" value=${text}
+            placeholder=${"Paste here, e.g.\nWe agreed to ship Friday.\nAction items\n- Alice fixes the login bug\n- Bob updates the docs"}
+            onInput=${function (ev) { setText(ev.target.value); }}></textarea>
+        </div>
+        <div class="row">
+          <button class="btn" type="submit" disabled=${busy}>${busy ? "Summarizing…" : "Summarize"}</button>
+          <button class="btn ghost" type="button" onClick=${clear} disabled=${busy}>Clear</button>
+        </div>
+        <${Msg} text=${err} />
+      </form>
+
+      ${busy && html`<${Empty}>Summarizing…<//>`}
+      ${res && html`<div>
+        <div class="panel">
+          <div class="panelhead"><h2>Summary${res.source_label ? " — " + res.source_label : ""}</h2>
+            <${Badge} k=${res.grounded ? "done" : "blocked"}>${res.provider}<//></div>
+          <div class="answer"><p style="white-space:pre-wrap">${res.text}</p></div>
+        </div>
+        <${ActionItemsBridge} items=${res.action_items} key=${res.text} />
+        ${res.action_items && !res.action_items.length ? html`<${Empty}>
+          No action items detected. Tip: bullets under an “Action items” heading, or lines
+          starting with “TODO:” / “Action:”, are picked up automatically.<//>` : null}
+      </div>`}
+      ${!res && !busy && html`<${Empty}>Paste your notes above and click Summarize.<//>`}
+    </div>`;
+  }
+
   // --- shell + tabs --------------------------------------------------------
   var TABS = [
     { id: "home", label: "Home" },
@@ -1307,6 +1412,7 @@
     { id: "projects", label: "Projects" },
     { id: "learning", label: "Learn" },
     { id: "career", label: "Career" },
+    { id: "meeting", label: "Meeting" },
     { id: "settings", label: "Settings" }
   ];
 
@@ -1339,6 +1445,7 @@
         ${tab === "projects" && html`<${ProjectsView} tick=${tick} reload=${reload} />`}
         ${tab === "learning" && html`<${LearningView} />`}
         ${tab === "career" && html`<${CareerView} />`}
+        ${tab === "meeting" && html`<${MeetingView} />`}
         ${tab === "settings" && html`<${SettingsView} />`}
       </main>
       <div class="footer">DeveloperOS · local-first · runs only on your machine</div>

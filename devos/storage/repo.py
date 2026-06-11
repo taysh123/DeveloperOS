@@ -483,13 +483,19 @@ def get_file_chunks(
 
 
 def find_project_for_path(conn: sqlite3.Connection, abs_path: str) -> sqlite3.Row | None:
-    """Return the project whose root_path contains abs_path (longest match wins)."""
+    """Return the project whose root_path contains abs_path (longest match wins).
+
+    Both sides are canonicalized with realpath (not just abspath): scan stores the
+    root resolve()d to its long form, while callers may pass a Windows 8.3 short
+    alias (e.g. the CI runner's C:\\Users\\RUNNERA~1 TEMP) or a symlinked path —
+    realpath makes those compare equal. Nonexistent paths pass through unchanged.
+    """
     import os as _os
-    target = _os.path.normcase(_os.path.abspath(abs_path))
+    target = _os.path.normcase(_os.path.realpath(abs_path))
     best = None
     best_len = -1
     for p in conn.execute("SELECT id, name, root_path FROM projects;").fetchall():
-        root = _os.path.normcase(_os.path.abspath(p["root_path"]))
+        root = _os.path.normcase(_os.path.realpath(p["root_path"]))
         if target == root or target.startswith(root + _os.sep):
             if len(root) > best_len:
                 best, best_len = p, len(root)

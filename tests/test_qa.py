@@ -84,6 +84,31 @@ class TestRepoRetrievalHelpers(QaTestCase):
         finally:
             conn.close()
 
+    def test_find_project_for_path_with_windows_short_path(self) -> None:
+        """GitHub's Windows runners hand tests an 8.3 short TEMP path
+        (C:\\Users\\RUNNERA~1\\...) while scan stores the root resolve()d to its
+        long form — the lookup must canonicalize both sides or it returns None."""
+        if os.name != "nt":
+            self.skipTest("Windows 8.3 short paths only")
+        import ctypes
+        long_root = self.root / "longprojectname_for_dos83_alias"
+        _write(long_root, "pkg/mod.py", "VALUE = 1\n")
+        conn = self.ws.connect()
+        try:
+            pid = ingest.scan_project(conn, long_root, name="dos83").project_id
+            buf = ctypes.create_unicode_buffer(512)
+            if not ctypes.windll.kernel32.GetShortPathNameW(str(long_root), buf, 512):
+                self.skipTest("cannot derive an 8.3 short path here")
+            short_root = buf.value
+            if os.path.normcase(short_root) == os.path.normcase(str(long_root)):
+                self.skipTest("8.3 aliases disabled on this volume")
+            row = repo.find_project_for_path(
+                conn, os.path.join(short_root, "pkg", "mod.py"))
+            self.assertIsNotNone(row)
+            self.assertEqual(row["id"], pid)
+        finally:
+            conn.close()
+
     def test_top_files_by_chunk_count(self) -> None:
         conn = self.ws.connect()
         try:
@@ -253,3 +278,50 @@ class TestExplainCli(QaTestCase):
         code, out = self._run("explain", "--project", "demo")
         self.assertEqual(code, 0)
         self.assertIn("Sources", out)
+
+
+class TestAndFirstRetrieval(unittest.TestCase):
+    """Precision upgrade: AND-matching chunks beat single-term incidental matches."""
+
+    def setUp(self) -> None:
+        self._prev = os.environ.get("DEVOS_HOME")
+        self._home = tempfile.TemporaryDirectory()
+        os.environ["DEVOS_HOME"] = self._home.name
+        ws = Workspace.load()
+        ws.initialize().close()
+        self._proj = tempfile.TemporaryDirectory()
+        root = Path(self._proj.name)
+        # One file matches BOTH terms; another matches only one (incidentally).
+        (root / "auth_flow.py").write_text(
+            "def login_session(user):\n    # token refresh handled here\n    return user\n",
+            encoding="utf-8")
+        (root / "unrelated.py").write_text(
+            "def helper():\n    return 'token'  # token mentioned once, incidentally\n",
+            encoding="utf-8")
+        self.conn = ws.connect()
+        pid = ingest.scan_project(self.conn, root, name="andtest").project_id
+        index_mod.index_project(self.conn, pid)
+
+    def tearDown(self) -> None:
+        self.conn.close()
+        if self._prev is None:
+            os.environ.pop("DEVOS_HOME", None)
+        else:
+            os.environ["DEVOS_HOME"] = self._prev
+        self._home.cleanup()
+        self._proj.cleanup()
+
+    def test_and_match_excludes_incidental_single_term_chunks(self) -> None:
+        chunks = qa.retrieve(self.conn, "token refresh")
+        self.assertTrue(chunks)
+        paths = {c.rel_path for c in chunks}
+        self.assertIn("auth_flow.py", paths)
+        self.assertNotIn("unrelated.py", paths)  # OR alone would have included it
+
+    def test_falls_back_to_or_when_and_finds_nothing(self) -> None:
+        # "token zebra": no chunk has both, but "token" exists → OR fallback grounds it.
+        chunks = qa.retrieve(self.conn, "token zebra")
+        self.assertTrue(chunks)
+
+    def test_still_declines_when_nothing_matches_at_all(self) -> None:
+        self.assertEqual(qa.retrieve(self.conn, "qqzz xxyy"), [])

@@ -4,6 +4,42 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0026 — v0.6.0: Meeting tab (slice 9) + Ollama provider + AND-first retrieval + secret-aware scan + CI
+- **Date:** 2026-06-11
+- **Context:** The dashboard's last CLI-parity gap was the Meeting surface (recorded next step after
+  D-0025), and the Settings seam (D-0022) had providers catalogued but only the offline mock wired.
+  Retrieval was OR-only (KNOWN_ISSUES) and SECURITY §2 carried a PLANNED "secret-aware indexing" item.
+  The work was built TDD in a detached working copy and merged into this repo (tree-hash verified, no
+  loss) in the v0.6.0 release session.
+- **Decision:**
+  - **Meeting tab (slice 9):** `modules/meeting.extract_action_items` (deterministic — bulleted lines
+    under an "Action items"/"Next steps" heading or `TODO:`/`Action:`/`Next step:` prefixes; **never
+    calls a provider**) + `app.py` `meeting_payload` and inline `POST /api/meeting` (multi-line
+    transcript, like `/api/debug`; transcript **not persisted**; inherits the D-0018 CSRF/Origin/JSON/
+    64 KB guards). UI: a **Meeting** tab with summary/decisions/action-items cards and an
+    `ActionItemsBridge` that creates selected items as tasks by reusing the guarded
+    `POST /api/tasks/create` — **no new write surface**.
+  - **Ollama provider:** `devos/providers/ollama.py` (`OllamaProvider.complete`/`ping`) against a local
+    daemon (`http://127.0.0.1:11434` default; `DEVOS_OLLAMA_URL`/`DEVOS_OLLAMA_MODEL`), stdlib `urllib`
+    only, registered via `providers/__init__` import (the same seam plugins use). Unreachable daemon →
+    clearly-labeled "[OLLAMA UNAVAILABLE]" `AIResult` (`meta.ok=False`) with fix instructions, never an
+    exception. **Default unchanged:** the effective provider remains the offline mock unless the user
+    deliberately selects Ollama in Settings.
+  - **AND-first retrieval:** `qa.retrieve` tries `op="AND"` first (multi-term queries only) and falls
+    back to `op="OR"`, preserving the old recall while strongly preferring tight grounding.
+  - **Secret-aware scan:** `ingest.SECRET_FILE_PATTERNS` + `is_secret_file` skip credential-looking
+    files **before stat/read**; `ScanResult.skipped_secrets` reports the count (closes the SECURITY §2
+    PLANNED item).
+  - **CI:** `.github/workflows/ci.yml` — the stdlib unittest suite on every push/PR, matrix
+    py3.11–3.13 × Linux/Windows.
+  - Version **0.5.0 → 0.6.0**.
+- **Rationale:** Closes CLI parity and ships the first real provider without breaking the no-cost,
+  local-first, offline-by-default posture (SECURITY §0/§1): Ollama is local/free/keyless and opt-in;
+  the deterministic extractor plus CV-style non-persistence keep the new surface minimal; AND-first
+  improves grounding precision exactly where a real model benefits; secret skipping closes a recorded
+  gap before any real model ever sees indexed text.
+- **Status:** Accepted (v0.6.0).
+
 ## D-0025 — Dashboard Career tab (`/api/jobs*`, `/api/cv`)
 - **Date:** 2026-06-03
 - **Context:** The Career Assistant (`modules/career` + `repo` `job_leads` CRUD) — job-lead tracking,
