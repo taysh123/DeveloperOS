@@ -3,7 +3,12 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
-_Nothing yet._
+### Fixed
+- **Meeting tab crash.** Rendering a meeting summary crashed the whole dashboard (blank page) because of an invalid string `style` prop that had shipped unnoticed since the Meeting tab landed — browser rendering was never part of that slice's smoke test. Found by the new screenshot automation, fixed, and now guarded by a regression test.
+
+### Documentation
+- **Real screenshot gallery.** The README now shows nine genuine captures of the running product — the standalone desktop window, Home with the welcome guide, Project Deep Dive, Search & Ask with grounded results, Learning Center, Career Center, Meeting summary with the action-items bridge, Settings & AI, and the Windows installer. Captured by a new dev-time tool (`tools/take_screenshots.py`, Playwright) that drives the real dashboard through normal flows; a test keeps every referenced image present.
+- README status/roadmap sections updated for the v1.0.0 milestone (D-0034).
 
 ## [0.9.0] — 2026-06-12 ("DeveloperOS in its own window")
 > Why this release exists: slice 16 changed how launching DeveloperOS *feels* — a standalone

@@ -1500,7 +1500,7 @@
         <div class="panel">
           <div class="panelhead"><h2>Summary${res.source_label ? " — " + res.source_label : ""}</h2>
             <${Badge} k=${res.grounded ? "done" : "blocked"}>${res.provider}<//></div>
-          <div class="answer"><p style="white-space:pre-wrap">${res.text}</p></div>
+          <div class="answer"><p>${res.text}</p></div>
         </div>
         <${ActionItemsBridge} items=${res.action_items} key=${res.text} />
         ${res.action_items && !res.action_items.length ? html`<${Empty}>

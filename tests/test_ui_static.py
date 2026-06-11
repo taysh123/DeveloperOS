@@ -62,6 +62,23 @@ class TestA11yContract(unittest.TestCase):
         self.assertIn('lang="en"', HTML)
         self.assertIn('name="viewport"', HTML)
 
+    def test_no_string_style_props(self) -> None:
+        # React requires the style prop to be an object; a string style throws at
+        # render time and unmounts the whole SPA (this crashed the Meeting tab —
+        # found by the screenshot automation). Use CSS classes instead.
+        self.assertNotIn('style="', JS, "string style prop crashes React at render")
+
+    def test_readme_screenshots_exist(self) -> None:
+        # Every screenshot the README references must be committed (D-0034) —
+        # the gallery is real captures, never broken links or fabrications.
+        root = STATIC_DIR.parents[2]
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        refs = re.findall(r"docs/screenshots/([\w.-]+\.png)", readme)
+        self.assertTrue(refs, "README should reference the screenshot gallery")
+        for name in refs:
+            self.assertTrue((root / "docs" / "screenshots" / name).is_file(),
+                            f"README references missing screenshot {name}")
+
 
 class TestOnboardingContract(unittest.TestCase):
     """Slice 11 (D-0028): welcome + live get-started checklist on Home."""

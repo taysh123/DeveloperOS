@@ -18,6 +18,16 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Final polish complete (D-0034): real screenshot gallery + v1.0 declared.** Nine genuine
+captures (`docs/screenshots/`) made by `tools/take_screenshots.py` (dev-time Playwright driving
+the real dashboard through normal flows; native window + installer via Win32 `PrintWindow`).
+The pass **found and fixed a shipped bug**: the Meeting tab crashed the SPA on render (string
+`style` prop from slice 9 — that slice's smoke was API-only); guarded by
+`test_no_string_style_props` + `test_readme_screenshots_exist`. README: gallery + v1.0 status.
+TDD **363/363** (+2). **v1.0 declared per the FUTURE_ROADMAP §1 checklist (all Core items
+shipped) — D-0034.**
+
+## Previous milestone
 **Slice 16 complete (D-0033): native desktop shell via Chromium app-mode window.** `devos app` /
 `DeveloperOS.exe` open a **standalone app window** (Edge-first `--app=` mode; Chrome fallback;
 default-browser fallback with honest note; `--browser` escape hatch). `_find_app_browser` (App
@@ -103,17 +113,22 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-**v0.9.0 released** ("DeveloperOS in its own window" — slice 16; tag + GitHub release with
-window-mode Setup/exe assets). Final completion phase in progress: real screenshot gallery
-(Playwright dev-time tool) → README/docs final polish → **v1.0.0** (justified per the
-FUTURE_ROADMAP §1 Core checklist — to be recorded as D-0034). After v1.0.0, all further work
-(Plugins UI, embeddings, cloud providers) is optional/on-request.
+Merge `feat/final-polish`, then cut **v1.0.0** (release branch: bump, CHANGELOG `[1.0.0]`, PR,
+merge, rebuild assets, final silent install→launch→uninstall validation, tag, GitHub release
+with assets) and set the GitHub repo description/topics. **After v1.0.0 the project is
+complete** — all further work (FUTURE_ROADMAP v2.0 ideas: Safe Action Agent, semantic search,
+editor presence, Plugins UI, cloud providers) is optional and on-request only.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Final polish (2026-06-12): screenshot gallery + v1.0 declaration (D-0034). 9 real captures
+      via `tools/take_screenshots.py` (dev-time Playwright; PrintWindow for native shots); README
+      gallery + v1.0 status; **fixed shipped Meeting-tab SPA crash** (string `style` prop from
+      slice 9; API-only smoke missed it) + 2 guard tests. TDD **363/363**. v0.9.0 released
+      earlier same day (window-mode assets).
 - [x] Slice 16 (2026-06-12): native desktop shell (D-0033). App-mode window (Edge-first
       `--app=`, Chrome fallback, default-browser fallback, `--browser` flag) wired into the
       D-0030 launcher; `index.html` title → "DeveloperOS". pywebview/Tauri/Electron rejected.
