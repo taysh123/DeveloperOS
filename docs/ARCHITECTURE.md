@@ -178,6 +178,9 @@ navigation** (Home · Tasks · Notes · Search & Ask · Debug · Projects) and a
 `static/styles.css` is the **design-system source of truth** (D-0027): spacing/radius/type/motion
 tokens + semantic colors, dark-only, offline system fonts; the a11y contract (WAI-ARIA tabs, skip
 link, alert/status messaging, `Loading`) is pinned by `tests/test_ui_static.py`.
+Home opens with the **onboarding `WelcomeGuide`** (D-0028): a live get-started checklist whose
+done-state is data-backed from `/api/overview` or click-backed via a localStorage UI preference
+(`devos.onboarding`) — frontend-only, no API/state-store change.
 The Projects tab adds a confirm-before-write import/scan flow + project detail view (with a **Study this
 project** → Project Deep Dive sub-view: Start here / Key files / How this works / Questions / Interview
 prep + project-scoped Ask); the Debug tab adds a paste → Analyze → result-cards flow. `devos serve`

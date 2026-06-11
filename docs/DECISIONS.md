@@ -4,6 +4,32 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0028 — Onboarding: welcome + live get-started checklist on Home (slice 11)
+- **Date:** 2026-06-11
+- **Context:** FUTURE_ROADMAP records "Onboarding that earns trust in 60 seconds" [Core]:
+  folder → scan/index → first question, privacy/cost stated up front. A new user previously
+  opened the dashboard to four zero-stat cards with no explanation. Patterns considered:
+  first-run wizard (blocks exploration, re-embeds surfaces in a modal), guided tour (brittle
+  tooltip positioning, no offline tour lib), empty-state-only hints (undiscoverable later).
+- **Decision:** A `WelcomeGuide` section at the top of **Home**: two plain-language sentences
+  (privacy/cost up front — "everything stays on your computer, no account, no API key") plus a
+  six-step **live checklist** that deep-links into existing tabs via an `App.go(tabId)` helper
+  (which also moves focus to `#main`, matching the slice-10 focus pattern). Completion state is
+  **data-backed where the data exists** (`/api/overview`: project imported, task/note created —
+  no new endpoint) and **click-backed otherwise** (search/ask/learn/settings, recorded in
+  localStorage). Visibility rule: **always shown while the workspace is empty** (it *is* the
+  Home empty state; no Hide button then), dismissible once data exists, with a persistent
+  "Show the getting-started guide" link as the resurface path.
+- **State storage:** one localStorage key (`devos.onboarding`, `{hidden, clicked{…}}`), wrapped
+  in try/catch for storage-less browsers. Chosen over extending the `POST /api/settings`
+  whitelist: it is a per-browser UI preference, not workspace data — **zero new write surface,
+  CSRF/security posture untouched** (SECURITY.md intentionally unchanged).
+- **Rationale:** Reuses every existing surface (ScanFlow import, Search & Ask, Learn, Tasks/
+  Notes, Settings) instead of building a parallel onboarding engine; the checklist stays useful
+  after first run (live progress) instead of being a one-shot modal; honest copy reinforces the
+  local-first/no-cost posture at the exact moment trust is formed.
+- **Status:** Accepted.
+
 ## D-0027 — Dashboard design system + accessibility contract (slice 10)
 - **Date:** 2026-06-11
 - **Context:** v0.6.0 made the dashboard feature-complete; the recorded next step was a
