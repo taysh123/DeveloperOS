@@ -4,6 +4,38 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0033 — Native desktop shell via Chromium app-mode window (slice 16)
+- **Date:** 2026-06-12
+- **Context:** v0.8.0 completed the install story, but launching opened a browser **tab** with an
+  address bar. Target: a standalone app window (VS Code/Obsidian feel) without Electron and
+  without rebuilding the dashboard.
+- **Options evaluated:**
+  - **Chromium app-mode window (Edge-first)** — `msedge --app=<loopback URL>`: zero runtime size
+    (Edge ships with Windows 10/11; Chrome fallback), zero dependencies (stdlib `winreg` +
+    `subprocess`), ~40 lines in the existing launcher. Standalone window, own taskbar entry,
+    title from the page `<title>`, geometry remembered by the browser per app URL. **Chosen.**
+  - *pywebview / WebView2 bindings* — real native window but a **runtime pip dependency**
+    (violates the stdlib-only rule, D-0005) plus packaging quirks. **Rejected.**
+  - *Tauri* — Rust toolchain + Python sidecar for window chrome app mode gives free. **Rejected
+    again** (consistent with D-0029); *Electron* remains rejected outright.
+- **Decision:** `devos app` (and therefore `DeveloperOS.exe`) opens the dashboard as an app-mode
+  window by default: `_find_app_browser()` (App Paths registry → standard locations; Edge then
+  Chrome) → `_open_window()` (`--app=URL`) → fallback to the default browser with an honest
+  one-line note. `--browser` forces a plain tab; `--no-browser` unchanged; the D-0030 lifecycle
+  (probe → reuse-or-start → ready-wait → open → serve → Ctrl+C) is otherwise untouched.
+  `index.html` `<title>` is now "DeveloperOS" (it is the window title).
+- **Honest limits (documented):** minimum window size is not controllable in app mode; window
+  icon/title come from the page (favicon + title; the installed PWA gives the full icon
+  treatment); non-Windows falls back to the default browser; closing the window does not stop
+  the server (the launcher console/Ctrl+C owns the server lifetime — same as before).
+- **Verification:** live process checks — `devos app` and the rebuilt `DeveloperOS.exe` both
+  spawned a real `msedge.exe` carrying `--app=http://127.0.0.1:<port>` while the dashboard
+  served; installer pipeline rebuilt. Suite 361/361 (+5 in `tests/test_app_cmd.py`).
+- **Security:** zero new surface — the "shell" is a browser process pointed at the same
+  loopback-only URL; SECURITY.md unchanged.
+- **Status:** Accepted. Desktop ladder step E is hereby **resolved by a lighter path**; Tauri
+  stays parked indefinitely unless native tray/dialog integration ever becomes a real need.
+
 ## D-0032 — Windows installer + manual update strategy (desktop ladder step D, slice 15)
 - **Date:** 2026-06-11
 - **Context:** D-0029 step D: turn the working `DeveloperOS.exe` (D-0031) into a normal Windows

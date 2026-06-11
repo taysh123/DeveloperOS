@@ -155,9 +155,15 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   data** (`%APPDATA%\DeveloperOS`), manual update path via GitHub Releases (no auto-update code).
   Live-verified end-to-end (silent install → installed exe serves the dashboard → silent
   uninstall removes app+shortcut, data survives). LICENSE (MIT) added. SECURITY unchanged.
+- ✅ **Slice 16 — Native desktop shell (app-mode window)** (D-0033): `devos app` and
+  `DeveloperOS.exe` now open a **standalone app window** (Edge/Chrome `--app=` mode — no browser
+  chrome, no address bar, own taskbar entry) with default-browser fallback and a `--browser`
+  escape hatch. Zero new runtime/dependency; dashboard/CLI/installer untouched; SECURITY
+  unchanged. Live-verified (real `--app=` window process for both the command and the exe).
+  Desktop ladder **complete** (E resolved by the lighter path; Tauri parked).
 - ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** Plugins/Extensions UI (surface `devos plugins`) ·
-  embeddings/semantic search behind the D-0006 seam · desktop ladder step E (Tauri)
-  **only-if-justified** · optional cloud provider (Claude) **only if the no-cost policy changes**.
+  embeddings/semantic search behind the D-0006 seam · optional cloud provider (Claude)
+  **only if the no-cost policy changes**.
 
 ---
 
