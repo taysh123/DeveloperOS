@@ -4,6 +4,36 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0034 — Declaring v1.0: the recorded vision is shipped
+- **Date:** 2026-06-12
+- **Context:** FUTURE_ROADMAP §1 has carried the definition of v1.0 since slice 5. Honest
+  check of every item:
+  - ✅ **One real AI provider, opt-in and safe [Core]** — Ollama (v0.6.0): local-only, keyless,
+    selecting it in Settings is the explicit consent step; offline mock stays the default; cloud
+    providers deliberately unwired (no-cost policy).
+  - ✅ **Dashboard = CLI parity [Core]** — Meeting tab closed the last gap (v0.6.0, D-0026).
+  - ✅ **Trustworthy grounding everywhere [Core]** — retrieval-computed `file:line` citations;
+    every AI surface declines when ungrounded.
+  - ✅ **Onboarding in 60 seconds [Core]** — slice 11 welcome + live checklist (D-0028).
+  - ✅ **Polish & accessibility [High]** — slice 10 design system + WAI-ARIA (D-0027; dark-only
+    is a recorded deliberate choice, not a gap).
+  Plus, beyond the original vision: a complete desktop distribution ladder (D-0029…D-0033),
+  363 TDD tests on a 6-job CI matrix, releases with downloadable assets, and a real screenshot
+  gallery (`tools/take_screenshots.py`, dev-time Playwright; every image a genuine capture of
+  the running app — native window/installer shots via Win32 `PrintWindow`).
+- **Decision:** ship **v1.0.0** as the polished final product. Project status becomes
+  **complete**; everything in FUTURE_ROADMAP (Safe Action Agent, semantic search, editor
+  presence, Plugins UI, cloud providers) is explicitly optional v2.0-era work, on request only.
+- **Notable find during the screenshot pass:** the Meeting tab **crashed the whole SPA** when a
+  summary rendered — a string `style="…"` prop (React requires an object) shipped in slice 9 and
+  was never caught because that slice's smoke was API-level, not browser-rendered. Fixed (the
+  CSS class already carried the style); guarded by `test_no_string_style_props`; a second guard
+  (`test_readme_screenshots_exist`) keeps the gallery honest. Lesson recorded: UI slices need at
+  least one rendered-browser check, not only socket smokes.
+- **What stays intentionally out of 1.0:** code signing (cost), Plugins/Extensions UI surface,
+  embeddings backend, per-tab deep links, light theme.
+- **Status:** Accepted.
+
 ## D-0033 — Native desktop shell via Chromium app-mode window (slice 16)
 - **Date:** 2026-06-12
 - **Context:** v0.8.0 completed the install story, but launching opened a browser **tab** with an

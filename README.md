@@ -31,7 +31,18 @@ DeveloperOS is a **personal operating system for developers**: point it at your 
 
 ## Screenshots
 
-*Placeholder — screenshots to be added. Planned shots: Dashboard Home (welcome guide + overview), Project Deep Dive, Learning Center, Career Center, Meeting Summary, Settings & AI management, and the Windows installer / Start-Menu launch experience. Run `devos app` to see all of it live in the meantime.*
+All screenshots are real captures of the running app (offline mock provider — exactly what ships).
+
+**The desktop app window** — no browser chrome, just DeveloperOS:
+
+![DeveloperOS desktop window](docs/screenshots/desktop-window.png)
+
+| | |
+|---|---|
+| **Home** — welcome guide + live overview ![Home](docs/screenshots/dashboard-home.png) | **Project Deep Dive** — study any codebase ![Deep Dive](docs/screenshots/projects-deep-dive.png) |
+| **Search & Ask** — grounded answers with `file:line` ![Search & Ask](docs/screenshots/search-ask.png) | **Learning Center** — explanations from your code ![Learning](docs/screenshots/learning-center.png) |
+| **Career Center** — job leads, CV check, interview prep ![Career](docs/screenshots/career-center.png) | **Meeting Summary** — transcript → action items → tasks ![Meeting](docs/screenshots/meeting-summary.png) |
+| **Settings & AI** — providers, privacy, system status ![Settings](docs/screenshots/settings-ai.png) | **Windows installer** — per-user, clean uninstall ![Installer](docs/screenshots/installer.png) |
 
 ## Quick start
 
@@ -136,17 +147,17 @@ Full security model: [`docs/SECURITY.md`](docs/SECURITY.md).
 
 | | |
 |---|---|
-| **Version** | v0.8.0 — "DeveloperOS as a desktop product" (native app window already on `main`) |
-| **Milestone** | Roadmap phases 0–9 complete · dashboard slices 1–16 shipped · **desktop ladder complete** (PWA → launcher → exe → installer → app window) |
-| **Tests** | 361 (stdlib unittest, TDD) |
+| **Version** | v1.0.0 — the recorded v1.0 vision is fully shipped (D-0034) |
+| **Milestone** | Roadmap phases 0–9 complete · dashboard slices 1–16 shipped · **desktop ladder complete** (PWA → launcher → exe → installer → app window) · **project complete** |
+| **Tests** | 363 (stdlib unittest, TDD) |
 | **CI** | GitHub Actions — Python 3.11/3.12/3.13 × Linux + Windows on every push/PR |
 | **Platforms** | Windows-first (installer/exe); dashboard & CLI run anywhere Python ≥ 3.11 does |
 
 ## Roadmap
 
 - **Done**: CLI foundation (scan/index/search/ask/explain/debug/tasks/memory/docgen/learning/career/plugins/meeting) → full-parity dashboard in 11 slices → design system + accessibility → onboarding → first real AI provider (Ollama) → CI → PWA → launcher → `DeveloperOS.exe` → Windows installer → **standalone app window**.
-- **Current**: desktop ladder complete; next release (v0.9.0) pending.
-- **Upcoming**: Plugins/Extensions UI · semantic search behind the prepared embeddings seam · real screenshots · cloud AI providers only if the no-cost policy ever changes.
+- **Current**: **v1.0.0 — the recorded v1.0 vision is complete** (one real opt-in provider, CLI parity, grounding everywhere, 60-second onboarding, polish & accessibility — see D-0034).
+- **Future (optional, on request)**: the v2.0 idea bank in [`docs/FUTURE_ROADMAP.md`](docs/FUTURE_ROADMAP.md) — Safe Action Agent, semantic search behind the prepared embeddings seam, editor/terminal presence, Plugins UI; cloud AI providers only if the no-cost policy ever changes.
 
 Live state: [`docs/AGENT_STATE.md`](docs/AGENT_STATE.md) · plan: [`docs/ROADMAP.md`](docs/ROADMAP.md) + [`docs/FUTURE_ROADMAP.md`](docs/FUTURE_ROADMAP.md).
 

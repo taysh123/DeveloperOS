@@ -58,6 +58,10 @@ _Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Final polish + v1.0 (D-0034) ✅
+- [x] **Real screenshot gallery** (9 captures → `docs/screenshots/`): `tools/take_screenshots.py` (dev-time Playwright drives the real dashboard through normal flows — seeded temp workspace, real scan of this repo, real searches/asks/summaries) + Win32 `PrintWindow` for the native window and installer wizard. All images genuine; `test_readme_screenshots_exist` keeps the gallery honest.
+- [x] **Shipped bug found & fixed by the pass:** Meeting tab crashed the whole SPA on summary render (string `style` prop, slice 9 — its smoke was API-only). One-line fix (CSS class already carried the style) + `test_no_string_style_props` guard. README finalized (gallery + v1.0 status/roadmap). 363 tests. **v1.0.0 declared per the FUTURE_ROADMAP §1 Core checklist (D-0034).**
+
 ## Post-roadmap: Slice 16 — Native desktop shell (app-mode window) ✅
 - [x] `devos app` / `DeveloperOS.exe` open a **standalone desktop window** (no browser chrome/address bar, own taskbar entry): `_find_app_browser` (App Paths registry + standard paths; **Edge first** — ships with Windows 10/11; Chrome fallback; stdlib `winreg`), `_open_window` (`--app=URL`), `_open_ui` (default-browser fallback with honest note), `--browser` flag for a plain tab; `--no-browser` unchanged; D-0030 lifecycle untouched. `index.html` `<title>` → "DeveloperOS" (= window title).
 - [x] **Evaluation recorded (D-0033):** pywebview/WebView2 bindings rejected (runtime pip dep vs stdlib-only D-0005); Tauri rejected again (toolchain for chrome we get free); Electron stays rejected. **Zero new runtime/deps/surface; SECURITY unchanged.** Live-verified: real `msedge --app=` process for both the command and the rebuilt exe; installer pipeline rebuilt. 361 tests (+5). Desktop ladder **complete (A–E)**.

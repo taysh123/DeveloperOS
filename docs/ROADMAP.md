@@ -161,9 +161,14 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   escape hatch. Zero new runtime/dependency; dashboard/CLI/installer untouched; SECURITY
   unchanged. Live-verified (real `--app=` window process for both the command and the exe).
   Desktop ladder **complete** (E resolved by the lighter path; Tauri parked).
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** Plugins/Extensions UI (surface `devos plugins`) ·
-  embeddings/semantic search behind the D-0006 seam · optional cloud provider (Claude)
-  **only if the no-cost policy changes**.
+- ✅ **Final polish + v1.0 (D-0034):** real screenshot gallery (9 captures via dev-time
+  Playwright/`tools/take_screenshots.py`; the pass found and fixed a shipped Meeting-tab SPA
+  crash), README finalized, **v1.0.0 declared and released** — every Core item of the recorded
+  v1.0 vision (FUTURE_ROADMAP §1) is shipped.
+
+**The roadmap is complete.** All further work (FUTURE_ROADMAP v2.0 ideas: Safe Action Agent,
+semantic search, editor/terminal presence, Plugins UI, cloud providers under a changed no-cost
+policy) is optional and on-request only.
 
 ---
 
