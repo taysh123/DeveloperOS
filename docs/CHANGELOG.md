@@ -3,8 +3,12 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
+_Nothing yet._
+
+## [0.6.1] — 2026-06-11 ("polished + accessible")
 ### Changed
 - **Dashboard design system + accessibility pass (slice 10).** The dashboard now feels like one product instead of ten screens: a consistent spacing/typography/radius/motion token system, slightly larger base text (15px, nothing below 12px), comfortable button/input sizes (larger still on touch screens), and gentle 150ms hover/press feedback that is **fully disabled if your system asks for reduced motion**. Accessibility got a real upgrade: a **"Skip to content"** link for keyboard users, the tab bar now works with **arrow keys** (Left/Right/Home/End) and announces itself properly to screen readers, error messages **interrupt** screen readers while confirmations announce politely, every loading state announces itself (with a small spinner), delete confirmations move keyboard focus into the confirm step and **Escape backs out**, and form errors are linked to the field they belong to. No features added or removed, no new endpoints, and the security posture is untouched — everything remains local-first and offline.
+- **Project version bumped to 0.6.1**; shown in `devos --version` and the dashboard's System status.
 
 ## [0.6.0] — 2026-06-11 ("feature-complete dashboard + first real AI")
 ### Added
