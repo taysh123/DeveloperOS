@@ -3,7 +3,8 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
-_Nothing yet._
+### Documentation
+- **README overhauled** into an accurate product homepage: value proposition, feature matrix (Understand/Learn/Build/Grow/System), quick start covering installer/portable-exe/pip/`devos app`, desktop-experience and update story, architecture diagram, AI philosophy, privacy & security, honest current-status table (v0.8.0, 356 tests, CI matrix), roadmap summary, contributing guide, and a screenshots placeholder (no fabricated images). Replaces text that still described the project as "early foundation (Phase 1)".
 
 ## [0.8.0] — 2026-06-11 ("DeveloperOS as a desktop product")
 > Why this release exists: slices 13–15 complete the desktop story that v0.7.0's PWA
