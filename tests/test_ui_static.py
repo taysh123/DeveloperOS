@@ -7,7 +7,9 @@ covered by the live socket smoke and a manual keyboard pass per slice.
 """
 from __future__ import annotations
 
+import json
 import re
+import struct
 import unittest
 
 from devos.api.app import STATIC_DIR
@@ -84,6 +86,64 @@ class TestOnboardingContract(unittest.TestCase):
     def test_welcome_styles_defined(self) -> None:
         self.assertIn(".welcome", CSS)
         self.assertIn(".checklist", CSS)
+
+
+def _png_size(path) -> tuple[int, int]:
+    """Width/height from a PNG's IHDR (validates the signature too)."""
+    data = path.read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise AssertionError(f"{path.name} is not a PNG")
+    return struct.unpack(">II", data[16:24])
+
+
+class TestPwaContract(unittest.TestCase):
+    """Slice 12 (D-0029): PWA foundation — manifest + icon system + installability."""
+
+    def setUp(self) -> None:
+        self.manifest_path = STATIC_DIR / "manifest.webmanifest"
+
+    def test_manifest_exists_with_install_criteria(self) -> None:
+        self.assertTrue(self.manifest_path.is_file(), "manifest.webmanifest required")
+        m = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(m["name"], "DeveloperOS")
+        self.assertEqual(m["short_name"], "DevOS")
+        self.assertEqual(m["start_url"], "/")
+        self.assertEqual(m["scope"], "/")
+        self.assertEqual(m["display"], "standalone")
+        self.assertEqual(m["theme_color"], "#0f1117")
+        self.assertEqual(m["background_color"], "#0f1117")
+
+    def test_manifest_icons_cover_192_and_512_plus_maskable(self) -> None:
+        m = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        sizes = {i["sizes"] for i in m["icons"]}
+        self.assertIn("192x192", sizes)
+        self.assertIn("512x512", sizes)
+        self.assertTrue(any(i.get("purpose") == "maskable" for i in m["icons"]),
+                        "a maskable icon is required for good Android/desktop masking")
+
+    def test_icon_files_are_real_pngs_with_declared_sizes(self) -> None:
+        m = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        for icon in m["icons"]:
+            rel = icon["src"].replace("/static/", "", 1)
+            path = STATIC_DIR / rel
+            self.assertTrue(path.is_file(), f"{icon['src']} missing")
+            w, h = _png_size(path)
+            self.assertEqual(f"{w}x{h}", icon["sizes"], f"{path.name} size mismatch")
+
+    def test_index_html_wires_pwa_head_links(self) -> None:
+        self.assertIn('rel="manifest"', HTML)
+        self.assertIn('name="theme-color"', HTML)
+        self.assertIn("favicon.svg", HTML)
+        self.assertIn('rel="apple-touch-icon"', HTML)
+
+    def test_content_types_cover_pwa_assets(self) -> None:
+        from devos.api.app import _CONTENT_TYPES
+        self.assertEqual(_CONTENT_TYPES.get(".png"), "image/png")
+        self.assertEqual(_CONTENT_TYPES.get(".webmanifest"),
+                         "application/manifest+json")
+
+    def test_favicon_svg_exists(self) -> None:
+        self.assertTrue((STATIC_DIR / "icons" / "favicon.svg").is_file())
 
 
 if __name__ == "__main__":
