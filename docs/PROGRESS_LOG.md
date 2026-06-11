@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-11 — Session 25: Dashboard slice 11 — onboarding (welcome + live get-started checklist)
+- v0.6.1 released earlier today; recorded next step = onboarding first-run flow. `/plan` + brainstorming (approved): compared wizard / guided tour / empty-state-only / hybrid; chose **welcome panel + live checklist on Home** (user-approved) — fulfils FUTURE_ROADMAP "trust in 60 seconds" (folder → scan → first question, privacy up front). Branched `feat/dashboard-onboarding`.
+- **Key reuse finding:** `/api/overview` already carries all data-backed completion state (projects, task_counts, where_i_left_off.memory) → **zero backend changes; zero new endpoints; SECURITY intentionally unchanged**.
+- **TDD.** 6 new contract tests in `tests/test_ui_static.py` (red first): `WelcomeGuide`, `devos.onboarding` storage key, "Get started" + privacy copy, checklist markup, `aria-labelledby` region wiring, `.welcome`/`.checklist` styles.
+- **Frontend:** `WelcomeGuide` on Home — 6 deep-linking steps (import → search → ask → learn → tasks/notes → settings) with live done-state (data-backed via overview; click-backed via localStorage for the read-only surfaces); "N of 6 done"; **always visible while the workspace is empty**, "Hide this guide" once data exists, muted "Show the getting-started guide" resurface link. `App.go(tabId)` switches tab + focuses `#main` (slice-10 focus pattern). Token-based CSS (`.welcome`, `.checklist`, `.stepmark`, `.steplink`). D-0028.
+- **verification-before-completion:** `node --check` OK; full suite **334/334** (+6); live socket smoke on a fresh `DEVOS_HOME`: onboarding markers + styles served, empty overview (guide visible on first run), guarded write 201-with-token / 403-without.
+- **Git:** feat + docs commits; PR → `main` after CI. No tag — recommend bundling with the next slice(s) for the next version bump. Scope held: no wizard, no tour, no new dashboard features.
+
 ## 2026-06-11 — Session 24: Dashboard slice 10 — design system + accessibility pass
 - v0.6.0 released earlier today; AGENT_STATE's recorded next step was the design-system/a11y pass. `/plan` (approved): refine in place, no new features/endpoints, dark-only + offline fonts. Branched `feat/dashboard-design-system` off `main`.
 - **Skills applied:** ui-ux-pro-max `--design-system` run for "developer productivity dashboard, dark, minimal" → validates Dark/OLED, dark-only (light-default = anti-pattern for this product type), visible focus, reduced-motion, 150–300ms motion. Its Google-Fonts suggestion rejected (offline constraint) — system font stack kept.

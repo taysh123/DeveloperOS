@@ -58,6 +58,10 @@ _Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 11 — Onboarding / first-run ✅
+- [x] **WelcomeGuide** on Home: plain-language welcome with **privacy/cost up front** ("everything stays on your computer — no account, no API key, nothing is uploaded") + live six-step **Get started** checklist deep-linking into existing tabs (import project → search → ask → learn → tasks/notes → settings). Done-state: data-backed from `/api/overview` (projects / task_counts / where_i_left_off.memory) or click-backed via localStorage (`devos.onboarding`, try/catch-safe). Always shown while the workspace is empty (it is the Home empty state); "Hide this guide" once data exists + "Show the getting-started guide" resurface link. `App.go(tabId)` switches tab and focuses `#main`.
+- [x] **Zero new endpoints / no SECURITY change** (per-browser UI preference only; all linked flows keep their existing validation). Token-based CSS (`.welcome`/`.checklist`/`.stepmark`/`.steplink`). D-0028. 334 tests (+6 contract tests), live socket smoke verified on a fresh DEVOS_HOME.
+
 ## Post-roadmap: Dashboard slice 10 — Design system + accessibility pass ✅
 - [x] **Design tokens** in `styles.css` (single design source of truth): spacing `--space-1..6`, radii, type scale (15px body, 12px floor), motion (`--dur-fast/med` + ease, `prefers-reduced-motion` collapse), `--focus-ring`, semantic colors (`--danger/-soft`, `--success/-soft`, `--warn`); button/input/tab min-heights (44px on `pointer: coarse`), `:active` press states, 150ms transitions. **Dark-only by choice; offline system fonts (no CDN).**
 - [x] **A11y pass** in `app.js`: WAI-ARIA tabs (`aria-controls` + `role="tabpanel"` + roving tabindex + Arrow/Home/End), skip link → focusable `<main>`, semantic `<footer>`, `Msg` errors → `role="alert"`, shared `Loading` primitive (`role="status"` + spinner), `ConfirmDelete` focus management + Escape, `aria-hidden` glyphs, `aria-invalid`/`aria-describedby` on add-form errors. **No new endpoints/surface; SECURITY unchanged.** D-0027. 328 tests (+10 `test_ui_static.py` contract tests), live smoke verified.
@@ -105,7 +109,7 @@ _Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021…D-0027): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), ~~Meeting Summary tab~~ ✅ (slice 9, v0.6.0), ~~first real AI provider (Ollama-first)~~ ✅ (v0.6.0), ~~design-system/a11y polish~~ ✅ (slice 10), then onboarding first-run flow and Plugins/Extensions UI.
+- [ ] Dashboard (roadmap order, D-0021…D-0027): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), ~~Meeting Summary tab~~ ✅ (slice 9, v0.6.0), ~~first real AI provider (Ollama-first)~~ ✅ (v0.6.0), ~~design-system/a11y polish~~ ✅ (slice 10), ~~onboarding first-run flow~~ ✅ (slice 11), then Plugins/Extensions UI.
 - [ ] Wire a real AI provider behind `providers.ai`: ~~Ollama~~ ✅ (v0.6.0); Claude/OpenAI remain **only if the no-cost policy changes**.
 - [ ] Meeting: audio/STT (~~action-item → tasks~~ ✅ v0.6.0).
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

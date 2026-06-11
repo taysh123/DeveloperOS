@@ -18,6 +18,15 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Dashboard slice 11 complete (D-0028): onboarding — welcome + live get-started checklist.**
+`WelcomeGuide` on Home: privacy/cost stated up front; 6 deep-linking steps (import → search → ask →
+learn → tasks/notes → settings) with live done-state — data-backed from `/api/overview` (projects /
+task_counts / where_i_left_off.memory), click-backed via localStorage (`devos.onboarding`) for the
+read-only surfaces. Always visible while the workspace is empty; dismissible after; resurface link.
+`App.go(tabId)` deep links + focuses `#main`. **Zero new endpoints; SECURITY unchanged.** TDD
+**334/334** (+6 contract tests); live smoke verified (fresh-home markers + guarded write 201/403).
+
+## Previous milestone
 **Dashboard slice 10 complete (D-0027): design system + accessibility pass.** `styles.css` is the
 single design source of truth — token scales (spacing/radius/type/motion + semantic colors,
 `--focus-ring`), 15px body / 12px floor, button/input/tab min-heights (44px on coarse pointers),
@@ -39,16 +48,22 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-**v0.6.1 released** (slice 10 merged via PR #9; version bumped; annotated tag `v0.6.1` + GitHub
-release). Next, per FUTURE_ROADMAP: onboarding first-run flow; Plugins/Extensions UI; optional
-Claude provider **only when the no-cost policy changes** (env key + consent + audit log are already
-specified); embeddings behind the D-0006 seam.
+Merge `feat/dashboard-onboarding` (slice 11 PR) to `main` once CI is green. Next, per
+FUTURE_ROADMAP: **Plugins/Extensions UI** (surface `devos plugins`); then embeddings/semantic
+search behind the D-0006 seam; optional Claude provider **only when the no-cost policy changes**
+(env key + consent + audit log are already specified). Bundle the next version bump/tag with
+whichever slice lands next (no tag for onboarding alone).
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Dashboard slice 11 (2026-06-11): onboarding. `WelcomeGuide` on Home (privacy/cost up front;
+      6 deep-linking steps with live done-state: data-backed from `/api/overview`, click-backed via
+      localStorage `devos.onboarding`); always-on while workspace empty, dismissible after, resurface
+      link; `App.go(tabId)` + focus `#main`. Zero new endpoints; SECURITY unchanged. Token CSS
+      (`.welcome`/`.checklist`). TDD **334/334** (+6); live smoke verified. D-0028.
 - [x] Dashboard slice 10 (2026-06-11): design system + a11y pass. `styles.css` token scales
       (spacing/radius/type/motion/semantic + `--focus-ring`; 15px body, 12px floor; min-heights +
       `:active` + 150ms transitions; `prefers-reduced-motion`; dark-only, offline system fonts).

@@ -125,9 +125,14 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   tabs with arrow-key navigation, skip link, `role="alert"` errors, shared `Loading` primitive,
   focus-managed delete confirms with Escape, reduced-motion support; contract pinned by
   `tests/test_ui_static.py`. No new endpoints/surface.
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** onboarding first-run flow · Plugins/Extensions UI ·
-  optional cloud provider (Claude) **only if the no-cost policy changes** (env key + consent + audit
-  log already specified) · embeddings/semantic search behind the D-0006 seam.
+- ✅ **Slice 11 — Onboarding / first-run** (D-0028): `WelcomeGuide` on Home — privacy/cost stated up
+  front + a live six-step "Get started" checklist deep-linking into existing tabs (import → search →
+  ask → learn → tasks/notes → settings); done-state data-backed from `/api/overview` or click-backed
+  via localStorage; always-on while the workspace is empty, dismissible after. Fulfils
+  FUTURE_ROADMAP "onboarding that earns trust in 60 seconds". Zero new endpoints.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** Plugins/Extensions UI (surface `devos plugins`) ·
+  embeddings/semantic search behind the D-0006 seam · optional cloud provider (Claude) **only if the
+  no-cost policy changes** (env key + consent + audit log already specified).
 
 ---
 

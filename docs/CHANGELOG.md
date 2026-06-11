@@ -3,7 +3,8 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
-_Nothing yet._
+### Added
+- **First-run onboarding (slice 11): a welcome guide on Home.** The first time you open the dashboard (and any time your workspace is empty), the Home tab now starts with a friendly **"Welcome to DeveloperOS"** panel that explains, in plain language, what the app is — and states up front that **everything stays on your computer: no account, no API key, nothing is uploaded**. Below it, a **"Get started" checklist** walks you from zero to productive in six clicks: import your first project, search your code, ask a plain-English question, learn from a file, add a task or note, and see how AI is set up. Each step jumps straight to the right tab, and the checklist **ticks itself off as you actually do things** (imported projects, tasks and notes are detected automatically). Once you have data, you can hide the guide — and bring it back any time with a "Show the getting-started guide" link. Nothing else changed: no new endpoints, same security posture, fully offline.
 
 ## [0.6.1] — 2026-06-11 ("polished + accessible")
 ### Changed
