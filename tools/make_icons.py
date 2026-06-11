@@ -22,17 +22,37 @@ TRANSPARENT = (0, 0, 0, 0)
 OUT_DIR = Path(__file__).resolve().parents[1] / "devos" / "api" / "static" / "icons"
 
 
-def write_png(path: Path, size: int, pixels: list[list[tuple[int, int, int, int]]]) -> None:
+def png_bytes(size: int, pixels: list[list[tuple[int, int, int, int]]]) -> bytes:
     def chunk(tag: bytes, data: bytes) -> bytes:
         body = tag + data
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
 
     raw = b"".join(b"\x00" + b"".join(bytes(px) for px in row) for row in pixels)
-    png = (b"\x89PNG\r\n\x1a\n"
-           + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
-           + chunk(b"IDAT", zlib.compress(raw, 9))
-           + chunk(b"IEND", b""))
-    path.write_bytes(png)
+    return (b"\x89PNG\r\n\x1a\n"
+            + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(raw, 9))
+            + chunk(b"IEND", b""))
+
+
+def write_png(path: Path, size: int, pixels: list[list[tuple[int, int, int, int]]]) -> None:
+    path.write_bytes(png_bytes(size, pixels))
+
+
+def write_ico(path: Path, sizes: tuple[int, ...]) -> None:
+    """Multi-size Windows .ico with PNG-format entries (valid since Vista).
+
+    ICONDIR + one ICONDIRENTRY per image + the raw PNG blobs — stdlib struct
+    only, same zero-dependency rule as the PNG writer (D-0031).
+    """
+    images = [png_bytes(s, render(s, maskable=False)) for s in sizes]
+    header = struct.pack("<HHH", 0, 1, len(sizes))
+    entries = b""
+    offset = len(header) + 16 * len(sizes)
+    for size, blob in zip(sizes, images):
+        dim = 0 if size >= 256 else size  # 0 encodes 256 in ICO entries
+        entries += struct.pack("<BBBBHHII", dim, dim, 0, 0, 1, 32, len(blob), offset)
+        offset += len(blob)
+    path.write_bytes(header + entries + b"".join(images))
 
 
 def render(size: int, *, maskable: bool) -> list[list[tuple[int, int, int, int]]]:
@@ -102,6 +122,10 @@ def main() -> None:
     for name, size, maskable in targets:
         write_png(OUT_DIR / name, size, render(size, maskable=maskable))
         print(f"wrote {OUT_DIR / name} ({size}x{size}{', maskable' if maskable else ''})")
+    ico_path = Path(__file__).resolve().parents[1] / "packaging" / "devos.ico"
+    ico_path.parent.mkdir(parents=True, exist_ok=True)
+    write_ico(ico_path, (16, 32, 48, 256))
+    print(f"wrote {ico_path} (16/32/48/256, PNG entries)")
 
 
 if __name__ == "__main__":

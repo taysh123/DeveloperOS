@@ -142,10 +142,17 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   starts one, auto-inits a fresh home, waits for readiness, opens the browser, serves until Ctrl+C.
   Single instance per port; Windows port-occupancy handled via exclusive-bind check (SO_REUSEADDR +
   firewall-drop findings encoded in tests). No new API surface; SECURITY unchanged.
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step C (PyInstaller `DeveloperOS.exe`)
-  → step D (installer) · Plugins/Extensions UI (surface `devos plugins`) · embeddings/semantic
-  search behind the D-0006 seam · optional cloud provider (Claude) **only if the no-cost policy
-  changes** (env key + consent + audit log already specified).
+- ✅ **Slice 14 — PyInstaller packaging foundation (desktop ladder step C)** (D-0031):
+  `packaging/` — spec (onefile, console, bundles `devos/api/static` + `storage/schema.sql`),
+  `launch_devos.py` entry (wraps `devos app`), `build.ps1`, developer README, multi-size
+  `devos.ico` (stdlib ICO writer in `tools/make_icons.py`). **Real `DeveloperOS.exe` built
+  (~9.6 MB) and smoke-verified** (fresh init from bundled schema; dashboard/manifest/API from
+  bundled assets; single-instance reuse). PyInstaller = dev-time only; runtime stays stdlib-only;
+  SECURITY unchanged.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step D (Inno Setup installer +
+  optional manual update check via GitHub Releases) · Plugins/Extensions UI (surface
+  `devos plugins`) · embeddings/semantic search behind the D-0006 seam · optional cloud provider
+  (Claude) **only if the no-cost policy changes** (env key + consent + audit log already specified).
 
 ---
 
