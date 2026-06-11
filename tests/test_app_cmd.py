@@ -106,8 +106,8 @@ class TestLauncher(_IsolatedHome):
         port = _start_devos_server(self)
         opened: list[str] = []
         starts: list[int] = []
-        orig_open = app_cmd.webbrowser.open
-        app_cmd.webbrowser.open = lambda url: opened.append(url) or True
+        orig_ui = app_cmd._open_ui
+        app_cmd._open_ui = lambda url, **k: opened.append(url)
         from devos.api import server as api_server
         orig_create = api_server.create_server
         api_server.create_server = lambda *a, **k: starts.append(1)
@@ -116,7 +116,7 @@ class TestLauncher(_IsolatedHome):
             with redirect_stdout(buf):
                 code = main(["app", "--port", str(port)])
         finally:
-            app_cmd.webbrowser.open = orig_open
+            app_cmd._open_ui = orig_ui
             api_server.create_server = orig_create
         self.assertEqual(code, 0)
         self.assertEqual(opened, [f"http://127.0.0.1:{port}"])
@@ -156,6 +156,69 @@ class TestLauncher(_IsolatedHome):
         self.assertTrue(StubServer.served)
         self.assertTrue(Workspace.load().is_initialized(),
                         "launcher must auto-initialize a fresh home")
+
+
+class TestAppWindow(unittest.TestCase):
+    """Slice 16 (D-0033): standalone app-mode window via Edge/Chrome --app."""
+
+    def test_find_app_browser_returns_existing_path_or_none(self) -> None:
+        from devos.commands.app_cmd import _find_app_browser
+        path = _find_app_browser()
+        if path is not None:
+            self.assertTrue(os.path.isfile(path), f"{path} should exist")
+
+    def test_open_window_spawns_app_mode_process(self) -> None:
+        from devos.commands import app_cmd
+        calls: list[list[str]] = []
+        orig_find, orig_popen = app_cmd._find_app_browser, app_cmd.subprocess.Popen
+        app_cmd._find_app_browser = lambda: r"C:\fake\msedge.exe"
+        app_cmd.subprocess.Popen = lambda argv, **k: calls.append(argv)
+        try:
+            ok = app_cmd._open_window("http://127.0.0.1:9999")
+        finally:
+            app_cmd._find_app_browser = orig_find
+            app_cmd.subprocess.Popen = orig_popen
+        self.assertTrue(ok)
+        self.assertEqual(calls[0][0], r"C:\fake\msedge.exe")
+        self.assertIn("--app=http://127.0.0.1:9999", calls[0])
+
+    def test_open_ui_falls_back_to_default_browser(self) -> None:
+        from devos.commands import app_cmd
+        opened: list[str] = []
+        orig_find, orig_open = app_cmd._find_app_browser, app_cmd.webbrowser.open
+        app_cmd._find_app_browser = lambda: None
+        app_cmd.webbrowser.open = lambda url: opened.append(url) or True
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                app_cmd._open_ui("http://127.0.0.1:9999")
+        finally:
+            app_cmd._find_app_browser = orig_find
+            app_cmd.webbrowser.open = orig_open
+        self.assertEqual(opened, ["http://127.0.0.1:9999"])
+
+    def test_open_ui_plain_forces_browser_tab(self) -> None:
+        from devos.commands import app_cmd
+        opened: list[str] = []
+        windows: list[str] = []
+        orig_win, orig_open = app_cmd._open_window, app_cmd.webbrowser.open
+        app_cmd._open_window = lambda url: windows.append(url) or True
+        app_cmd.webbrowser.open = lambda url: opened.append(url) or True
+        try:
+            app_cmd._open_ui("http://127.0.0.1:9999", plain=True)
+        finally:
+            app_cmd._open_window = orig_win
+            app_cmd.webbrowser.open = orig_open
+        self.assertEqual(opened, ["http://127.0.0.1:9999"])
+        self.assertEqual(windows, [], "--browser must bypass the app window")
+
+    def test_app_has_browser_flag(self) -> None:
+        import argparse
+        from devos.commands.app_cmd import AppCommand
+        parser = argparse.ArgumentParser()
+        AppCommand().configure(parser)
+        args = parser.parse_args(["--browser"])
+        self.assertTrue(args.browser)
 
 
 if __name__ == "__main__":

@@ -18,6 +18,17 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Slice 16 complete (D-0033): native desktop shell via Chromium app-mode window.** `devos app` /
+`DeveloperOS.exe` open a **standalone app window** (Edge-first `--app=` mode; Chrome fallback;
+default-browser fallback with honest note; `--browser` escape hatch). `_find_app_browser` (App
+Paths registry + standard locations, stdlib winreg), `_open_window`, `_open_ui`; D-0030 lifecycle
+otherwise unchanged; `index.html` title → "DeveloperOS" (window title). pywebview/WebView2
+bindings rejected (runtime dep vs D-0005); Tauri/Electron rejected again. **Zero new runtime/
+deps/surface; SECURITY unchanged.** Live-verified: real `msedge --app=` window process for both
+the command and the rebuilt exe; installer pipeline rebuilt. TDD **361/361** (+5). **Desktop
+ladder complete (A–E).**
+
+## Previous milestone
 **Slice 15 complete (D-0032): Windows installer (desktop ladder step D).** Inno Setup per-user
 installer (`packaging/installer.iss`, `build_installer.ps1` → `DeveloperOS-Setup-<v>.exe`, ~11 MB;
 version from `devos/__init__.py`): `PrivilegesRequired=lowest` → `%LOCALAPPDATA%\Programs\
@@ -92,19 +103,22 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-**v0.8.0 released** ("DeveloperOS as a desktop product" — slices 13+14+15; tag + GitHub release
-**with `DeveloperOS-Setup-0.8.0.exe` and `DeveloperOS.exe` attached as downloadable assets**) and
-the **README overhauled** to match the real product state (value proposition, feature matrix,
-desktop story, architecture diagram, AI philosophy, honest status — replacing the stale "Phase 1"
-text). Next, per FUTURE_ROADMAP: **Plugins/Extensions UI**; embeddings (D-0006 seam); real
-screenshots for the README placeholder; ladder E (Tauri) only-if-justified; optional Claude
-provider **only when the no-cost policy changes**.
+Merge `feat/desktop-shell` (slice 16 PR), update the README's desktop story to the window-mode
+state, then **recommend `v0.9.0` ("DeveloperOS in its own window")** with rebuilt release assets.
+Afterwards, per FUTURE_ROADMAP: **Plugins/Extensions UI**; embeddings (D-0006 seam); real
+screenshots for the README placeholder; optional Claude provider **only when the no-cost policy
+changes**.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Slice 16 (2026-06-12): native desktop shell (D-0033). App-mode window (Edge-first
+      `--app=`, Chrome fallback, default-browser fallback, `--browser` flag) wired into the
+      D-0030 launcher; `index.html` title → "DeveloperOS". pywebview/Tauri/Electron rejected.
+      Zero new deps/surface. Live-verified window process for `devos app` + rebuilt exe;
+      installer pipeline rebuilt. TDD **361/361** (+5). Desktop ladder complete (A–E).
 - [x] Slice 15 (2026-06-11): Windows installer (ladder step D, D-0032). `packaging/installer.iss`
       (per-user, Start-Menu, KEEP-USER-DATA uninstall) + `build_installer.ps1` (version from
       `__init__.py`; ISCC discovery + winget hint) + LICENSE (MIT). Real Setup built (~11 MB);

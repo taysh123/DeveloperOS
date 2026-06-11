@@ -194,6 +194,11 @@ stdlib-only, D-0005). Build: `packaging/build.ps1` → `packaging/dist/Developer
 **The Windows installer** (D-0032, `packaging/installer.iss` + `build_installer.ps1`) ships that
 exe as a per-user Inno Setup package (Start-Menu shortcut, uninstall that preserves
 `%APPDATA%\DeveloperOS`); updates are manual via GitHub Releases — no auto-update code.
+**The desktop shell** (D-0033) is a Chromium **app-mode window**: the launcher finds Edge (App
+Paths registry; Chrome fallback) and opens `--app=<loopback URL>` — a standalone window with its
+own taskbar entry, zero new runtime/dependency, same loopback security. Fallback: default browser
+(`--browser` forces a plain tab). Closing the window never stops the server; the launcher
+console/Ctrl+C owns the server lifetime (D-0030).
 The Projects tab adds a confirm-before-write import/scan flow + project detail view (with a **Study this
 project** → Project Deep Dive sub-view: Start here / Key files / How this works / Questions / Interview
 prep + project-scoped Ask); the Debug tab adds a paste → Analyze → result-cards flow. `devos serve`

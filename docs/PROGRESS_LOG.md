@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-12 — Session 29: Slice 16 — native desktop shell (app-mode window)
+- `/plan` (approved): evaluated WebView2-bindings/pywebview (runtime pip dep — violates stdlib-only D-0005), Tauri (Rust toolchain for window chrome app mode gives free), and **Chromium app-mode (Edge-first `--app=`)** — chose app mode (D-0033): zero runtime, zero deps, ~40 launcher lines; Edge ships with Windows 10/11, Chrome fallback verified discoverable via the App Paths registry. Branched `feat/desktop-shell`.
+- **TDD.** 5 new tests in `tests/test_app_cmd.py` (red first): finder returns existing-path-or-None; `_open_window` spawns `--app=<url>`; fallback to `webbrowser.open` when no app browser; `--browser` bypasses the window; reuse-path test updated to capture `_open_ui`.
+- **Implementation:** `_find_app_browser` (winreg App Paths → standard locations) + `_open_window` + `_open_ui` wired into both launcher paths; `--browser` flag; `index.html` `<title>` → "DeveloperOS" (window title). D-0030 lifecycle unchanged; SECURITY unchanged (the shell is a browser process at the same loopback URL).
+- **verification-before-completion:** suite **361/361** (+5); **live window validation** — `devos app` and the rebuilt `DeveloperOS.exe` each spawned a real `msedge.exe` with `--app=http://127.0.0.1:<port>` in its command line while the dashboard served (processes then tree-stopped, temp homes removed); installer pipeline rebuilt OK (full install cycle unchanged since slice 15's verified run). One transient environment EPERM during validation resolved by retry.
+- Honest limits documented in D-0033: no min-size control in app mode; icon/title from the page; non-Windows → default browser; closing the window doesn't stop the server.
+- Then: README desktop-story refresh; recommend **v0.9.0** with rebuilt assets. Desktop ladder now complete (A–E).
+
 ## 2026-06-11 — Session 28: Slice 15 — Windows installer (ladder step D) → v0.8.0 → README overhaul
 - `/plan` (approved): installer (Inno Setup, per-user) → v0.8.0 release with downloadable assets → README rewrite (it still claimed "Phase 1"). Branched `feat/desktop-installer`.
 - **TDD.** 5 new contract tests in `tests/test_packaging.py` (red first): `{#MyAppVersion}` define, exe+ico packaging, `PrivilegesRequired=lowest`, `[Icons]` Start-Menu entry, **KEEP-USER-DATA** marker, root `LICENSE` (MIT) — the LICENSE file didn't exist despite pyproject/README claiming MIT.

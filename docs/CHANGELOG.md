@@ -3,6 +3,9 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
+### Added
+- **DeveloperOS now opens in its own window (slice 16).** Launching DeveloperOS (`devos app` or `DeveloperOS.exe`) no longer drops you into a browser tab with an address bar — it opens a **standalone desktop window** with its own taskbar entry, like a normal app. Under the hood this uses the app mode of Edge (which every Windows 10/11 machine already has; Chrome as fallback), so it adds **zero** new runtime, dependencies, or network surface — the window is simply your browser showing the same local, loopback-only dashboard without any chrome. If no app-capable browser is found it falls back to your default browser and says so; `devos app --browser` gives you a regular tab on purpose. The window remembers its size between launches.
+
 ### Documentation
 - **README overhauled** into an accurate product homepage: value proposition, feature matrix (Understand/Learn/Build/Grow/System), quick start covering installer/portable-exe/pip/`devos app`, desktop-experience and update story, architecture diagram, AI philosophy, privacy & security, honest current-status table (v0.8.0, 356 tests, CI matrix), roadmap summary, contributing guide, and a screenshots placeholder (no fabricated images). Replaces text that still described the project as "early foundation (Phase 1)".
 

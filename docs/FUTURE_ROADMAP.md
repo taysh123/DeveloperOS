@@ -133,8 +133,10 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
 - ✅ **D. Installer (Inno Setup) + manual update path** [shipped slice 15, D-0032] — per-user
   Setup exe (Start-Menu shortcut, clean uninstall that preserves user data); GitHub Releases as
   the distribution channel; updates manual by design, offline keeps working.
-- ⬜ **E. Tauri shell** [Research, only-if-justified] — revisit only if C/D demand native
-  capabilities (tray, file dialogs, OS integration). Electron is **rejected** (D-0029).
+- ✅ **E. Native shell — resolved by a lighter path** [shipped slice 16, D-0033]: `devos app` /
+  `DeveloperOS.exe` open a standalone **Chromium app-mode window** (Edge-first, `--app=`) — zero
+  new runtime/deps. Tauri stays parked indefinitely unless tray/dialog-level OS integration ever
+  becomes a real need; Electron remains **rejected** (D-0029).
 
 ## 9. Stretch goals
 - Voice/STT for the Meeting assistant (action-item capture) [Research].
