@@ -135,7 +135,8 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   `manifest.webmanifest` (standalone, `#0f1117`, 192/512 + maskable icons), stdlib icon generator
   (`tools/make_icons.py`) + committed PNGs/SVG favicon, head wiring, `.png`/`.webmanifest` content
   types. Dashboard is now **installable from Edge/Chrome** as a desktop app. No service worker; no
-  new endpoints; SECURITY unchanged.
+  new endpoints; SECURITY unchanged. Slices 11+12 shipped together as **`v0.7.0`
+  ("Installable DeveloperOS foundation")**.
 - ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step B/C (`devos app` launcher →
   PyInstaller `devos.exe`) · Plugins/Extensions UI (surface `devos plugins`) · embeddings/semantic
   search behind the D-0006 seam · optional cloud provider (Claude) **only if the no-cost policy
