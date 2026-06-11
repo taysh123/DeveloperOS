@@ -8,7 +8,7 @@
 
 ## What is DeveloperOS?
 
-DeveloperOS is a **personal operating system for developers**: point it at your project folders and it builds a private, searchable index you can **search, question, study, and work from** — through a friendly local dashboard or a full CLI.
+DeveloperOS is a **personal operating system for developers**: point it at your project folders and it builds a private, searchable index you can **search, question, study, and work from** — in a real **desktop app window**, through a friendly local dashboard, or from a full CLI.
 
 - **Understand any project**: plain-English Q&A and file explanations grounded in your real code, always cited as `file:line` — it declines instead of guessing.
 - **Study mode**: a per-project Deep Dive (key files, how it works, study questions, interview prep).
@@ -27,7 +27,7 @@ DeveloperOS is a **personal operating system for developers**: point it at your 
 | **Learn** | Leveled code explanations (ELI5 → advanced) · grounded quizzes · practice exercises · answer **grading** with strengths/weaknesses |
 | **Build** | Tasks (status/priority/projects, inline edit) · notes & long-term memory · **recall** across memory+tasks+code · **meeting summaries → tasks** · grounded doc generation (`devos docgen`) |
 | **Grow** | Job-lead tracking · **CV match check** (offline keyword coverage; CV text never stored) · interview prep grounded in your notes · onboarding **get-started guide** |
-| **System** | Settings & AI management (provider catalog, key-presence-only display) · plugin seam (`devos plugins`) · installable **PWA** + desktop launcher + Windows installer · CSRF-guarded loopback API · secret-aware scanning |
+| **System** | Settings & AI management (provider catalog, key-presence-only display) · plugin seam (`devos plugins`) · **standalone desktop window** + launcher + Windows installer + installable PWA · CSRF-guarded loopback API · secret-aware scanning |
 
 ## Screenshots
 
@@ -46,7 +46,7 @@ confirmation on first run (More info → Run anyway).
 ```bash
 pip install -e .
 
-devos app          # launches the dashboard and opens your browser (recommended)
+devos app          # opens DeveloperOS in its own desktop window (recommended)
 ```
 
 The first run creates your private workspace automatically and the dashboard's welcome
@@ -76,15 +76,16 @@ cd packaging
 
 ## Desktop experience
 
-Current state (the "desktop ladder", decisions D-0029–D-0032):
+The full desktop ladder is shipped (decisions D-0029–D-0033):
 
-- **Installable PWA** — open the dashboard in Edge/Chrome and click *Install* for a real window with its own Start-Menu/taskbar icon (no service worker; nothing changes about the local backend).
-- **`devos app` launcher** — one command that starts (or reuses — never duplicates) the dashboard and opens your browser.
-- **`DeveloperOS.exe`** — single-file executable; no Python required.
-- **Windows installer** — per-user setup with Start-Menu shortcut and a clean uninstall that **preserves your data** (`%APPDATA%\DeveloperOS`).
+- **A real app window** — launching DeveloperOS opens a **standalone desktop window** (no browser chrome, no address bar, its own taskbar entry), using the app mode of Edge/Chrome already on your machine — zero extra runtime. Falls back to your default browser if needed; `devos app --browser` gives a plain tab on purpose.
+- **`DeveloperOS.exe`** — single-file executable; no Python required. Double-click → window opens.
+- **Windows installer** — per-user setup (no admin rights) with a Start-Menu shortcut and a clean uninstall that **preserves your data** (`%APPDATA%\DeveloperOS`).
+- **`devos app` launcher** — starts (or reuses — never duplicates) the local backend, waits for readiness, opens the window; Ctrl+C in its console stops everything.
+- **Installable PWA** — alternatively, open the dashboard in Edge/Chrome and click *Install* (no service worker; nothing changes about the local backend).
 - **Updates are manual by design**: check the [Releases](https://github.com/taysh123/DeveloperOS/releases) page; a newer Setup upgrades in place. No auto-updater, no phoning home.
 
-Remaining roadmap: an optional native shell (Tauri) **only if** tray/dialog-level integration ever becomes necessary — Electron was evaluated and rejected (size, toolchain, surface).
+Electron was evaluated and rejected (size, toolchain, surface); Tauri stays parked unless tray/dialog-level OS integration ever becomes a real need — the app-mode window achieves the goal with zero added weight.
 
 ## Architecture
 
@@ -135,17 +136,17 @@ Full security model: [`docs/SECURITY.md`](docs/SECURITY.md).
 
 | | |
 |---|---|
-| **Version** | v0.8.0 — "DeveloperOS as a desktop product" |
-| **Milestone** | Roadmap phases 0–9 complete · dashboard slices 1–15 shipped · desktop ladder complete through step D (installer) |
-| **Tests** | 356 (stdlib unittest, TDD) |
+| **Version** | v0.8.0 — "DeveloperOS as a desktop product" (native app window already on `main`) |
+| **Milestone** | Roadmap phases 0–9 complete · dashboard slices 1–16 shipped · **desktop ladder complete** (PWA → launcher → exe → installer → app window) |
+| **Tests** | 361 (stdlib unittest, TDD) |
 | **CI** | GitHub Actions — Python 3.11/3.12/3.13 × Linux + Windows on every push/PR |
 | **Platforms** | Windows-first (installer/exe); dashboard & CLI run anywhere Python ≥ 3.11 does |
 
 ## Roadmap
 
-- **Done**: CLI foundation (scan/index/search/ask/explain/debug/tasks/memory/docgen/learning/career/plugins/meeting) → full-parity dashboard in 11 slices → design system + accessibility → onboarding → first real AI provider (Ollama) → CI → PWA → launcher → `DeveloperOS.exe` → Windows installer.
-- **Current**: v0.8.0 released; documentation refresh.
-- **Upcoming**: Plugins/Extensions UI · semantic search behind the prepared embeddings seam · optional native shell only-if-justified · cloud AI providers only if the no-cost policy ever changes.
+- **Done**: CLI foundation (scan/index/search/ask/explain/debug/tasks/memory/docgen/learning/career/plugins/meeting) → full-parity dashboard in 11 slices → design system + accessibility → onboarding → first real AI provider (Ollama) → CI → PWA → launcher → `DeveloperOS.exe` → Windows installer → **standalone app window**.
+- **Current**: desktop ladder complete; next release (v0.9.0) pending.
+- **Upcoming**: Plugins/Extensions UI · semantic search behind the prepared embeddings seam · real screenshots · cloud AI providers only if the no-cost policy ever changes.
 
 Live state: [`docs/AGENT_STATE.md`](docs/AGENT_STATE.md) · plan: [`docs/ROADMAP.md`](docs/ROADMAP.md) + [`docs/FUTURE_ROADMAP.md`](docs/FUTURE_ROADMAP.md).
 
