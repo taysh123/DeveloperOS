@@ -4,6 +4,38 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0027 — Dashboard design system + accessibility contract (slice 10)
+- **Date:** 2026-06-11
+- **Context:** v0.6.0 made the dashboard feature-complete; the recorded next step was a
+  design-system/a11y pass. The UI had good bones (dark palette vars, shared primitives,
+  labeled fields, focus-visible outlines) but no token scales, no WAI-ARIA tab semantics
+  beyond `aria-selected`, status-role-only messages, no skip link, no reduced-motion
+  support, and sub-12px text.
+- **Decision:**
+  - **`styles.css` is the single design source of truth**, extended with token scales:
+    spacing `--space-1..6` (4px rhythm), radii `--radius-s/m/l`, type scale (12–22px,
+    body 15px, 12px floor), motion `--dur-fast/--dur-med` + ease, `--focus-ring`, and
+    semantic aliases (`--danger(-soft)`, `--success(-soft)`, `--warn`, `--on-accent`)
+    over the existing palette. Buttons/inputs/tabs get min-heights (44px under
+    `pointer: coarse`), `:active` press states, and 150ms transitions — all collapsed by
+    `@media (prefers-reduced-motion: reduce)`.
+  - **Dark-only by deliberate choice** (ui-ux-pro-max design-system run for this product
+    type recommends Dark/OLED and flags light-default as an anti-pattern); system font
+    stack kept — **no webfonts/CDN**, the UI stays fully offline.
+  - **A11y contract in `app.js`:** WAI-ARIA tabs (ids + `aria-controls` + `role="tabpanel"`
+    + roving tabindex + Arrow/Home/End keys), skip link → focusable `<main>`, semantic
+    `<footer>`, `Msg` errors announce as `role="alert"` (ok stays `status`), shared
+    `Loading` primitive (`role="status"`, decorative spinner), `ConfirmDelete` moves focus
+    into the confirm step and restores it on Escape/cancel, decorative glyphs are
+    `aria-hidden`, single-field forms wire `aria-invalid`/`aria-describedby` to their error.
+  - **The contract is pinned by source-level tests** (`tests/test_ui_static.py`): stdlib
+    has no DOM runtime, so tests assert the served sources carry the tokens/roles/handlers;
+    runtime behavior is covered by live socket smoke + a manual keyboard pass per slice.
+- **Rationale:** Polish and accessibility as a durable contract rather than a one-off
+  sweep; zero new endpoints or write surface (SECURITY unchanged); all existing components
+  refined in place, preserving the no-build vendored architecture (D-0010/D-0018).
+- **Status:** Accepted.
+
 ## D-0026 — v0.6.0: Meeting tab (slice 9) + Ollama provider + AND-first retrieval + secret-aware scan + CI
 - **Date:** 2026-06-11
 - **Context:** The dashboard's last CLI-parity gap was the Meeting surface (recorded next step after

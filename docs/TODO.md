@@ -58,6 +58,10 @@ _Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 10 — Design system + accessibility pass ✅
+- [x] **Design tokens** in `styles.css` (single design source of truth): spacing `--space-1..6`, radii, type scale (15px body, 12px floor), motion (`--dur-fast/med` + ease, `prefers-reduced-motion` collapse), `--focus-ring`, semantic colors (`--danger/-soft`, `--success/-soft`, `--warn`); button/input/tab min-heights (44px on `pointer: coarse`), `:active` press states, 150ms transitions. **Dark-only by choice; offline system fonts (no CDN).**
+- [x] **A11y pass** in `app.js`: WAI-ARIA tabs (`aria-controls` + `role="tabpanel"` + roving tabindex + Arrow/Home/End), skip link → focusable `<main>`, semantic `<footer>`, `Msg` errors → `role="alert"`, shared `Loading` primitive (`role="status"` + spinner), `ConfirmDelete` focus management + Escape, `aria-hidden` glyphs, `aria-invalid`/`aria-describedby` on add-form errors. **No new endpoints/surface; SECURITY unchanged.** D-0027. 328 tests (+10 `test_ui_static.py` contract tests), live smoke verified.
+
 ## Post-roadmap: Dashboard slice 9 — Meeting tab + v0.6.0 ✅
 - [x] **Meeting** tab (the last CLI-parity gap): paste notes/transcript → grounded **summary / decisions / action items** (provider seam, mock default) + **action items → tasks bridge** (deterministic `meeting.extract_action_items` — no provider call; select/untick items; creates via the existing guarded `POST /api/tasks/create` — **no new write surface**). Transcript **never persisted** (same rule as CV text). Inline `POST /api/meeting` inherits D-0018 guards.
 - [x] **v0.6.0 platform work:** `devos/providers/ollama.py` (**first real AI provider** — local daemon, stdlib `urllib`, no key, "[OLLAMA UNAVAILABLE]" graceful degradation; registered behind `providers.ai`; **default stays offline mock**); **AND-first retrieval** in `qa.retrieve` (OR fallback); **secret-aware scan** (`ingest.SECRET_FILE_PATTERNS` + `skipped_secrets`, skip-before-read); **CI** (`.github/workflows/ci.yml`, py3.11–3.13 × Linux/Windows). Version → **0.6.0**. D-0026; SECURITY §1/§2/§5/§8/§9. 318 tests (+24, incl. the CI-exposed Windows 8.3 short-path fix in `repo.find_project_for_path`), live socket smoke verified.
@@ -101,7 +105,7 @@ _Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021…D-0026): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), ~~Meeting Summary tab~~ ✅ (slice 9, v0.6.0), ~~first real AI provider (Ollama-first)~~ ✅ (v0.6.0), then design-system/a11y polish and Plugins/Extensions UI.
+- [ ] Dashboard (roadmap order, D-0021…D-0027): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), ~~Meeting Summary tab~~ ✅ (slice 9, v0.6.0), ~~first real AI provider (Ollama-first)~~ ✅ (v0.6.0), ~~design-system/a11y polish~~ ✅ (slice 10), then onboarding first-run flow and Plugins/Extensions UI.
 - [ ] Wire a real AI provider behind `providers.ai`: ~~Ollama~~ ✅ (v0.6.0); Claude/OpenAI remain **only if the no-cost policy changes**.
 - [ ] Meeting: audio/STT (~~action-item → tasks~~ ✅ v0.6.0).
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

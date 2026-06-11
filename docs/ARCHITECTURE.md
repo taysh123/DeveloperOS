@@ -175,6 +175,9 @@ per-server **CSRF token** (`X-DevOS-Token`, served via `GET /api/session`), an *
 JSON-only content type, and a 64 KB cap, with **no CORS headers**. The frontend (`static/index.html`
 + `app.js`) is a **React + htm** SPA (no build step, vendored offline) with lightweight **tabbed
 navigation** (Home · Tasks · Notes · Search & Ask · Debug · Projects) and a token-aware `post()` helper.
+`static/styles.css` is the **design-system source of truth** (D-0027): spacing/radius/type/motion
+tokens + semantic colors, dark-only, offline system fonts; the a11y contract (WAI-ARIA tabs, skip
+link, alert/status messaging, `Loading`) is pinned by `tests/test_ui_static.py`.
 The Projects tab adds a confirm-before-write import/scan flow + project detail view (with a **Study this
 project** → Project Deep Dive sub-view: Start here / Key files / How this works / Questions / Interview
 prep + project-scoped Ask); the Debug tab adds a paste → Analyze → result-cards flow. `devos serve`
