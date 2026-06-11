@@ -3,6 +3,20 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
+_Nothing yet._
+
+## [1.0.0] — 2026-06-12 ("Your codebase, understood and under control, on your machine")
+> Why 1.0 exists: every Core item of the v1.0 vision recorded in FUTURE_ROADMAP §1 is shipped
+> and verified (D-0034) — a real opt-in AI provider (local Ollama, keyless), full dashboard/CLI
+> parity, trustworthy grounding everywhere, onboarding that earns trust in the first minute,
+> and a polished accessible UI — plus a complete desktop story (window, exe, installer) the
+> original vision didn't even promise. What moved the project from pre-1.0 to 1.0: the desktop
+> distribution ladder, the final polish pass (real screenshot gallery), and fixing the last
+> known shipped defect (the Meeting-tab render crash below).
+
+### Added
+- **Project version bumped to 1.0.0**; shown in `devos --version` and the dashboard's System status.
+
 ### Fixed
 - **Meeting tab crash.** Rendering a meeting summary crashed the whole dashboard (blank page) because of an invalid string `style` prop that had shipped unnoticed since the Meeting tab landed — browser rendering was never part of that slice's smoke test. Found by the new screenshot automation, fixed, and now guarded by a regression test.
 
