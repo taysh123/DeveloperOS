@@ -92,11 +92,11 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-Merge `feat/desktop-installer` (slice 15 PR), then cut **v0.8.0 "DeveloperOS as a desktop
-product"** (slices 13+14+15) with the **Setup exe + bare exe attached as GitHub release assets**
-(the download channel). Then the README overhaul (it still claims "Phase 1"). Afterwards:
-Plugins/Extensions UI; embeddings (D-0006 seam); ladder E (Tauri) only-if-justified; optional
-Claude provider **only when the no-cost policy changes**.
+**v0.8.0 released** ("DeveloperOS as a desktop product" — slices 13+14+15; annotated tag + GitHub
+release **with `DeveloperOS-Setup-0.8.0.exe` and `DeveloperOS.exe` attached as downloadable
+assets**). Then the README overhaul (it still claims "Phase 1") — in progress this session.
+Afterwards: Plugins/Extensions UI; embeddings (D-0006 seam); ladder E (Tauri) only-if-justified;
+optional Claude provider **only when the no-cost policy changes**.
 
 ## Tasks
 ### In progress
