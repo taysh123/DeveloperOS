@@ -56,6 +56,7 @@ devos/                      # Python package (core + CLI)
   providers/
     __init__.py
     ai.py                   # AIProvider ABC + MockAIProvider + factory
+    ollama.py               # OllamaProvider — local daemon, stdlib urllib, keyless (v0.6.0)
 docs/                       # source of truth (this folder)
 tests/                      # unittest-based (stdlib), pytest-compatible
   test_smoke.py
@@ -159,6 +160,10 @@ The **career** surfaces (slice 8) reuse `repo` job CRUD + `modules/career`: `GET
 `GET /api/jobs/interview` (grounded on the lead's notes), `POST /api/jobs/{create,update,delete}` (in
 `_POST_ACTIONS`), and inline `POST /api/cv` (deterministic offline keyword coverage; **CV text is not
 persisted**).
+The **meeting** surface (slice 9, v0.6.0) reuses `modules/meeting`: inline `POST /api/meeting`
+(multi-line transcript, like `/api/debug`) returns the grounded summary plus action items extracted
+deterministically by the new `meeting.extract_action_items` (no provider call); the **transcript is not
+persisted**, and the UI's action-items→tasks bridge reuses `POST /api/tasks/create` (no new write surface).
 `POST /api/debug` is read-only but POSTs the multi-line trace body (reuses `debug.diagnose`; inline in
 `route()` so it gets `ws.ai`); the trace is data-not-instructions, file location is index-only, and the
 diagnosis is not persisted. `GET /api/projects/study` is a read-only Deep Dive aggregator (reuses
@@ -197,6 +202,12 @@ returning a structured result. `MockAIProvider` returns deterministic, clearly-l
 stub output (echoing assembled context) so the full pipeline is testable offline. A
 `get_provider()` factory selects implementation from config/env; a real Claude provider
 is added later without touching callers.
+**`OllamaProvider` (v0.6.0)** is the first real implementation behind the seam: it talks to a
+**local** Ollama daemon (`http://127.0.0.1:11434` default; `DEVOS_OLLAMA_URL`/`DEVOS_OLLAMA_MODEL`)
+using stdlib `urllib` only — no key, no cost, nothing leaves the machine. It registers via
+`providers.ai.register_provider` on import (the same seam plugins use) and degrades gracefully to a
+clearly-labeled "[OLLAMA UNAVAILABLE]" result instead of raising. The **default provider remains the
+offline mock**; Ollama runs only when deliberately selected in Settings (D-0026).
 
 ## Interfaces
 - **CLI (now):** `argparse` dispatcher in `cli.py`; each command in `commands/` registers

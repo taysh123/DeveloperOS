@@ -1,6 +1,6 @@
 # DeveloperOS — Roadmap
 
-_Last updated: 2026-06-01_
+_Last updated: 2026-06-11_
 
 A phased plan detailed enough that any future session can continue without rethinking
 the product. Each phase lists **goal · scope · deliverables · completion criteria ·
@@ -113,10 +113,16 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
 - ✅ **Slice 8 — Career tab** (`repo` job CRUD + `career.analyze_cv`/`interview_prep`; `GET /api/jobs`,
   `GET /api/jobs/interview`, `POST /api/jobs/{create,update,delete}`, `POST /api/cv`; CV text not
   persisted). D-0025. Dashboard now at **near-CLI-parity**.
-- ⬜ **Next priority — Meeting Summary tab** (`modules/meeting`; last CLI-parity gap → dashboard
-  feature-complete, **v0.6.0** candidate), then design-system/a11y polish, Plugins/Extensions UI, and the
-  first **real AI provider** (Ollama-first) behind the Settings seam. See `docs/FUTURE_ROADMAP.md`.
-  **Recommend tagging `v0.5.0`** once slices 6–8 are merged to `main`.
+- ✅ **Slice 9 — Meeting tab** (`modules/meeting.summarize` + new deterministic
+  `meeting.extract_action_items`; inline `POST /api/meeting`, transcript never persisted; action-items→
+  tasks bridge reusing the guarded `POST /api/tasks/create`). D-0026. Dashboard at **full CLI parity**.
+  Shipped as **v0.6.0** ("feature-complete dashboard + first real AI provider") together with: local
+  **Ollama** provider behind the Settings seam (keyless, opt-in, mock stays default), **AND-first
+  retrieval** (OR fallback), **secret-aware scanning**, and **GitHub Actions CI** (py3.11–3.13 ×
+  Linux/Windows). Tagged **`v0.6.0`**.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** design-system/a11y polish · onboarding first-run flow ·
+  Plugins/Extensions UI · optional cloud provider (Claude) **only if the no-cost policy changes** (env
+  key + consent + audit log already specified) · embeddings/semantic search behind the D-0006 seam.
 
 ---
 

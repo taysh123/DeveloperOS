@@ -1,6 +1,6 @@
 # DeveloperOS — Security Architecture (Security by Design)
 
-_Last updated: 2026-06-01 · Living document._
+_Last updated: 2026-06-11 · Living document._
 
 > This documents the **security-by-design architecture every phase must respect**. Most
 > controls here are **not yet implemented** — they are commitments that constrain future
@@ -25,8 +25,9 @@ _Last updated: 2026-06-01 · Living document._
 - No telemetry, no network calls, no external services in the foundation (Phases 0–4).
 - The data dir and `*.db` are git-ignored so a user's indexed code/notes are never committed.
 - **Scope of indexed content:** scanning reads source files into the local index. Ignore
-  rules already exclude `.git`, `node_modules`, build dirs, binaries, and oversized files,
-  but **secrets in tracked source (e.g. `.env`, hardcoded keys) can be indexed.** See §2.
+  rules already exclude `.git`, `node_modules`, build dirs, binaries, and oversized files, and
+  as of **v0.6.0** credential-looking files (`.env*`, key files, keystores — see §2) are skipped
+  **before being read**; **hardcoded secrets inside ordinary source files can still be indexed.** See §2.
 
 ## 2. Secret management strategy
 - **[NOW]** DeveloperOS stores **no secrets** of its own (mock AI provider; no keys needed).
@@ -34,10 +35,16 @@ _Last updated: 2026-06-01 · Living document._
   from **environment variables** (e.g. `ANTHROPIC_API_KEY`) or an OS keychain — **never** the
   SQLite DB, never a committed config file, never logs. The provider layer is the only place
   that reads them.
-- **[PLANNED] Secret-aware indexing:** add a scan/index policy to skip or redact likely-secret
-  files (`.env`, `*.pem`, `id_rsa`, `credentials*`) and optionally mask high-entropy strings
-  before chunk text is stored in the FTS index. Until then, **§5 prompt-injection / data-egress
-  rules limit blast radius** because nothing leaves the machine.
+- **[NOW] Secret-aware indexing (v0.6.0, D-0026):** `devos scan` and the dashboard import skip
+  credential-looking files (`ingest.SECRET_FILE_PATTERNS`: `.env*`, `*.pem`, `*.key`, `id_rsa*`
+  and other SSH keys, keystores, `.netrc`/`.npmrc`/`.pypirc`, `credentials*`, `secrets.*`, …)
+  **before the first byte is read** — a matched file is never stat'd, read, hashed, recorded, or
+  indexed, so its content cannot reach SQLite or the FTS index. Scan results surface a
+  `skipped_secrets` count. **[PLANNED]** optionally mask high-entropy strings inside files that
+  *are* indexed.
+- **[NOW] The first real provider needs no key (v0.6.0):** Ollama is a local daemon — no API key
+  exists, so there is nothing to store; the env-var/keychain rule above still binds any future
+  cloud provider.
 - **[NOW] Never echo secrets:** CLI output and any future logs must not print environment
   variables or file contents flagged as secrets.
 - **[NOW] Dashboard key-detection is presence-only (slice 5, D-0022):** the Settings tab can show whether
@@ -90,6 +97,19 @@ into the AI context, a model could be manipulated.
   input → treated as **data, not instructions** (grounding contract); `meeting summarize <file>`
   reads only the user-named path; the **transcript is not persisted** and the summary goes to stdout;
   offline/mock default. No new external surface.
+  - **[NOW] Dashboard exposure (slice 9, v0.6.0, D-0026):** the same engine is reachable via inline
+    `POST /api/meeting` (multi-line transcript, like `/api/debug`). The transcript stays untrusted
+    **data** (grounding contract), is **never persisted**, and action items are extracted
+    **deterministically** (`meeting.extract_action_items` — no provider call). The "create tasks"
+    bridge reuses the guarded `POST /api/tasks/create`, adding **no new write surface**; the POST
+    inherits the D-0018 CSRF/Origin/JSON/size/no-CORS gating.
+- **[NOW] Ollama provider (v0.6.0, D-0026) — first real model behind the seam:** when the user opts in
+  via Settings, prompts/retrieved context reach a **local** Ollama daemon (127.0.0.1 by default; user-run).
+  The grounding system prompt passes through unchanged (context = **data, not instructions**); the
+  provider adds no instructions of its own; model output remains untrusted text (never executed — see
+  output handling above). Failure is graceful and labeled ("[OLLAMA UNAVAILABLE]"), never silent. The
+  **default remains the offline mock** — no traffic at all, even loopback, unless Ollama is deliberately
+  selected.
 - **[NOW] Plugin system (Phase 9 slice 5) — code execution / supply-chain surface (NEW):** loading a
   plugin **runs third-party Python in-process** with the user's full authority. Trust model:
   (1) **entry-point plugins** (group `devos.plugins`) come from packages the user deliberately
@@ -216,6 +236,13 @@ into the AI context, a model could be manipulated.
   **CV text is untrusted DATA, analyzed deterministically/offline (`career.analyze_cv`, no provider call),
   and never persisted**; interview prep is grounded on the lead's notes and declines when noteless. No
   scraping, no external/paid APIs, no new outbound surface.
+- **[NOW] Meeting tab (slice 9, v0.6.0, D-0026).** Inline `POST /api/meeting` (multi-line transcript)
+  inherits the D-0018 controls (**CSRF token + Origin allowlist + JSON-only + 64 KB cap, no CORS,
+  loopback-only**). The transcript is untrusted **data** and is **never persisted**; the summary goes
+  through the provider seam (offline mock default) while action items are extracted **deterministically**
+  (no provider call). The action-items→tasks bridge reuses the existing guarded `POST /api/tasks/create` —
+  **no new write surface**. No new outbound calls (Ollama, when selected, talks only to a user-run local
+  daemon on 127.0.0.1).
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -227,7 +254,7 @@ into the AI context, a model could be manipulated.
 ## 9. Current posture summary (Phase 4)
 | Area | Status |
 |---|---|
-| Network calls / telemetry | **None** (offline, mock AI) |
+| Network calls / telemetry | **None by default** (offline, mock AI). Opt-in **local** Ollama (v0.6.0) talks only to a user-run daemon on 127.0.0.1 — nothing leaves the machine |
 | Secrets stored | **None** |
 | Data location | Local SQLite under data dir; git-ignored |
 | AI grounding / anti-hallucination | **Enforced** (grounded answers, declines when context insufficient) |
@@ -244,6 +271,9 @@ into the AI context, a model could be manipulated.
 | Dashboard learning (Learn tab, D-0023) | `GET /api/learn|quiz|exercise` + `POST /api/grade` reuse `modules/learning`: grounded (code + learner answer = data), retrieval-derived `file:line`, **read-only/not persisted**, declines when unindexed; POST inherits D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
 | Dashboard deletes (CRUD polish, D-0024) | `POST /api/{tasks,notes,projects}/delete` in `_POST_ACTIONS` → same D-0018 CSRF/Origin/JSON/size/no-CORS gating; id-validated (400) / unknown (404); scoped DB deletes ≈ CLI `task rm` (no Safe Action Agent). **Project delete is index-only** (cascade + `reconcile_fts`); **never deletes disk files**. UI requires explicit confirm — type-to-confirm for projects |
 | Dashboard career (Career tab, D-0025) | `GET /api/jobs`/`/api/jobs/interview` read-only; `POST /api/jobs/{create,update,delete}` + `POST /api/cv` inherit D-0018 gating. Job leads = personal data stored locally (≈ CLI `job`); **CV text = untrusted data, deterministic offline analysis, not persisted**; interview prep grounded on notes, declines when noteless. No scraping/paid APIs; offline/mock |
+| Dashboard meeting (Meeting tab, v0.6.0, D-0026) | Inline `POST /api/meeting`: transcript = untrusted data, **not persisted**; action items extracted deterministically (no provider call); tasks bridge reuses existing guarded create (no new write surface); D-0018 gating; offline/mock default |
+| Ollama provider (v0.6.0, D-0026) | Opt-in via Settings; **local daemon only** (127.0.0.1), stdlib urllib, **no key**; labeled graceful degradation; grounding contract passed through (context = data); default stays offline mock |
+| Secret-aware scan (v0.6.0, D-0026) | Credential-looking files (`SECRET_FILE_PATTERNS`) skipped **before read** — never stat'd/hashed/indexed; `skipped_secrets` surfaced; closes the §2 PLANNED item |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

@@ -4,6 +4,14 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-11 — Session 23: v0.6.0 — Meeting tab (slice 9) + Ollama provider (merge from TEMP copy)
+- The v0.6.0 work was built TDD in a detached copy (`C:\Projects\TEMP\DeveloperOS`, no `.git`); this session merged it into the real repo. `/plan` (approved): verify state → merge slice-8 PR → integrate v0.6.0 on `feat/v0.6.0-meeting-ollama` → verify → PR (first CI run) → tag → delete TEMP.
+- **Pre-merge verification:** SHA-256 tree comparison proved TEMP = the repo's slice-8 state + exactly 19 intended files (3 new: `.github/workflows/ci.yml`, `devos/providers/ollama.py`, `tests/test_ollama.py`; 16 modified) — **0 files existed only in the original**, so nothing could be lost. All diffs reviewed before copying; nothing out-of-scope rode along.
+- **Merged scope:** Meeting tab (slice 9: deterministic `meeting.extract_action_items` + inline `POST /api/meeting`, transcript never persisted, action-items→tasks bridge reusing `tasks/create` — no new write surface); `OllamaProvider` (local daemon, stdlib `urllib`, keyless, "[OLLAMA UNAVAILABLE]" degradation; **mock stays default**); AND-first retrieval in `qa.retrieve` (OR fallback); secret-aware scanning (`SECRET_FILE_PATTERNS`, skip-before-read, `skipped_secrets`); GitHub Actions CI (py3.11–3.13 × Linux/Windows); version 0.5.0 → 0.6.0.
+- **Doc sync the TEMP copy missed** (written this session): SECURITY (§1 scope note, §2 secret-aware indexing PLANNED→NOW + Ollama-no-key note, §5 Ollama + Meeting-dashboard bullets, §8 slice-9 entry, §9 posture rows), DECISIONS (D-0026), ROADMAP (slice 9 + v0.6.0), TODO, AGENT_STATE wording, this log. CHANGELOG `[Unreleased]` → `[0.6.0]`.
+- **verification-before-completion:** full suite **317/317** (+23; the TEMP docs' "315" claim was stale — both trees measured at 317); `devos --version` → 0.6.0; scripted live socket smoke (`POST /api/meeting` 200-with-token / 403-without; existing endpoint spot-check).
+- **Git:** gh CLI installed this session; slice-8 PR (`feat/dashboard-career-tab`) merged to `main` first, then the `feat/v0.6.0-meeting-ollama` PR (first CI run) merged; annotated tag **`v0.6.0`** + GitHub release; TEMP deleted only after a post-merge hash spot-check against `main`.
+
 ## 2026-06-03 — Session 22: Dashboard slice 8 — Career tab
 - Slice 7 PR (#6) merged to `main`; branched `feat/dashboard-career-tab` off the merged base. `/plan` (approved): scoped to surfacing `modules/career` (job leads + interview prep + CV check), reusing the existing engine.
 - **Reuse findings:** `repo` already has full `job_leads` CRUD (`create_job`/`get_job`/`list_jobs`/`update_job`/`delete_job`, `JOB_STATUSES`, `_JOB_UPDATABLE`); `career.analyze_cv` is deterministic/offline and `career.interview_prep` is grounded on a lead's notes (declines when noteless). → no schema/engine work.

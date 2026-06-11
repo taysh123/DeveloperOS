@@ -1,6 +1,6 @@
 # DeveloperOS — TODO
 
-_Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AGENT_STATE.md.
+_Last updated: 2026-06-11_ · Authoritative backlog. Detailed status lives in AGENT_STATE.md.
 
 ## Done (Phase 1 — Scaffolding) ✅
 - [x] `devos` package skeleton: `cli.py`, `config.py`, `storage/db.py`+`schema.sql`, `providers/ai.py`, `commands/`, `core/workspace.py`, `modules/` stubs.
@@ -58,6 +58,10 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 9 — Meeting tab + v0.6.0 ✅
+- [x] **Meeting** tab (the last CLI-parity gap): paste notes/transcript → grounded **summary / decisions / action items** (provider seam, mock default) + **action items → tasks bridge** (deterministic `meeting.extract_action_items` — no provider call; select/untick items; creates via the existing guarded `POST /api/tasks/create` — **no new write surface**). Transcript **never persisted** (same rule as CV text). Inline `POST /api/meeting` inherits D-0018 guards.
+- [x] **v0.6.0 platform work:** `devos/providers/ollama.py` (**first real AI provider** — local daemon, stdlib `urllib`, no key, "[OLLAMA UNAVAILABLE]" graceful degradation; registered behind `providers.ai`; **default stays offline mock**); **AND-first retrieval** in `qa.retrieve` (OR fallback); **secret-aware scan** (`ingest.SECRET_FILE_PATTERNS` + `skipped_secrets`, skip-before-read); **CI** (`.github/workflows/ci.yml`, py3.11–3.13 × Linux/Windows). Version → **0.6.0**. D-0026; SECURITY §1/§2/§5/§8/§9. 317 tests (+23), live socket smoke verified.
+
 ## Post-roadmap: Dashboard slice 8 — Career tab ✅
 - [x] **Career** tab (… · Learn · **Career** · Settings): **Track a job application** (job-lead CRUD — add, inline status select, edit, two-step delete), **Interview prep** (pick a lead → grounded questions from its notes; declines when noteless), **CV match check** (paste CV + compare vs a lead's notes or a pasted description → coverage % + matched/missing keyword chips).
 - [x] `GET /api/jobs` + `GET /api/jobs/interview` + `POST /api/jobs/{create,update,delete}` (in `_POST_ACTIONS`) + inline `POST /api/cv`. Reuse `repo` job CRUD + `repo.JOB_STATUSES` + `career.analyze_cv`/`interview_prep`; no new engine. **CV text treated as untrusted data, analyzed deterministically/offline, never persisted.** Inherits D-0018 guards; no schema/`server.py` change. D-0025; SECURITY §5/§9/§8. 294 tests (+22), live socket smoke verified.
@@ -97,9 +101,9 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021…D-0025): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), then **Meeting Summary tab** (lead — last CLI-parity gap), design-system/a11y polish, Plugins/Extensions UI, then first **real AI provider** (Ollama-first) behind the Settings seam.
-- [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
-- [ ] Meeting: audio/STT, action-item → tasks.
+- [ ] Dashboard (roadmap order, D-0021…D-0026): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), ~~Meeting Summary tab~~ ✅ (slice 9, v0.6.0), ~~first real AI provider (Ollama-first)~~ ✅ (v0.6.0), then design-system/a11y polish and Plugins/Extensions UI.
+- [ ] Wire a real AI provider behind `providers.ai`: ~~Ollama~~ ✅ (v0.6.0); Claude/OpenAI remain **only if the no-cost policy changes**.
+- [ ] Meeting: audio/STT (~~action-item → tasks~~ ✅ v0.6.0).
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.
 - [ ] Career: CV rewrite/cover-letter; (scraping/APIs intentionally excluded).
 - [ ] Semantic/embedding search (D-0006 seam); persisted exercises/scores; multi-user/cloud sync.
