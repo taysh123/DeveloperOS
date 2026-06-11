@@ -136,6 +136,30 @@ input:focus, textarea:focus, select:focus, button:focus-visible {
 .msg.error { background: rgba(255,107,107,.12); color: var(--danger-soft); border: 1px solid var(--danger); }
 .msg.ok { background: rgba(81,207,102,.12); color: var(--success-soft); border: 1px solid var(--success); }
 
+/* onboarding welcome guide (slice 11, D-0028) */
+.welcome { border-color: var(--accent2); }
+.welcome h2 { text-transform: none; letter-spacing: 0; font-size: var(--text-l); color: var(--text); }
+.welcome > p { margin: var(--space-2) 0 var(--space-4); }
+.getstarted { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted); margin: 0 0 var(--space-2); }
+.checklist { list-style: none; margin: 0 0 var(--space-3); padding: 0; }
+.checklist .step { display: flex; gap: var(--space-2); align-items: baseline;
+  padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.checklist .step:first-of-type { border-top: 0; }
+.stepmark { flex: 0 0 22px; height: 22px; display: inline-flex; align-items: center;
+  justify-content: center; border-radius: 50%; border: 1px solid var(--border);
+  color: var(--muted); font-size: var(--text-xs); align-self: center; }
+.step.done .stepmark { color: var(--success); border-color: var(--success); }
+.steplink { background: none; border: 0; color: var(--accent); cursor: pointer;
+  font: inherit; font-weight: 600; padding: 2px 0; text-align: left; }
+.steplink:hover { text-decoration: underline; }
+.step.done .steplink { color: var(--muted); }
+.stephint { font-size: var(--text-s); }
+.linklike { background: none; border: 0; color: var(--accent); cursor: pointer;
+  font: inherit; padding: 0; text-decoration: underline; }
+.rewelcome { margin: 0 0 var(--space-3); }
+@media (max-width: 620px) { .checklist .step { flex-wrap: wrap; } }
+
 /* selectable checklist rows (meeting action items) */
 .checkitem { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
 .checkitem input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); }

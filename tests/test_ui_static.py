@@ -61,5 +61,30 @@ class TestA11yContract(unittest.TestCase):
         self.assertIn('name="viewport"', HTML)
 
 
+class TestOnboardingContract(unittest.TestCase):
+    """Slice 11 (D-0028): welcome + live get-started checklist on Home."""
+
+    def test_welcome_guide_component_exists(self) -> None:
+        self.assertIn("function WelcomeGuide(", JS)
+
+    def test_state_persisted_in_local_storage(self) -> None:
+        self.assertIn("devos.onboarding", JS)
+
+    def test_plain_language_and_privacy_up_front(self) -> None:
+        self.assertIn("Get started", JS)
+        self.assertIn("stays on your computer", JS)
+
+    def test_checklist_markup_present(self) -> None:
+        self.assertIn('class="checklist"', JS)
+
+    def test_welcome_region_labelled(self) -> None:
+        match = re.search(r"aria-labelledby=\"welcome-h\"[\s\S]{0,300}?id=\"welcome-h\"", JS)
+        self.assertIsNotNone(match, "welcome section must be labelled by its heading")
+
+    def test_welcome_styles_defined(self) -> None:
+        self.assertIn(".welcome", CSS)
+        self.assertIn(".checklist", CSS)
+
+
 if __name__ == "__main__":
     unittest.main()

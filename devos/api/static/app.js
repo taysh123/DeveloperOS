@@ -94,6 +94,89 @@
   }
 
   // --- HOME ----------------------------------------------------------------
+  // Onboarding state lives in the browser only (single power user, loopback
+  // dashboard): a tiny localStorage record of UI preferences — no API surface,
+  // nothing personal stored (D-0028).
+  var ONBOARD_KEY = "devos.onboarding";
+  function onboardState() {
+    try { return JSON.parse(localStorage.getItem(ONBOARD_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function onboardSave(state) {
+    try { localStorage.setItem(ONBOARD_KEY, JSON.stringify(state)); }
+    catch (e) { /* storage unavailable (private mode) — guide just won't persist */ }
+  }
+
+  // Welcome + live "get started" checklist (slice 11). Always shown while the
+  // workspace is empty (it IS the empty state); dismissible once data exists.
+  // Steps deep-link into existing tabs — no parallel onboarding surfaces.
+  function WelcomeGuide(props) {
+    var ov = props.ov;
+    var s = useState(onboardState()), st = s[0], setSt = s[1];
+    var counts = ov.task_counts || {};
+    var anyTasks = Object.keys(counts).some(function (k) { return counts[k] > 0; });
+    var hasNote = !!(ov.where_i_left_off && ov.where_i_left_off.memory);
+    var hasProject = (ov.projects || []).length > 0;
+    var empty = !hasProject && !anyTasks && !hasNote;
+    var clicked = st.clicked || {};
+
+    function update(next) { setSt(next); onboardSave(next); }
+    function stepGo(key, tabId) {
+      return function () {
+        if (key) {
+          var c = Object.assign({}, clicked); c[key] = true;
+          update(Object.assign({}, st, { clicked: c }));
+        }
+        props.go(tabId);
+      };
+    }
+
+    if (st.hidden && !empty) {
+      return html`<p class="muted rewelcome">
+        <button class="linklike" type="button"
+          onClick=${function () { update(Object.assign({}, st, { hidden: false })); }}>
+          Show the getting-started guide</button></p>`;
+    }
+
+    var steps = [
+      { key: null, label: "Import your first project", tab: "projects", done: hasProject,
+        hint: "Point DeveloperOS at a folder of code or notes." },
+      { key: "search", label: "Search your code", tab: "assist", done: !!clicked.search,
+        hint: "Find anything by keyword." },
+      { key: "ask", label: "Ask a plain-English question", tab: "assist", done: !!clicked.ask,
+        hint: "“How does login work?” — answers cite your own files." },
+      { key: "learn", label: "Learn from a file", tab: "learning", done: !!clicked.learn,
+        hint: "Explanations, quizzes and exercises from your real code." },
+      { key: null, label: "Add a task or save a note", tab: "tasks", done: anyTasks || hasNote,
+        hint: "Keep your work and decisions in one place." },
+      { key: "settings", label: "See how AI is set up", tab: "settings", done: !!clicked.settings,
+        hint: "Offline by default — nothing leaves your machine." }
+    ];
+    var doneCount = steps.filter(function (x) { return x.done; }).length;
+
+    return html`<section class="panel welcome" aria-labelledby="welcome-h">
+      <h2 id="welcome-h">Welcome to DeveloperOS</h2>
+      <p>Your private workspace for understanding, organizing and learning from your own code.
+        Everything <strong>stays on your computer</strong> — no account, no API key, nothing is uploaded.</p>
+      <h3 class="getstarted">Get started</h3>
+      <ol class="checklist">
+        ${steps.map(function (x, i) {
+          return html`<li key=${i} class=${"step" + (x.done ? " done" : "")}>
+            <span class="stepmark" aria-hidden="true">${x.done ? "✓" : i + 1}</span>
+            <button class="steplink" type="button" onClick=${stepGo(x.key, x.tab)}>
+              ${x.label}${x.done ? html`<span class="sr-only"> (done)</span>` : null}</button>
+            <span class="muted stephint">${x.hint}</span>
+          </li>`;
+        })}
+      </ol>
+      <div class="row spread">
+        <span class="muted">${doneCount} of ${steps.length} done</span>
+        ${empty ? null : html`<button class="btn small ghost" type="button"
+          onClick=${function () { update(Object.assign({}, st, { hidden: true })); }}>Hide this guide</button>`}
+      </div>
+    </section>`;
+  }
+
   function Activity(props) {
     var items = props.items || [];
     if (!items.length) return html`<${Empty}>No activity yet.<//>`;
@@ -110,6 +193,7 @@
     if (ov.error) return html`<${Empty}>Couldn't load your overview. Is the dashboard still running?<//>`;
     var c = ov.task_counts || {}, w = ov.where_i_left_off || {};
     return html`<div>
+      <${WelcomeGuide} ov=${ov} go=${props.go} />
       <div class="grid cards">
         <${Stat} k="todo" n=${c.todo || 0} label="To do" />
         <${Stat} k="in_progress" n=${c.in_progress || 0} label="In progress" />
@@ -1449,6 +1533,14 @@
     var pcount = ov && !ov.error && ov.projects ? ov.projects.length : 0;
     var tablistRef = useRef(null);
 
+    // Programmatic tab switch (onboarding deep links): move focus to the main
+    // region so screen-reader/keyboard users land on the new content.
+    function go(id) {
+      setTab(id);
+      var m = document.getElementById("main");
+      if (m) m.focus();
+    }
+
     // WAI-ARIA tabs pattern: roving tabindex + arrow-key navigation.
     function onTabKey(ev) {
       var step = { ArrowRight: 1, ArrowLeft: -1, Home: 0, End: 0 };
@@ -1483,7 +1575,7 @@
       </nav>
       <main id="main" tabIndex=${-1}>
         <div role="tabpanel" id=${"panel-" + tab} aria-labelledby=${"tab-" + tab}>
-          ${tab === "home" && html`<${HomeView} tick=${tick} />`}
+          ${tab === "home" && html`<${HomeView} tick=${tick} go=${go} />`}
           ${tab === "tasks" && html`<${TasksView} tick=${tick} reload=${reload} />`}
           ${tab === "notes" && html`<${NotesView} tick=${tick} reload=${reload} />`}
           ${tab === "assist" && html`<${SearchView} />`}
