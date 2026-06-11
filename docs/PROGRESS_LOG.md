@@ -4,6 +4,15 @@ _Newest entries first. One entry per meaningful work session/milestone._
 
 ---
 
+## 2026-06-11 — Session 28: Slice 15 — Windows installer (ladder step D) → v0.8.0 → README overhaul
+- `/plan` (approved): installer (Inno Setup, per-user) → v0.8.0 release with downloadable assets → README rewrite (it still claimed "Phase 1"). Branched `feat/desktop-installer`.
+- **TDD.** 5 new contract tests in `tests/test_packaging.py` (red first): `{#MyAppVersion}` define, exe+ico packaging, `PrivilegesRequired=lowest`, `[Icons]` Start-Menu entry, **KEEP-USER-DATA** marker, root `LICENSE` (MIT) — the LICENSE file didn't exist despite pyproject/README claiming MIT.
+- **Installer (D-0032):** `installer.iss` — per-user (`%LOCALAPPDATA%\Programs\DeveloperOS`, no UAC), Start-Menu + opt-in desktop shortcut, LICENSE page, in-place upgrades via stable AppId, **no `[UninstallDelete]`** so `%APPDATA%\DeveloperOS` survives; `build_installer.ps1` (version from `__init__.py`, builds exe if missing, ISCC discovery + winget hint). Inno Setup installed via winget (dev-time only).
+- **Live verification (full cycle):** built `DeveloperOS-Setup-0.7.0.exe` (~11 MB) → silent `/CURRENTUSER` install → exe + Start-Menu `.lnk` + uninstaller present → installed exe served the dashboard on a test port → silent uninstall → app dir + shortcut removed, **sentinel file in `%APPDATA%\DeveloperOS` survived** → machine state restored.
+- **systematic-debugging finding:** first uninstall left a locked `DeveloperOS.exe` — PyInstaller onefile runs **parent + child**; force-killing only the parent orphaned the server child (kept the port, locked the exe). Ctrl+C stops both correctly; smoke tests now stop the process tree; caveat documented in packaging/README (+ D-0032).
+- **verification-before-completion:** full suite **356/356** (+5); docs synced (D-0032, ROADMAP slice 15, FUTURE_ROADMAP §8 D ✅, CHANGELOG, AGENT_STATE, TODO, ARCHITECTURE, packaging/README). SECURITY unchanged (no new network surface; updates manual).
+- Then: v0.8.0 release ("DeveloperOS as a desktop product", slices 13+14+15) with Setup + exe attached as GitHub release assets; README overhaul to match the real product state.
+
 ## 2026-06-11 — Session 27: v0.7.0 release + desktop ladder steps B & C
 - **Part A — v0.7.0 "Installable DeveloperOS foundation"** (release PR; bump 0.6.1→0.7.0; CHANGELOG `[0.7.0]` consolidating slices 11+12 with the why-this-release note; annotated tag + GitHub release after merge + CI green). Rationale: onboarding + installable PWA = the foundation the D-0029 desktop ladder builds on.
 - **Part B — `devos app` launcher (ladder step B, D-0030):** probe → reuse-or-start → ready-wait → open → blocking serve lifecycle; single-instance via read-only `/api/session` probe; auto-`init` for first-run users; `--port`/`--no-browser`; friendly plain-language stdout. TDD in `tests/test_app_cmd.py`.

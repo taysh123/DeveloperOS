@@ -130,8 +130,9 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
   spec + build script + multi-size `.ico`; exe wraps `devos app`; built and smoke-verified
   (~9.6 MB). Dev-time dependency only (D-0031). Start-Menu shortcut arrives with the step-D
   installer.
-- ⬜ **D. Installer (Inno Setup) + optional manual update check** [Nice] — GitHub Releases as the
-  distribution channel; updates never required, offline keeps working.
+- ✅ **D. Installer (Inno Setup) + manual update path** [shipped slice 15, D-0032] — per-user
+  Setup exe (Start-Menu shortcut, clean uninstall that preserves user data); GitHub Releases as
+  the distribution channel; updates manual by design, offline keeps working.
 - ⬜ **E. Tauri shell** [Research, only-if-justified] — revisit only if C/D demand native
   capabilities (tray, file dialogs, OS integration). Electron is **rejected** (D-0029).
 

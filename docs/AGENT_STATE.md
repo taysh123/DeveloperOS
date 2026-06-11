@@ -18,6 +18,18 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Slice 15 complete (D-0032): Windows installer (desktop ladder step D).** Inno Setup per-user
+installer (`packaging/installer.iss`, `build_installer.ps1` → `DeveloperOS-Setup-<v>.exe`, ~11 MB;
+version from `devos/__init__.py`): `PrivilegesRequired=lowest` → `%LOCALAPPDATA%\Programs\
+DeveloperOS`, Start-Menu shortcut + opt-in desktop icon, **KEEP-USER-DATA** uninstall
+(`%APPDATA%\DeveloperOS` survives), manual update path via GitHub Releases (no auto-update code,
+no new network surface), `LICENSE` (MIT) added. **Live-verified full cycle:** silent install →
+installed exe serves dashboard → silent uninstall removes app/shortcut, sentinel user data
+survives. **Finding:** PyInstaller onefile parent+child — force-killing only the parent orphans
+the server + locks the exe; Ctrl+C stops both (documented in packaging/README + KNOWN_ISSUES).
+TDD **356/356** (+5). SECURITY unchanged.
+
+## Previous milestone
 **Slice 14 complete (D-0031): PyInstaller packaging foundation (desktop ladder step C).**
 `packaging/`: `devos.spec` (onefile, console=True, upx=False; datas = `devos/api/static/**` +
 `storage/schema.sql`; hiddenimports = collect_submodules), `launch_devos.py` (exe wraps
@@ -80,16 +92,22 @@ persisted; inherits D-0018 guards); React+htm **Meeting** tab with `ActionItemsB
 (meeting 200 + 403-without-token).
 
 ## Next immediate step
-Merge `feat/desktop-packaging` (slice 14 PR) to `main` once CI is green. Then, per FUTURE_ROADMAP
-§8: desktop ladder **step D** (Inno Setup installer + optional manual update check via GitHub
-Releases — consider a `v0.8.0` bundling slices 13+14+D); or Plugins/Extensions UI; embeddings
-behind the D-0006 seam; optional Claude provider **only when the no-cost policy changes**.
+Merge `feat/desktop-installer` (slice 15 PR), then cut **v0.8.0 "DeveloperOS as a desktop
+product"** (slices 13+14+15) with the **Setup exe + bare exe attached as GitHub release assets**
+(the download channel). Then the README overhaul (it still claims "Phase 1"). Afterwards:
+Plugins/Extensions UI; embeddings (D-0006 seam); ladder E (Tauri) only-if-justified; optional
+Claude provider **only when the no-cost policy changes**.
 
 ## Tasks
 ### In progress
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Slice 15 (2026-06-11): Windows installer (ladder step D, D-0032). `packaging/installer.iss`
+      (per-user, Start-Menu, KEEP-USER-DATA uninstall) + `build_installer.ps1` (version from
+      `__init__.py`; ISCC discovery + winget hint) + LICENSE (MIT). Real Setup built (~11 MB);
+      full silent install→smoke→uninstall cycle verified incl. user-data survival sentinel.
+      PyInstaller parent/child force-kill caveat documented. TDD **356/356** (+5). SECURITY unchanged.
 - [x] Slice 14 (2026-06-11): PyInstaller packaging foundation (ladder step C, D-0031).
       `packaging/devos.spec` + `launch_devos.py` (wraps `devos app`) + `build.ps1` + README +
       `devos.ico` (stdlib `write_ico`, 16/32/48/256 PNG entries). Real exe built (~9.6 MB),

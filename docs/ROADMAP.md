@@ -149,10 +149,15 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   (~9.6 MB) and smoke-verified** (fresh init from bundled schema; dashboard/manifest/API from
   bundled assets; single-instance reuse). PyInstaller = dev-time only; runtime stays stdlib-only;
   SECURITY unchanged.
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step D (Inno Setup installer +
-  optional manual update check via GitHub Releases) · Plugins/Extensions UI (surface
-  `devos plugins`) · embeddings/semantic search behind the D-0006 seam · optional cloud provider
-  (Claude) **only if the no-cost policy changes** (env key + consent + audit log already specified).
+- ✅ **Slice 15 — Windows installer (desktop ladder step D)** (D-0032): Inno Setup per-user
+  installer (`packaging/installer.iss` + `build_installer.ps1` → `DeveloperOS-Setup-<v>.exe`,
+  ~11 MB) — Start-Menu shortcut, optional desktop icon, clean uninstall that **preserves user
+  data** (`%APPDATA%\DeveloperOS`), manual update path via GitHub Releases (no auto-update code).
+  Live-verified end-to-end (silent install → installed exe serves the dashboard → silent
+  uninstall removes app+shortcut, data survives). LICENSE (MIT) added. SECURITY unchanged.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** Plugins/Extensions UI (surface `devos plugins`) ·
+  embeddings/semantic search behind the D-0006 seam · desktop ladder step E (Tauri)
+  **only-if-justified** · optional cloud provider (Claude) **only if the no-cost policy changes**.
 
 ---
 

@@ -191,6 +191,9 @@ ready-wait thread opens the browser → blocking serve until Ctrl+C. Single inst
 `devos.spec` bundles the vendored dashboard + `storage/schema.sql`; `devos.ico` comes from the
 same stdlib icon generator; PyInstaller is a **dev-time** dependency only (runtime stays
 stdlib-only, D-0005). Build: `packaging/build.ps1` → `packaging/dist/DeveloperOS.exe`.
+**The Windows installer** (D-0032, `packaging/installer.iss` + `build_installer.ps1`) ships that
+exe as a per-user Inno Setup package (Start-Menu shortcut, uninstall that preserves
+`%APPDATA%\DeveloperOS`); updates are manual via GitHub Releases — no auto-update code.
 The Projects tab adds a confirm-before-write import/scan flow + project detail view (with a **Study this
 project** → Project Deep Dive sub-view: Start here / Key files / How this works / Questions / Interview
 prep + project-scoped Ask); the Debug tab adds a paste → Analyze → result-cards flow. `devos serve`
