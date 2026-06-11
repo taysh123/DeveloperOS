@@ -1,0 +1,17 @@
+{
+  "name": "DeveloperOS",
+  "short_name": "DevOS",
+  "description": "Your private, local-first workspace for understanding, organizing and learning from your own code. Everything stays on your computer.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
