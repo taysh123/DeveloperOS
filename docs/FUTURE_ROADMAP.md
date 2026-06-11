@@ -124,8 +124,8 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
 ## 8. Desktop packaging & distribution (D-0029 ladder — Windows-first, cross-platform-friendly)
 - ✅ **A. PWA foundation** [Core, shipped slice 12] — manifest + icon system + installability
   (Edge/Chrome → real window, Start-Menu/taskbar icon). No service worker by design.
-- ⬜ **B. `devos app` launcher** [High] — one command that starts the server and opens the
-  installed app window (falls back to the default browser).
+- ✅ **B. `devos app` launcher** [High, shipped slice 13] — probe → reuse-or-start → ready-wait →
+  open → serve; single instance per port; auto-init on first run (D-0030).
 - ⬜ **C. PyInstaller single-file `devos.exe`** [High] — self-starting server + Start-Menu
   shortcut; the step that removes the terminal entirely for non-technical users. Multi-size
   `.ico` from the D-0029 mark.

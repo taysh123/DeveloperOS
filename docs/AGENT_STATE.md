@@ -18,6 +18,16 @@ Also in v0.6.0: **AND-first retrieval** (OR fallback), **secret-aware scanning**
 IA = Work · Understand · Grow · System (D-0021…D-0025 + `docs/FUTURE_ROADMAP.md`).
 
 ## Current milestone
+**Slice 13 complete (D-0030): `devos app` launcher (desktop ladder step B).** Lifecycle: probe →
+reuse-or-start → ready-wait → open → serve (blocking) → Ctrl+C. Read-only `/api/session` probe
+identifies a running DeveloperOS (single instance per port); occupied ports detected via an
+**exclusive-bind check** (Windows findings: firewall silently drops SYNs to closed loopback ports,
+and HTTPServer's SO_REUSEADDR lets a second bind succeed silently — both encoded in tests);
+auto-init on first run; friendly plain-language output. No new API surface; SECURITY unchanged.
+TDD **347/347** (+7, `tests/test_app_cmd.py`); live smoke: launcher serves, second instance reuses
+in ~300 ms.
+
+## Previous milestone
 **Slice 12 complete (D-0029): desktop strategy + PWA foundation.** Long-term direction decided —
 **PWA front + packaged Python backend** ladder (A: PWA ✅ → B: `devos app` launcher → C: PyInstaller
 `devos.exe` → D: Inno Setup installer + optional manual update check → E: Tauri only-if-justified;
@@ -70,6 +80,11 @@ release). Next, per FUTURE_ROADMAP §8: desktop ladder **step B (`devos app` lau
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Slice 13 (2026-06-11): `devos app` launcher (ladder step B, D-0030). `commands/app_cmd.py`:
+      probe (read-only `/api/session` token check) → reuse-or-start → `_port_takeable` exclusive
+      bind (Windows SO_REUSEADDR/firewall-drop findings) → auto-init → ready-wait thread →
+      `webbrowser.open` → blocking serve. `--port`/`--no-browser`. TDD **347/347** (+7); live
+      smoke verified (single instance ~300 ms reuse). No new API surface; SECURITY unchanged.
 - [x] Slice 12 (2026-06-11): desktop strategy + PWA foundation. D-0029 ladder decided (PWA →
       launcher → PyInstaller exe → installer → Tauri-only-if-justified; Electron rejected).
       Shipped: `manifest.webmanifest` (standalone, 192/512 + maskable), `tools/make_icons.py`
