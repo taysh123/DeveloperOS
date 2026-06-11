@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from devos import __version__, settings as settings_mod
+from devos.modules import career as career_mod
 from devos.modules import debug as debug_mod
 from devos.modules import index as index_mod
 from devos.modules import ingest
@@ -258,6 +259,28 @@ def grade_payload(conn: sqlite3.Connection, ws, target: str, *, answer: str,
             "provider": g.provider, "sources": _chunk_sources(g.sources)}
 
 
+# --- career (slice 8) -----------------------------------------------------
+
+def jobs_payload(conn: sqlite3.Connection, *, status: str | None = None) -> dict:
+    return {"jobs": [_d(j) for j in repo.list_jobs(conn, status=status)]}
+
+
+def interview_payload(conn: sqlite3.Connection, ws, job_id: int, *, n: int = 5) -> dict:
+    """Grounded interview-prep questions from a job lead's stored notes (reuse career.interview_prep)."""
+    prep = career_mod.interview_prep(conn, job_id, provider=ws.ai, n=n)
+    return {"job_id": prep.job_id, "n": n, "text": prep.text,
+            "grounded": prep.grounded, "provider": prep.provider, "sources": prep.sources}
+
+
+def cv_payload(conn: sqlite3.Connection, cv_text: str, *, target_text: str,
+               target_label: str = "") -> dict:
+    """Deterministic, offline CV-vs-target keyword coverage (reuse career.analyze_cv). Not persisted."""
+    a = career_mod.analyze_cv(cv_text, target_text, target_label=target_label)
+    return {"matched": sorted(a.matched), "missing": sorted(a.missing),
+            "matched_count": len(a.matched), "target_count": len(a.target_keywords),
+            "coverage": round(a.coverage, 3), "target_label": a.target_label}
+
+
 def debug_payload(conn: sqlite3.Connection, ws, trace_text: str, *,
                   project: str | None = None) -> dict:
     """Diagnose a pasted error/trace/log (read-only). Reuses modules/debug.diagnose."""
@@ -498,6 +521,80 @@ def delete_project_action(conn: sqlite3.Connection, body: dict) -> Response:
     return _json({"deleted": repo.delete_project(conn, pid)})
 
 
+# --- career: job leads (slice 8) ------------------------------------------
+
+def _clean_optional(value, label: str, cap: int) -> "tuple[str | None, Response | None]":
+    """Validate an optional length-capped string field; '' -> None."""
+    if value is None:
+        return None, None
+    s = str(value).strip()
+    if not s:
+        return None, None
+    if len(s) > cap:
+        return None, _bad(f"{label} is too long (max {cap} characters)")
+    return s, None
+
+
+def create_job_action(conn: sqlite3.Connection, body: dict) -> Response:
+    company = str(body.get("company") or "").strip()
+    if not company:
+        return _bad("a company name is required")
+    if len(company) > MAX_TITLE:
+        return _bad(f"company is too long (max {MAX_TITLE} characters)")
+    status = body.get("status") or "saved"
+    if status not in repo.JOB_STATUSES:
+        return _bad(f"status must be one of {', '.join(repo.JOB_STATUSES)}")
+    role, err = _clean_optional(body.get("role"), "role", MAX_TITLE)
+    if err:
+        return err
+    url, err = _clean_optional(body.get("url"), "link", MAX_TITLE)
+    if err:
+        return err
+    notes, err = _clean_optional(body.get("notes"), "notes", MAX_BODY)
+    if err:
+        return err
+    jid = repo.create_job(conn, company, role=role, url=url, status=status, notes=notes)
+    return _json({"id": jid}, 201)
+
+
+def update_job_action(conn: sqlite3.Connection, body: dict) -> Response:
+    jid, err = _require_id(body, "job")
+    if err:
+        return err
+    if repo.get_job(conn, jid) is None:
+        return _json({"error": f"no job #{jid}"}, 404)
+    fields: dict = {}
+    if body.get("company") is not None:
+        company = str(body["company"]).strip()
+        if not company:
+            return _bad("company cannot be empty")
+        if len(company) > MAX_TITLE:
+            return _bad(f"company is too long (max {MAX_TITLE} characters)")
+        fields["company"] = company
+    if body.get("status") is not None:
+        if body["status"] not in repo.JOB_STATUSES:
+            return _bad(f"status must be one of {', '.join(repo.JOB_STATUSES)}")
+        fields["status"] = body["status"]
+    for key, cap in (("role", MAX_TITLE), ("url", MAX_TITLE), ("notes", MAX_BODY)):
+        if body.get(key) is not None:
+            val, verr = _clean_optional(body.get(key), key, cap)
+            if verr:
+                return verr
+            fields[key] = val or ""
+    if not fields:
+        return _bad("no updatable fields provided")
+    return _json({"updated": repo.update_job(conn, jid, **fields)})
+
+
+def delete_job_action(conn: sqlite3.Connection, body: dict) -> Response:
+    jid, err = _require_id(body, "job")
+    if err:
+        return err
+    if repo.get_job(conn, jid) is None:
+        return _json({"error": f"no job #{jid}"}, 404)
+    return _json({"deleted": repo.delete_job(conn, jid)})
+
+
 MAX_PATH = 4096
 
 
@@ -547,6 +644,9 @@ _POST_ACTIONS = {
     "/api/notes/delete": delete_note_action,
     "/api/projects/scan": scan_project_action,
     "/api/projects/delete": delete_project_action,
+    "/api/jobs/create": create_job_action,
+    "/api/jobs/update": update_job_action,
+    "/api/jobs/delete": delete_job_action,
 }
 
 
@@ -592,6 +692,35 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                         return _bad("write an answer to grade")
                     return _json(grade_payload(conn, ws, target, answer=answer,
                                                question=b.get("question"), project=b.get("project")))
+                if path == "/api/cv":
+                    # deterministic, offline CV keyword check; POST because the CV is multi-line
+                    # free text. Inline like /api/grade. The CV text is NOT persisted.
+                    b = body or {}
+                    cv_text = b.get("cv_text")
+                    if not isinstance(cv_text, str) or not cv_text.strip():
+                        return _bad("paste your CV text to check")
+                    if len(cv_text) > MAX_BODY:
+                        return _bad(f"CV text is too long (max {MAX_BODY} characters)")
+                    target_text = b.get("target_text")
+                    label = ""
+                    if isinstance(target_text, str) and target_text.strip():
+                        target = target_text
+                        if len(target) > MAX_BODY:
+                            return _bad(f"job description is too long (max {MAX_BODY} characters)")
+                    elif b.get("job_id") is not None:
+                        jid = b.get("job_id")
+                        if not isinstance(jid, int) or isinstance(jid, bool) or jid <= 0:
+                            return _bad("a valid job id is required")
+                        job = repo.get_job(conn, jid)
+                        if job is None:
+                            return _json({"error": f"no job #{jid}"}, 404)
+                        if not (job["notes"] and job["notes"].strip()):
+                            return _bad("that job has no notes to compare against — add notes first")
+                        target = job["notes"]
+                        label = f"{job['company']} — {job['role'] or 'role'}"
+                    else:
+                        return _bad("choose a job to compare against, or paste a job description")
+                    return _json(cv_payload(conn, cv_text, target_text=target, target_label=label))
                 action = _POST_ACTIONS.get(path)
                 if action is None:
                     return _json({"error": "not found", "path": path}, 404)
@@ -663,6 +792,19 @@ def route(ws, path: str, query: dict[str, str], *, method: str = "GET",
                     return _bad("a file path or topic is required")
                 n = _int(query.get("n"), default=3, lo=1, hi=10)
                 return _json(exercise_payload(conn, ws, target, n=n, project=query.get("project")))
+            if path == "/api/jobs":
+                status = query.get("status")
+                if status is not None and status not in repo.JOB_STATUSES:
+                    return _bad(f"status must be one of {', '.join(repo.JOB_STATUSES)}")
+                return _json(jobs_payload(conn, status=status))
+            if path == "/api/jobs/interview":
+                jid = query.get("id")
+                if jid is None or not str(jid).isdigit():
+                    return _bad("a valid job id is required")
+                if repo.get_job(conn, int(jid)) is None:
+                    return _json({"error": f"no job #{jid}"}, 404)
+                n = _int(query.get("n"), default=5, lo=1, hi=15)
+                return _json(interview_payload(conn, ws, int(jid), n=n))
         finally:
             conn.close()
     return _json({"error": "not found", "path": path}, 404)

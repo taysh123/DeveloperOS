@@ -103,6 +103,13 @@ into the AI context, a model could be manipulated.
   memory/tasks). `cv <file>` reads only the user-named path; CV text + job notes are untrusted **data**
   (CV matching is deterministic/no-AI; interview prep treats notes as data, not instructions). **No
   scraping, no external/paid APIs**, offline. No new outbound surface.
+  - **[NOW] Dashboard exposure (slice 8, D-0025):** the same engine is reachable from the UI via
+    `GET /api/jobs` / `GET /api/jobs/interview` (read-only) and guarded `POST /api/jobs/{create,update,
+    delete}` / `POST /api/cv`. Job leads remain **personal data stored locally** (git-ignored SQLite).
+    **CV text submitted to `POST /api/cv` is untrusted DATA, analyzed deterministically (no AI/provider
+    call), and is NOT persisted.** Interview prep stays grounded on the lead's notes (data-not-instructions)
+    and declines when noteless. POSTs inherit the D-0018 CSRF/Origin/JSON/size/no-CORS gating. No scraping,
+    no external/paid APIs, offline/mock default.
 - **[NOW] Learning Assistant (Phase 9 slices 1–3: `learn`/`quiz`/`exercise`/`grade`):** same grounding
   contract as Q&A — indexed code **and the learner's answer** (`grade`) are **data to evaluate, not
   instructions**; ground truth is retrieved code; attribution is retrieval-derived; read-only/stateless;
@@ -203,6 +210,12 @@ into the AI context, a model could be manipulated.
   confirmation**: a two-step confirm for tasks/notes and a stricter **type-the-project-name** gate for the
   cascading project delete. All input remains untrusted and validated server-side; no new outbound surface;
   offline/mock default.
+- **[NOW] Career tab (slice 8, D-0025).** `GET /api/jobs` / `GET /api/jobs/interview` are read-only;
+  `POST /api/jobs/{create,update,delete}` (in `_POST_ACTIONS`) and `POST /api/cv` (inline; multi-line CV
+  text) inherit the D-0018 controls. Job leads are personal data stored locally (≈ CLI `devos job`);
+  **CV text is untrusted DATA, analyzed deterministically/offline (`career.analyze_cv`, no provider call),
+  and never persisted**; interview prep is grounded on the lead's notes and declines when noteless. No
+  scraping, no external/paid APIs, no new outbound surface.
 - **[FUTURE — Phase 9 cloud/multi-user]** Beyond loopback: per-user auth tokens (§3),
   CORS locked to the dashboard origin, TLS, and rate limiting on any networked surface.
 - Input validation and parameterized queries everywhere (already the norm — see `storage/repo.py`,
@@ -230,6 +243,7 @@ into the AI context, a model could be manipulated.
 | Dashboard settings (Settings tab, D-0022) | `GET /api/system`/`GET /api/settings` read-only; `POST /api/settings` persists **only** `ai_enabled`/`ai_provider` to `settings.json` (not SQLite), ignores any `api_key`/`endpoint`; same D-0018 CSRF/Origin/JSON/size/no-CORS gating. **No keys stored/transmitted** — env-var/keychain only, **presence boolean** surfaced; effective provider stays offline mock until a real provider ships |
 | Dashboard learning (Learn tab, D-0023) | `GET /api/learn|quiz|exercise` + `POST /api/grade` reuse `modules/learning`: grounded (code + learner answer = data), retrieval-derived `file:line`, **read-only/not persisted**, declines when unindexed; POST inherits D-0018 CSRF/Origin/JSON/size/no-CORS gating; offline/mock |
 | Dashboard deletes (CRUD polish, D-0024) | `POST /api/{tasks,notes,projects}/delete` in `_POST_ACTIONS` → same D-0018 CSRF/Origin/JSON/size/no-CORS gating; id-validated (400) / unknown (404); scoped DB deletes ≈ CLI `task rm` (no Safe Action Agent). **Project delete is index-only** (cascade + `reconcile_fts`); **never deletes disk files**. UI requires explicit confirm — type-to-confirm for projects |
+| Dashboard career (Career tab, D-0025) | `GET /api/jobs`/`/api/jobs/interview` read-only; `POST /api/jobs/{create,update,delete}` + `POST /api/cv` inherit D-0018 gating. Job leads = personal data stored locally (≈ CLI `job`); **CV text = untrusted data, deterministic offline analysis, not persisted**; interview prep grounded on notes, declines when noteless. No scraping/paid APIs; offline/mock |
 | Docgen (Phase 8) | Inputs are data, not instructions; output never executed; writes only to explicit `--output`, **no overwrite without `--force`** |
 | Learning (Phase 9.1–9.3: learn/quiz/exercise/grade) | Read-only/stateless; grounded (code + answer = data); offline/mock default; no new surface |
 | Career (Phase 9.4: job/cv/interview) | Personal data stored locally (git-ignored); CV match deterministic/offline; no scraping/APIs |

@@ -4,6 +4,35 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0025 — Dashboard Career tab (`/api/jobs*`, `/api/cv`)
+- **Date:** 2026-06-03
+- **Context:** The Career Assistant (`modules/career` + `repo` `job_leads` CRUD) — job-lead tracking,
+  deterministic offline CV keyword analysis, and grounded interview prep — was CLI-only (`devos
+  job/cv/interview`). Surface it in the dashboard (recorded next slice) without a parallel engine.
+- **Decision:**
+  - **Reads:** `GET /api/jobs?status=` (reuse `repo.list_jobs`); `GET /api/jobs/interview?id=&n=`
+    (read-only AI via `ws.ai`, reuse `career.interview_prep`; grounded on the lead's notes, **declines
+    when noteless**; `n` clamped 1–15; unknown id → 404).
+  - **Writes:** `POST /api/jobs/{create,update,delete}` registered in `_POST_ACTIONS` (inherit the D-0018
+    CSRF/Origin/JSON/64 KB guards). `create` requires `company` and validates `status ∈ repo.JOB_STATUSES`;
+    `update`/`delete` validate a positive int id (400) and 404 unknown. Reuse `repo.create_job`/
+    `update_job`/`delete_job`. No schema change (`job_leads` shipped in schema v4).
+  - **`POST /api/cv`** handled **inline in `route()`** (multi-line CV text, like `/api/grade`):
+    **deterministic, offline** keyword coverage via `career.analyze_cv` against either a selected lead's
+    `notes` (`job_id`) or a pasted `target_text`. **The CV text is treated as untrusted DATA and is never
+    persisted** (stateless analysis, no provider call). Returns matched/missing (sets → sorted lists),
+    coverage, counts, target label.
+  - **UI:** a **Career** tab (IA "Grow" group, beside Learn) with three friendly sections — Track a job
+    application (CRUD with inline status select + edit + the slice-7 `ConfirmDelete` two-step), Interview
+    prep (lead → grounded questions; friendly decline), and CV match check (coverage % + matched/missing
+    keyword chips). Reused existing components/CSS; no new CSS.
+- **Rationale:** Maximum reuse of the existing career engine and the secure write boundary; job leads are
+  personal data already stored locally (SECURITY §5/§9); CV text and job notes are data-not-instructions;
+  interview prep is grounded and declines rather than guessing. No new outbound surface; offline/mock.
+- **Status:** Accepted (dashboard slice 8). Career follow-ups (CV rewrite / cover letters; portfolio
+  bullets; mock-interview mode) remain **on-request** (see `docs/FUTURE_ROADMAP.md`). Job-board
+  scraping/APIs remain intentionally excluded.
+
 ## D-0024 — Dashboard CRUD polish (delete endpoints, project pickers, inline edit)
 - **Date:** 2026-06-02
 - **Context:** The dashboard could create/update tasks & notes and import projects, but a non-CLI user

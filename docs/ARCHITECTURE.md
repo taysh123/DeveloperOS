@@ -155,6 +155,10 @@ and reuse `repo.delete_task`/`delete_memory`/`delete_project`; **`delete_project
 relies on the schema's `ON DELETE CASCADE` (files→chunks, tasks, memory) then `repo.reconcile_fts`, and
 never touches files on disk. Read GET endpoints also include the learning surfaces
 (`/api/learn|quiz|exercise`) and `POST /api/grade` (multi-line answer; reuses `modules/learning`).
+The **career** surfaces (slice 8) reuse `repo` job CRUD + `modules/career`: `GET /api/jobs`,
+`GET /api/jobs/interview` (grounded on the lead's notes), `POST /api/jobs/{create,update,delete}` (in
+`_POST_ACTIONS`), and inline `POST /api/cv` (deterministic offline keyword coverage; **CV text is not
+persisted**).
 `POST /api/debug` is read-only but POSTs the multi-line trace body (reuses `debug.diagnose`; inline in
 `route()` so it gets `ws.ai`); the trace is data-not-instructions, file location is index-only, and the
 diagnosis is not persisted. `GET /api/projects/study` is a read-only Deep Dive aggregator (reuses

@@ -58,6 +58,10 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Slice 5 — Plugin/Extension seam: `devos plugins`; entry-point + opt-in local plugins. 8 tests. D-0016.
 - [x] Slice 6 — Meeting/Transcript: `devos meeting summarize <file>` (grounded) + console-safe UTF-8 output. 7 tests (183 total). D-0017.
 
+## Post-roadmap: Dashboard slice 8 — Career tab ✅
+- [x] **Career** tab (… · Learn · **Career** · Settings): **Track a job application** (job-lead CRUD — add, inline status select, edit, two-step delete), **Interview prep** (pick a lead → grounded questions from its notes; declines when noteless), **CV match check** (paste CV + compare vs a lead's notes or a pasted description → coverage % + matched/missing keyword chips).
+- [x] `GET /api/jobs` + `GET /api/jobs/interview` + `POST /api/jobs/{create,update,delete}` (in `_POST_ACTIONS`) + inline `POST /api/cv`. Reuse `repo` job CRUD + `repo.JOB_STATUSES` + `career.analyze_cv`/`interview_prep`; no new engine. **CV text treated as untrusted data, analyzed deterministically/offline, never persisted.** Inherits D-0018 guards; no schema/`server.py` change. D-0025; SECURITY §5/§9/§8. 294 tests (+22), live socket smoke verified.
+
 ## Post-roadmap: Dashboard slice 7 — CRUD polish ✅
 - [x] Delete from the UI: **tasks** and **notes** (lightweight two-step confirm) and **projects** (**type-to-confirm** the project name, in a clearly-marked danger zone). Project delete is **index-only — never deletes files on disk**.
 - [x] **Project pickers** on the add-task and add-note forms (dropdown of existing projects → reuses the create endpoints' existing `project` field). **Inline task-title editing** (reuses `tasks/update`).
@@ -93,7 +97,7 @@ _Last updated: 2026-06-01_ · Authoritative backlog. Detailed status lives in AG
 - [x] Security: CSRF token (`X-DevOS-Token` via `/api/session`) + Origin allowlist + JSON-only + 64 KB cap, no CORS, loopback-only. D-0018; SECURITY §8 NOW. 208 tests (+25), live smoke verified.
 
 ## All roadmap phases (0–9) shipped their planned scope. Optional future extensions (on request only)
-- [ ] Dashboard (roadmap order, D-0021…D-0024): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), then **Career tab** (lead), Meeting Summary tab, Plugins/Extensions UI, design-system/a11y polish.
+- [ ] Dashboard (roadmap order, D-0021…D-0025): ~~Settings + AI-provider toggle~~ ✅ (slice 5), ~~Learning tab~~ ✅ (slice 6), ~~CRUD polish~~ ✅ (slice 7), ~~Career tab~~ ✅ (slice 8), then **Meeting Summary tab** (lead — last CLI-parity gap), design-system/a11y polish, Plugins/Extensions UI, then first **real AI provider** (Ollama-first) behind the Settings seam.
 - [ ] Wire a real AI provider (Claude/OpenAI/Ollama) behind `providers.ai`.
 - [ ] Meeting: audio/STT, action-item → tasks.
 - [ ] Plugin sandboxing/permissions/signing; plugin marketplace.

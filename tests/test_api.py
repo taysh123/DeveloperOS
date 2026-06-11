@@ -589,6 +589,127 @@ class TestDeleteEndpoints(ApiTestCase):
         self.assertEqual(api_app.route(self.ws, "/api/projects/delete", {}).status, 404)
 
 
+class TestCareerEndpoints(ApiTestCase):
+    def _post(self, path, body):
+        return api_app.route(self.ws, path, {}, method="POST", body=body)
+
+    def _make_job(self, **kw):
+        body = {"company": "Acme", "role": "Engineer", "status": "saved"}
+        body.update(kw)
+        return json.loads(self._post("/api/jobs/create", body).body)["id"]
+
+    def test_create_job_and_list(self) -> None:
+        jid = self._make_job(notes="python, sql")
+        resp = api_app.route(self.ws, "/api/jobs", {})
+        self.assertEqual(resp.status, 200)
+        jobs = json.loads(resp.body)["jobs"]
+        self.assertTrue(any(j["id"] == jid and j["company"] == "Acme" for j in jobs))
+
+    def test_create_job_missing_company_400(self) -> None:
+        self.assertEqual(self._post("/api/jobs/create", {"company": "  "}).status, 400)
+        self.assertEqual(self._post("/api/jobs/create", {}).status, 400)
+
+    def test_create_job_invalid_status_400(self) -> None:
+        self.assertEqual(self._post("/api/jobs/create",
+                                    {"company": "X", "status": "nope"}).status, 400)
+
+    def test_jobs_status_filter(self) -> None:
+        self._make_job(status="saved")
+        self._make_job(status="applied")
+        jobs = json.loads(api_app.route(self.ws, "/api/jobs", {"status": "applied"}).body)["jobs"]
+        self.assertTrue(jobs)
+        self.assertTrue(all(j["status"] == "applied" for j in jobs))
+
+    def test_update_job_status(self) -> None:
+        jid = self._make_job()
+        resp = self._post("/api/jobs/update", {"id": jid, "status": "interview"})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["updated"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertEqual(repo.get_job(conn, jid)["status"], "interview")
+        finally:
+            conn.close()
+
+    def test_update_job_unknown_404(self) -> None:
+        self.assertEqual(self._post("/api/jobs/update", {"id": 99999, "status": "applied"}).status, 404)
+
+    def test_update_job_bad_id_400(self) -> None:
+        self.assertEqual(self._post("/api/jobs/update", {"status": "applied"}).status, 400)
+
+    def test_update_job_invalid_status_400(self) -> None:
+        jid = self._make_job()
+        self.assertEqual(self._post("/api/jobs/update", {"id": jid, "status": "nope"}).status, 400)
+
+    def test_delete_job(self) -> None:
+        jid = self._make_job()
+        resp = self._post("/api/jobs/delete", {"id": jid})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["deleted"], 1)
+        conn = self.ws.connect()
+        try:
+            self.assertIsNone(repo.get_job(conn, jid))
+        finally:
+            conn.close()
+
+    def test_delete_job_unknown_404(self) -> None:
+        self.assertEqual(self._post("/api/jobs/delete", {"id": 99999}).status, 404)
+
+    def test_interview_grounded_with_notes(self) -> None:
+        jid = self._make_job(notes="We use Python, FastAPI and SQLite. Expect system design.")
+        resp = api_app.route(self.ws, "/api/jobs/interview", {"id": str(jid)})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertTrue(b["grounded"])
+        self.assertTrue(b["sources"])
+        self.assertTrue(b["text"])
+
+    def test_interview_declines_without_notes(self) -> None:
+        jid = self._make_job(notes=None)
+        resp = api_app.route(self.ws, "/api/jobs/interview", {"id": str(jid)})
+        self.assertEqual(resp.status, 200)
+        self.assertFalse(json.loads(resp.body)["grounded"])
+
+    def test_interview_clamps_n(self) -> None:
+        jid = self._make_job(notes="python sql")
+        resp = api_app.route(self.ws, "/api/jobs/interview", {"id": str(jid), "n": "999"})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.body)["n"], 15)
+
+    def test_interview_unknown_id_404(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/jobs/interview", {"id": "99999"}).status, 404)
+
+    def test_interview_bad_id_400(self) -> None:
+        self.assertEqual(api_app.route(self.ws, "/api/jobs/interview", {}).status, 400)
+        self.assertEqual(api_app.route(self.ws, "/api/jobs/interview", {"id": "x"}).status, 400)
+
+    def test_cv_against_target_text(self) -> None:
+        resp = self._post("/api/cv", {"cv_text": "I know python and sql",
+                                      "target_text": "python sql kubernetes"})
+        self.assertEqual(resp.status, 200)
+        b = json.loads(resp.body)
+        self.assertIn("python", b["matched"])
+        self.assertIn("kubernetes", b["missing"])
+        self.assertGreaterEqual(b["coverage"], 0.0)
+        self.assertLessEqual(b["coverage"], 1.0)
+
+    def test_cv_against_job_notes(self) -> None:
+        jid = self._make_job(notes="python sql docker")
+        resp = self._post("/api/cv", {"cv_text": "python developer", "job_id": jid})
+        self.assertEqual(resp.status, 200)
+        self.assertIn("python", json.loads(resp.body)["matched"])
+
+    def test_cv_missing_text_400(self) -> None:
+        self.assertEqual(self._post("/api/cv", {"target_text": "python"}).status, 400)
+        self.assertEqual(self._post("/api/cv", {"cv_text": "  ", "target_text": "python"}).status, 400)
+
+    def test_cv_no_target_400(self) -> None:
+        self.assertEqual(self._post("/api/cv", {"cv_text": "python dev"}).status, 400)
+
+    def test_cv_unknown_job_404(self) -> None:
+        self.assertEqual(self._post("/api/cv", {"cv_text": "x", "job_id": 99999}).status, 404)
+
+
 class TestServeCommand(unittest.TestCase):
     def test_serve_is_registered(self) -> None:
         from devos.commands import COMMANDS
@@ -741,4 +862,14 @@ class TestLiveSecurity(_LiveServerMixin):
     def test_project_delete_without_token_403(self) -> None:
         _, port = self._start()
         status, _ = self._post(port, "/api/projects/delete", {"id": 1})
+        self.assertEqual(status, 403)
+
+    def test_job_create_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/jobs/create", {"company": "X"})
+        self.assertEqual(status, 403)
+
+    def test_cv_without_token_403(self) -> None:
+        _, port = self._start()
+        status, _ = self._post(port, "/api/cv", {"cv_text": "x", "target_text": "y"})
         self.assertEqual(status, 403)
