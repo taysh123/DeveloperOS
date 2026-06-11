@@ -130,9 +130,16 @@ loopback API. Each reuses existing modules (no parallel engines) behind the D-00
   ask → learn → tasks/notes → settings); done-state data-backed from `/api/overview` or click-backed
   via localStorage; always-on while the workspace is empty, dismissible after. Fulfils
   FUTURE_ROADMAP "onboarding that earns trust in 60 seconds". Zero new endpoints.
-- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** Plugins/Extensions UI (surface `devos plugins`) ·
-  embeddings/semantic search behind the D-0006 seam · optional cloud provider (Claude) **only if the
-  no-cost policy changes** (env key + consent + audit log already specified).
+- ✅ **Slice 12 — Desktop strategy + PWA foundation** (D-0029): chose the long-term desktop ladder —
+  **PWA front + packaged Python backend** (Electron rejected; Tauri only-if-justified). Shipped step A:
+  `manifest.webmanifest` (standalone, `#0f1117`, 192/512 + maskable icons), stdlib icon generator
+  (`tools/make_icons.py`) + committed PNGs/SVG favicon, head wiring, `.png`/`.webmanifest` content
+  types. Dashboard is now **installable from Edge/Chrome** as a desktop app. No service worker; no
+  new endpoints; SECURITY unchanged.
+- ⬜ **Next (per `docs/FUTURE_ROADMAP.md`):** desktop ladder step B/C (`devos app` launcher →
+  PyInstaller `devos.exe`) · Plugins/Extensions UI (surface `devos plugins`) · embeddings/semantic
+  search behind the D-0006 seam · optional cloud provider (Claude) **only if the no-cost policy
+  changes** (env key + consent + audit log already specified).
 
 ---
 

@@ -121,14 +121,27 @@ IA target (from D-0021): **Work · Understand · Grow · System.**
 > data) and contradicts the single-power-user simplicity that makes today's product trustworthy. Do not
 > start until the single-user product is excellent and a real customer need is proven.
 
-## 8. Stretch goals
+## 8. Desktop packaging & distribution (D-0029 ladder — Windows-first, cross-platform-friendly)
+- ✅ **A. PWA foundation** [Core, shipped slice 12] — manifest + icon system + installability
+  (Edge/Chrome → real window, Start-Menu/taskbar icon). No service worker by design.
+- ⬜ **B. `devos app` launcher** [High] — one command that starts the server and opens the
+  installed app window (falls back to the default browser).
+- ⬜ **C. PyInstaller single-file `devos.exe`** [High] — self-starting server + Start-Menu
+  shortcut; the step that removes the terminal entirely for non-technical users. Multi-size
+  `.ico` from the D-0029 mark.
+- ⬜ **D. Installer (Inno Setup) + optional manual update check** [Nice] — GitHub Releases as the
+  distribution channel; updates never required, offline keeps working.
+- ⬜ **E. Tauri shell** [Research, only-if-justified] — revisit only if C/D demand native
+  capabilities (tray, file dialogs, OS integration). Electron is **rejected** (D-0029).
+
+## 9. Stretch goals
 - Voice/STT for the Meeting assistant (action-item capture) [Research].
 - Browser extension for "explain this snippet/error" [Research].
 - Plugin marketplace **after** sandboxing/permissions/signing land [Research] (SECURITY §5 PLANNED).
 - Offline local-LLM bundle for a zero-config private AI experience [Research].
 - Cross-project knowledge graph ("where else do we do X?") [Research].
 
-## 9. Ideas backlog (unsorted, revisit each planning session)
+## 10. Ideas backlog (unsorted, revisit each planning session)
 - Inline "explain this file" from the Projects tree.
 - Saved searches / pinned questions.
 - Export a project's Study Deep Dive to Markdown/PDF.

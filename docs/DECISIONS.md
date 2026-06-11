@@ -4,6 +4,44 @@ _Architectural & product decisions, newest first. Each: context · decision · r
 
 ---
 
+## D-0029 — Desktop strategy: PWA front + packaged Python backend (slice 12 = PWA foundation)
+- **Date:** 2026-06-11
+- **Context:** DeveloperOS should eventually feel like an installable desktop app for
+  non-technical users, without breaking the stdlib-only CLI, the loopback dashboard, the
+  offline/no-cost posture, or the security model.
+- **Options evaluated:**
+  - *Status-quo localhost web* — zero cost but "run a command, open a browser" is not a desktop app.
+  - *PWA* (manifest + icons) — tiny complexity, zero runtime size, security unchanged (same
+    origin; 127.0.0.1 is a secure context so install works without HTTPS); installed PWA gives a
+    real window + Start-Menu/taskbar icon today on Edge/Chrome. **Adopted now.**
+  - *Electron* — ~200 MB Chromium duplicate, Node toolchain and build pipeline contradict the
+    stdlib-only/no-build ethos, larger attack surface. **Rejected.**
+  - *Tauri* — small (~10 MB + WebView2) but needs a Rust toolchain plus packaging the Python
+    backend as a sidecar; a big complexity jump for window chrome we get from the PWA. **Deferred:
+    only if a native shell (tray, file dialogs, deep OS integration) becomes necessary.**
+  - *Native packaging (PyInstaller exe + Inno Setup installer)* — medium effort, no new framework,
+    fits the current architecture; the realistic distribution path for the backend. **Adopted later.**
+- **Decision — the desktop ladder (Windows-first, cross-platform-friendly):**
+  **A)** PWA foundation (this slice): `static/manifest.webmanifest` (name "DeveloperOS" /
+  short_name "DevOS", `start_url`/`scope` "/", `display: standalone`, theme/background `#0f1117`,
+  192/512 + maskable icons), icon system, head wiring, `.png`/`.webmanifest` content types.
+  **No service worker** — the server is local; a SW adds only cache-invalidation risk.
+  **B)** `devos app` launcher: start the server + open the installed app window.
+  **C)** PyInstaller single-file `devos.exe` + Start-Menu shortcut (server self-starts; PWA on top).
+  **D)** Inno Setup installer; update check is **optional and manual** (point at GitHub Releases) —
+  offline installs keep working forever; no cloud requirement, no auto-update daemon.
+  **E)** Tauri shell **only if** step-C/D limitations demand native capabilities.
+- **Branding spec:** terminal-prompt mark (`>_`) — accent `#6ea8fe` on panel `#0f1117`, drawn from
+  rectangle/diagonal primitives (no font dependency; renders identically at any size); rounded
+  square for normal icons, full-bleed + 78% safe-zone for maskable; SVG favicon; future multi-size
+  `.ico` for the exe reuses the same mark. Generator: `tools/make_icons.py` (stdlib zlib/struct PNG
+  writer — zero-dependency regeneration); generated PNGs are committed (vendored, offline).
+- **Rationale:** Each ladder step is small, reversible, and keeps the existing architecture
+  untouched; the web dashboard remains the single UI (no fork between "web" and "desktop" frontends);
+  users get desktop ergonomics incrementally without DeveloperOS ever depending on a network,
+  a paid service, or a heavyweight runtime.
+- **Status:** Accepted; step A shipped in slice 12.
+
 ## D-0028 — Onboarding: welcome + live get-started checklist on Home (slice 11)
 - **Date:** 2026-06-11
 - **Context:** FUTURE_ROADMAP records "Onboarding that earns trust in 60 seconds" [Core]:
