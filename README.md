@@ -32,17 +32,18 @@ DeveloperOS is a **personal operating system for developers**: point it at your 
 ## Screenshots
 
 All screenshots are real captures of the running app (offline mock provider — exactly what ships).
+See [**docs/SCREENSHOTS.md**](docs/SCREENSHOTS.md) for the full GitHub / portfolio / store sets and how they're generated.
 
 **The desktop app window** — no browser chrome, just DeveloperOS:
 
-![DeveloperOS desktop window](docs/screenshots/desktop-window.png)
+![DeveloperOS desktop window](docs/screenshots/github/desktop-window.png)
 
 | | |
 |---|---|
-| **Home** — welcome guide + live overview ![Home](docs/screenshots/dashboard-home.png) | **Project Deep Dive** — study any codebase ![Deep Dive](docs/screenshots/projects-deep-dive.png) |
-| **Search & Ask** — grounded answers with `file:line` ![Search & Ask](docs/screenshots/search-ask.png) | **Learning Center** — explanations from your code ![Learning](docs/screenshots/learning-center.png) |
-| **Career Center** — job leads, CV check, interview prep ![Career](docs/screenshots/career-center.png) | **Meeting Summary** — transcript → action items → tasks ![Meeting](docs/screenshots/meeting-summary.png) |
-| **Settings & AI** — providers, privacy, system status ![Settings](docs/screenshots/settings-ai.png) | **Windows installer** — per-user, clean uninstall ![Installer](docs/screenshots/installer.png) |
+| **Home** — welcome guide + live overview ![Home](docs/screenshots/github/dashboard-home.png) | **Project Deep Dive** — study any codebase ![Deep Dive](docs/screenshots/github/project-deep-dive.png) |
+| **Search & Ask** — grounded answers with `file:line` ![Search & Ask](docs/screenshots/github/search-ask.png) | **Learning Center** — explanations from your code ![Learning](docs/screenshots/github/learning-center.png) |
+| **Career Center** — job leads, CV check, interview prep ![Career](docs/screenshots/github/career-center.png) | **Meeting Summary** — transcript → action items → tasks ![Meeting](docs/screenshots/github/meeting-summary.png) |
+| **Settings & AI** — providers, privacy, system status ![Settings](docs/screenshots/github/settings-ai.png) | **Windows installer** — per-user, clean uninstall ![Installer](docs/screenshots/installer.png) |
 
 ## Quick start
 
