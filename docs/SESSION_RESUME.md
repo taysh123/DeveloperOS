@@ -2,13 +2,16 @@
 
 > One-page handoff so a **fresh Claude session can resume with minimal context**.
 > For live, authoritative state always defer to [`AGENT_STATE.md`](AGENT_STATE.md).
-> _Last updated: 2026-06-02_
+> _Last updated: 2026-06-14_
 
 ## 1. Current project status
-**DeveloperOS** — a local-first, AI-powered "operating system for developers" (CLI-first).
-**All planned roadmap phases (0–9) are complete.** **183 tests pass** (`python -m unittest
-discover -s tests`). Working tree clean; `main` in sync with `origin`. No work pending —
-future items are optional/on-request (§8).
+**DeveloperOS** — a local-first, AI-powered "operating system for developers" (CLI + dashboard +
+desktop app). **v1.0.0 released — PROJECT COMPLETE.** Beyond roadmap phases 0–9: the full
+action-oriented dashboard (16 slices, CSRF-guarded loopback API), the desktop ladder (app-mode
+window → `devos app` → PyInstaller exe → Inno Setup installer), a real opt-in local AI provider
+(Ollama; offline mock default), and a real screenshot package (github/portfolio/store sets).
+**363 tests pass** (`python -m unittest discover -s tests`). Working tree clean; `main` in sync
+with `origin`. No work pending — future items are optional/on-request (§7, FUTURE_ROADMAP v2.0).
 
 - **Runtime:** Python 3.11+ **stdlib-only** (no required third-party deps). Windows-primary, cross-platform via `pathlib`.
 - **AI:** behind a provider seam; default = offline **MockAIProvider** (no API keys, no network). Every AI command is **grounded** (cites sources) and **declines rather than guesses** when context is missing.
@@ -72,8 +75,9 @@ tests/              # stdlib unittest; isolate via DEVOS_HOME; pattern: write fa
 
 ## 6. Git state
 - **Branch:** `main` (in sync with `origin/main`).
-- **Latest commit:** `83f0bc0` — "Phase 9 slice 6: docs/state sync + D-0017 (Meeting foundation); roadmap 0-9 complete".
-- **Remote:** `https://github.com/taysh123/DeveloperOS.git` (push after each phase/slice).
+- **Latest milestone:** v1.0.0 released (annotated tag + GitHub release with Setup/exe assets);
+  most recent work = the screenshot package (PR #26) + this state-doc sync.
+- **Remote:** `https://github.com/taysh123/DeveloperOS.git` (branch + PR workflow; CI on push/PR).
 - Working tree clean.
 
 ## 7. Recommended next extensions (optional — none in progress)
@@ -90,7 +94,7 @@ tests/              # stdlib unittest; isolate via DEVOS_HOME; pattern: write fa
 4. **Workflow:** `/plan` each new feature narrowly → TDD (write a failing test, watch it fail, implement, green) → run the full suite → dogfood the CLI → update all state docs + add a `D-00xx` decision if architecture changes → commit → `git push origin main`.
 5. **Dev commands:**
    - Install: `pip install -e .`
-   - Tests: `python -m unittest discover -s tests` (must stay green; 183 currently)
+   - Tests: `python -m unittest discover -s tests` (must stay green; 363 currently)
    - Isolate data in dev/tests/dogfood: set `DEVOS_HOME` to a temp dir.
    - Try it: `devos init` → `devos scan .` → `devos index .` → `devos search <q>` / `devos ask "<q>"` / `devos serve`.
 6. **Guardrails:** stdlib-only runtime; mock provider default (no paid APIs); local-first/offline; grounded + no-guessing; no silent destructive writes; keep docs synchronized.

@@ -32,6 +32,12 @@ _Architectural & product decisions, newest first. Each: context · decision · r
   least one rendered-browser check, not only socket smokes.
 - **What stays intentionally out of 1.0:** code signing (cost), Plugins/Extensions UI surface,
   embeddings backend, per-tab deep links, light theme.
+- **Follow-up (2026-06-14, post-1.0, no new decision):** the root gallery was expanded into a
+  multi-audience screenshot package — `tools/take_screenshot_package.py` seeds a rich, real
+  multi-project demo and captures three curated 16:9 sets (`docs/screenshots/{github,portfolio,
+  store}/`); `docs/SCREENSHOTS.md` documents them. The pass surfaced one shipped-product
+  inaccuracy: the Settings roadmap label still read `v0.6.0` next to "Version 1.0.0" — corrected
+  (`ROADMAP_PHASE`). Reinforces the lesson above: a real rendered capture catches what smokes miss.
 - **Status:** Accepted.
 
 ## D-0033 — Native desktop shell via Chromium app-mode window (slice 16)

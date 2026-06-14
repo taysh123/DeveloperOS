@@ -3,7 +3,12 @@
 All notable, user-visible changes. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
-_Nothing yet._
+
+### Documentation
+- **Professional screenshot package.** The README gallery is now backed by three curated, 16:9 screenshot sets — `docs/screenshots/github/` (8, README), `docs/screenshots/portfolio/` (6, premium showcase), and `docs/screenshots/store/` (8, marketing/landing) — all real captures of the running v1.0.0 app (no mockups). A new dev-time tool (`tools/take_screenshot_package.py`) seeds a rich, real multi-project demo workspace (generated `TaskFlow API` + `PixelForge` sample repos + this repo, plus realistic tasks/notes/job-leads via the guarded API) and captures every screen with Playwright. New `docs/SCREENSHOTS.md` documents the full inventory, recommended usage per audience, and the regeneration process. README repointed to the `github/` set.
+
+### Fixed
+- **Settings roadmap label.** The dashboard's System status showed a stale `v0.6.0` roadmap phase next to "Version 1.0.0"; it now reads a v1.0.0 line so the displayed state matches the shipped product.
 
 ## [1.0.0] — 2026-06-12 ("Your codebase, understood and under control, on your machine")
 > Why 1.0 exists: every Core item of the v1.0 vision recorded in FUTURE_ROADMAP §1 is shipped

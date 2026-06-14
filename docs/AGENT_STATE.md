@@ -3,7 +3,7 @@
 > Read this FIRST every session. It is the authoritative record of where the project
 > stands and what to do next. Update it after every meaningful work session.
 
-_Last updated: 2026-06-12_
+_Last updated: 2026-06-14_
 
 ## Current phase
 **v1.0.0 — PROJECT COMPLETE** ("Your codebase, understood and under control, on your machine",
@@ -124,6 +124,15 @@ no-cost policy) as **optional, on-request work only** — start with `/plan` as 
 - _None. Dashboard slice 4 complete; further dashboard surfaces are on-request only._
 
 ### Completed
+- [x] Screenshot package (2026-06-14): expanded the root gallery into a multi-audience package —
+      `tools/take_screenshot_package.py` (dev-time Playwright) seeds a rich, **real** multi-project
+      demo (generated TaskFlow API + PixelForge repos + this repo; tasks/notes/job-leads via the
+      guarded API) and captures three curated 16:9 sets: **github/** (8) · **portfolio/** (6) ·
+      **store/** (8). Repointed README → `docs/screenshots/github/`; added `docs/SCREENSHOTS.md`
+      (inventory + usage + regen); widened `test_readme_screenshots_exist` for subfolders. **Found
+      + fixed a shipped accuracy bug:** Settings roadmap label said `v0.6.0` next to Version 1.0.0
+      → corrected `ROADMAP_PHASE` (api/app.py). TDD **363/363** (unchanged). PR #26 merged. Optional
+      on-request polish; project remains complete.
 - [x] Final polish (2026-06-12): screenshot gallery + v1.0 declaration (D-0034). 9 real captures
       via `tools/take_screenshots.py` (dev-time Playwright; PrintWindow for native shots); README
       gallery + v1.0 status; **fixed shipped Meeting-tab SPA crash** (string `style` prop from
