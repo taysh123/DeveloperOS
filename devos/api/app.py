@@ -22,7 +22,7 @@ from devos.modules import recall as recall_mod
 from devos.providers.ai import available_providers
 from devos.storage import repo
 
-ROADMAP_PHASE = "v0.6.0 · Feature-complete dashboard + first real AI provider (Ollama, local)"
+ROADMAP_PHASE = "v1.0.0 · Complete local-first developer workspace (desktop app + dashboard + full CLI parity)"
 DASHBOARD_MATURITY = (
     "Stable — full CLI parity (Home, Tasks, Notes, Search & Ask, Debug, Projects, Learn, "
     "Career, Meeting, Settings)"

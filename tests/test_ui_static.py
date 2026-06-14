@@ -11,6 +11,7 @@ import json
 import re
 import struct
 import unittest
+from pathlib import Path
 
 from devos.api.app import STATIC_DIR
 
@@ -73,10 +74,11 @@ class TestA11yContract(unittest.TestCase):
         # the gallery is real captures, never broken links or fabrications.
         root = STATIC_DIR.parents[2]
         readme = (root / "README.md").read_text(encoding="utf-8")
-        refs = re.findall(r"docs/screenshots/([\w.-]+\.png)", readme)
+        # Refs may live in subfolders (github/portfolio/store), so allow "/".
+        refs = re.findall(r"docs/screenshots/([\w./-]+\.png)", readme)
         self.assertTrue(refs, "README should reference the screenshot gallery")
         for name in refs:
-            self.assertTrue((root / "docs" / "screenshots" / name).is_file(),
+            self.assertTrue((root / "docs" / "screenshots" / Path(name)).is_file(),
                             f"README references missing screenshot {name}")
 
 
